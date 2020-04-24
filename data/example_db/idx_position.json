@@ -1,0 +1,14 @@
+{
+   "database":"dc2_run2_1i_dr1b",
+   "table":"position",
+   "index":"objectId",
+   "spec":"DEFAULT",
+   "comment":"None",
+   "columns":[
+      {
+         "column":"objectId",
+         "length":0,
+         "ascending":1
+      }
+   ]
+}

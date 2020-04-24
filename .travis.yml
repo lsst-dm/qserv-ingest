@@ -1,0 +1,32 @@
+sudo: required
+language: go
+dist: xenial
+
+go:
+- 1.13.4
+
+before_script:
+  - if [ "$DOCKER_USERNAME" ]; then docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"; fi
+  - git clone --depth 1 -b "k8s-v1.18.2" --single-branch https://github.com/k8s-school/kind-travis-ci.git
+  - ./kind-travis-ci/k8s-create.sh -s
+  - git clone --depth 1 -b "tickets/DM-24587" --single-branch https://github.com/lsst/qserv-operator
+  - ./qserv-operator/deploy/qserv.sh --dev
+  - kubectl apply -k ./qserv-operator/base
+  - ./qserv-operator/wait-qserv-ready.sh
+
+script:
+  - cp env.example.sh env.sh
+  - . ./env.sh
+  - ./build-image.sh
+  - ./job.sh init
+  - ./job.sh ingest
+  - ./job.sh publish
+  - ./job.sh index
+  # FIXME restart qserv to refresh xrootd cache
+  - kubectl delete pod -l app=$INSTANCE
+  - ./qserv-operator/wait-qserv-ready.sh
+  - ./query.sh
+
+after_success:
+  - echo "Generate and upload documentation"
+  - curl -fsSL https://raw.githubusercontent.com/lsst-dm/doc-container/master/run.sh | bash -s -- -p "$LTD_PASSWORD" "$PWD"

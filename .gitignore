@@ -1,0 +1,4 @@
+/env.sh
+telepresence.log
+/test-all.sh
+/.vscode
