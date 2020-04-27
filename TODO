@@ -1,0 +1,2 @@
+- Allow remote authenticated connection to repl ctl http service
+- Is czar db `root` access required for repl ctl or could the replication controller use lower privileges for czar db access?
