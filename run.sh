@@ -4,5 +4,9 @@ set -euxo pipefail
 
 DIR=$(cd "$(dirname "$0")"; pwd -P)
 
-kubectl cp "$DIR/resources" qserv-dev-repl-ctl-0:/tmp
-kubectl exec -it qserv-dev-repl-ctl-0 -- /tmp/resources/create-db.sh
+INSTANCE="qserv"
+
+REPL_CTL_POD="${INSTANCE}-repl-ctl-0"
+
+kubectl cp "$DIR/resources" "$REPL_CTL_POD":/tmp
+kubectl exec -it "$REPL_CTL_POD" -- /tmp/resources/create-db.sh
