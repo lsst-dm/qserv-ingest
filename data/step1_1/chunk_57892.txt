@@ -1,4 +1,4 @@
-\N,12015488838140049,69.59860713847087,-44.63731989175096,0,0,True,True,True,False,False,False,True,False,False,False,False,False,False,True,False,False,False,False,False,False,True,False,False,57892,561
-\N,12015488838140054,69.60862683891168,-44.62961567845234,0,0,True,True,True,False,False,False,True,False,False,False,False,False,False,True,False,False,False,False,False,False,True,False,False,57892,561
-\N,12015488838140052,69.60654345629779,-44.63241359405976,0,0,True,True,True,False,False,False,True,False,False,False,False,False,False,True,False,False,False,False,False,False,True,False,False,57892,561
-\N,12015488838140050,69.60813848332333,-44.63417496755628,0,0,True,True,True,False,False,False,True,False,False,False,False,False,False,True,False,False,False,False,False,False,True,False,False,57892,561
+12015488838140049,69.59860713847087,-44.63731989175096,0,0,True,True,True,False,False,False,True,False,False,False,False,False,False,True,False,False,False,False,False,False,True,False,False,57892,561
+12015488838140054,69.60862683891168,-44.62961567845234,0,0,True,True,True,False,False,False,True,False,False,False,False,False,False,True,False,False,False,False,False,False,True,False,False,57892,561
+12015488838140052,69.60654345629779,-44.63241359405976,0,0,True,True,True,False,False,False,True,False,False,False,False,False,False,True,False,False,False,False,False,False,True,False,False,57892,561
+12015488838140050,69.60813848332333,-44.63417496755628,0,0,True,True,True,False,False,False,True,False,False,False,False,False,False,True,False,False,False,False,False,False,True,False,False,57892,561
