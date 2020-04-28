@@ -9,7 +9,6 @@
  "latitude_key":"coord_dec",
  "longitude_key":"coord_ra",
  "schema":[
-  {"name": "id", "type": "bigint(20) NOT NULL"},
   {"name": "objectId", "type": "bigint(20) NOT NULL"},
   {"name": "coord_ra", "type": "FLOAT NOT NULL"},
   {"name": "coord_dec", "type": "FLOAT NOT NULL"},
