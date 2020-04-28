@@ -6,27 +6,23 @@
 set -euxo pipefail
 
 DIR=$(cd "$(dirname "$0")"; pwd -P)
+. "$DIR"/env.sh
 
-JQ="/tmp/jq"
 curl https://stedolan.github.io/jq/download/linux64/jq > $JQ
 chmod +x "$JQ"
-
-JSON_TRANSACTION="/tmp/transaction.json"
-
-PORT="25080"
-BASE_URL="http://localhost:${PORT}"
 
 # Create database
 curl "$BASE_URL/ingest/v1/database" \
   -X POST \
   -H "Content-Type: application/json" \
-  -d "@$DIR/db.json" || echo "WARN: failed to create db"
+  -d "@$DIR/db.json"
 
 # Register table Position
+# TODO: recreate a table
 curl "$BASE_URL/ingest/v1/table" \
   -X POST \
   -H "Content-Type: application/json" \
-  -d "@$DIR/schema_object.json" || echo "WARN: failed to create object table"
+  -d "@$DIR/schema_position.json"
 
 # Start a super-transaction
 echo '{"database":"desc_dc2"}' | \
@@ -35,9 +31,7 @@ echo '{"database":"desc_dc2"}' | \
       -H "Content-Type: application/json" \
       -d @- > "$JSON_TRANSACTION"
 
-
 TRANSACTION_ID=$(cat "$JSON_TRANSACTION" | $JQ '.databases.desc_dc2.transactions[0].id')
-CHUNK=57892
 
 echo "{\"transaction_id\":$TRANSACTION_ID,\"chunk\":$CHUNK}" | \
     curl "$BASE_URL/ingest/v1/chunk" \
@@ -45,4 +39,4 @@ echo "{\"transaction_id\":$TRANSACTION_ID,\"chunk\":$CHUNK}" | \
       -H "Content-Type: application/json" \
       -d @-
 
-curl "$BASE_URL/ingest/v1/trans/$TRANSACTION_ID?abort=0&build-secondary-index=1" -X PUT
+#curl "$BASE_URL/ingest/v1/trans/$TRANSACTION_ID?abort=0&build-secondary-index=1" -X PUT
