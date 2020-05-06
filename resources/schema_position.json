@@ -1,6 +1,7 @@
 
 {"database":"desc_dc2",
  "table":"position",
+ "auth_key":"",
  "is_partitioned":1,
  "chunk_id_key":"chunkId",
  "sub_chunk_id_key":"subChunkId",

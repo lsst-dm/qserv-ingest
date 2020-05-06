@@ -25,7 +25,7 @@ curl "$BASE_URL/ingest/v1/table" \
   -d "@$DIR/schema_position.json"
 
 # Start a super-transaction
-echo '{"database":"desc_dc2"}' | \
+echo '{"database":"desc_dc2","auth_key":""}' | \
     curl "$BASE_URL/ingest/v1/trans" \
       -X POST \
       -H "Content-Type: application/json" \
@@ -33,7 +33,7 @@ echo '{"database":"desc_dc2"}' | \
 
 TRANSACTION_ID=$(cat "$JSON_TRANSACTION" | $JQ '.databases.desc_dc2.transactions[0].id')
 
-echo "{\"transaction_id\":$TRANSACTION_ID,\"chunk\":$CHUNK}" | \
+echo "{\"transaction_id\":$TRANSACTION_ID,\"chunk\":$CHUNK,\"auth_key\":\"\"}" | \
     curl "$BASE_URL/ingest/v1/chunk" \
       -X POST \
       -H "Content-Type: application/json" \
