@@ -1,0 +1,31 @@
+﻿
+Paramètres de la DB des tasks - ancien dataloader SES
+
+> case Id :  correspond à un identifier pour chaque dataset de fichiers à charger
+on peut imaginer qu ‘à un moment on se retrouverait à charger plusieurs run de données en même temps    —-> voir si cela est possible sans crash au niveau du dataloader
+> task Id : la lecture des fichiers parquets se fait par série de fichiers, chaque série de fichiers est identifié par un task_Id
+cela correspond à la structure des fichiers : ..../step1_task_Id/chunk_xxxx,txt
+> level :  priorité de chargement des fichiers
+level=1 correspond au chargement de la table directeur à charger en premier lieu car cela va générer les datas chunkId/subChunkId, ou éventuellement aux tables non partitionnées
+level=2 correspond aux fichiers partitionnés qui dépendent de la table directeur
+=> la structure des fichiers CSV est donc : ..../steplevel_task_Id/chunk_xxcx.txt
+=> une tâche de level 2 ne peut être  executée tant que toutes les tâches level 1 ne sont pas executées et réussies
+=> lorsque toutes les tâches de level 1 sont finies, il est possible de vérifier que le chargement est correct en contrôlant que tous les objectId des fichiers CSV sont présents dans les DB Qserv des différents WN.
+> status :  état de réalisation de la requête
+ready : le dataloader peut executer la requête
+running : le dataloader est en train d ‘executer la tâche 
+done/failed : selon que le chargement est réussi ou non
+
+> timestamp : lorsque le dataloader prend en charge une tâche, je mets à jour un timestamp dans la DB afin de contrôler si une tâche ne reste pas en mode  “running “  trop longtemps - cela pourrait correspondre à une erreur
+> nom complet du répertoire des fichiers CSV  - avant le tag steplevel_task_Id
+           => cela permet d ‘éviter de configurer en plusieurs endroits ce paramètre 
+> commentaire qui contient entre autres le nom du dataset en chargement, 
+Remarque :
+=> on peut s ‘imaginer conserver l ‘historique des différents essais de chargement si on a des soucis récurrents avec le dataloader
+=> on peut s ‘imaginer ajouter un paramètre définissant la priorité d‘execution d‘une tâche
+=> il est également possible de définir une suite de levels incluants des scripts de validation :
+level 1 : table directeur
+level 2 : script de validation de l ‘étape level1
+level 3 : tables de datas ( partitionnées ou non)
+level 4 : script de validation de l ‘étape level3
+ 

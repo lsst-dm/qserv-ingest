@@ -11,9 +11,9 @@ DIR=$(cd "$(dirname "$0")"; pwd -P)
 JSON_CHUNK="/tmp/chunk.json"
 JSON_TRANSACTION="/tmp/transaction.json"
 
-PORT="25002"
 CHUNK=57892
 CHUNK_FILE="chunk_$CHUNK.txt"
+CHUNK_FILE_OVERLAP="chunk_${CHUNK}_overlap.txt"
 
 curl https://stedolan.github.io/jq/download/linux64/jq > $JQ
 chmod +x "$JQ"
@@ -34,10 +34,14 @@ echo "{\"transaction_id\":$TRANSACTION_ID,\"chunk\":$CHUNK,\"auth_key\":\"\"}" |
       -d @- > "$JSON_CHUNK"
 
 WORKER=$(cat "$JSON_CHUNK" | $JQ '.location.host' | sed 's/"//g')
+PORT=$(cat "$JSON_CHUNK" | $JQ '.location.port' | sed 's/"//g')
 
 cd /tmp
 curl -lO https://raw.githubusercontent.com/lsst-dm/qserv-DC2/tickets/DM-24587/data/step1_1/$CHUNK_FILE
 mkdir -p /qserv/data/ingest
-qserv-replica-file-ingest FILE $WORKER $PORT 1 position P "/tmp/$CHUNK_FILE"
+qserv-replica-file-ingest --debug --verbose FILE $WORKER $PORT $TRANSACTION_ID position P "/tmp/$CHUNK_FILE"
+
+curl -lO https://raw.githubusercontent.com/lsst-dm/qserv-DC2/tickets/DM-24587/data/step1_1/$CHUNK_FILE_OVERLAP
+qserv-replica-file-ingest --debug --verbose FILE $WORKER $PORT $TRANSACTION_ID position P "/tmp/$CHUNK_FILE_OVERLAP"
 
 curl "$BASE_URL/ingest/v1/trans/$TRANSACTION_ID?abort=0&build-secondary-index=1" -X PUT -H "Content-Type: application/json" -d '{"auth_key":""}'
