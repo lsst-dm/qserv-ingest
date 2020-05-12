@@ -8,21 +8,15 @@ set -euxo pipefail
 DIR=$(cd "$(dirname "$0")"; pwd -P)
 . "$DIR"/env.sh
 
+JSON_CHUNK="/tmp/chunk.json"
+JSON_TRANSACTION="/tmp/transaction.json"
+
+PORT="25002"
+CHUNK=57892
+CHUNK_FILE="chunk_$CHUNK.txt"
+
 curl https://stedolan.github.io/jq/download/linux64/jq > $JQ
 chmod +x "$JQ"
-
-# Create database
-curl "$BASE_URL/ingest/v1/database" \
-  -X POST \
-  -H "Content-Type: application/json" \
-  -d "@$DIR/db.json"
-
-# Register table Position
-# TODO: recreate a table
-curl "$BASE_URL/ingest/v1/table" \
-  -X POST \
-  -H "Content-Type: application/json" \
-  -d "@$DIR/schema_position.json"
 
 # Start a super-transaction
 echo '{"database":"desc_dc2","auth_key":""}' | \
@@ -37,6 +31,13 @@ echo "{\"transaction_id\":$TRANSACTION_ID,\"chunk\":$CHUNK,\"auth_key\":\"\"}" |
     curl "$BASE_URL/ingest/v1/chunk" \
       -X POST \
       -H "Content-Type: application/json" \
-      -d @-
+      -d @- > "$JSON_CHUNK"
 
-#curl "$BASE_URL/ingest/v1/trans/$TRANSACTION_ID?abort=0&build-secondary-index=1" -X PUT
+WORKER=$(cat "$JSON_CHUNK" | $JQ '.location.host' | sed 's/"//g')
+
+cd /tmp
+curl -lO https://raw.githubusercontent.com/lsst-dm/qserv-DC2/tickets/DM-24587/data/step1_1/$CHUNK_FILE
+mkdir -p /qserv/data/ingest
+qserv-replica-file-ingest FILE $WORKER $PORT 1 position P "/tmp/$CHUNK_FILE"
+
+curl "$BASE_URL/ingest/v1/trans/$TRANSACTION_ID?abort=0&build-secondary-index=1" -X PUT -H "Content-Type: application/json" -d '{"auth_key":""}'
