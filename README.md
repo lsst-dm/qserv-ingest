@@ -10,3 +10,6 @@ https://github.com/hsinfang/qserv-ingest-hsc-poc
 
 csv files: /sps/lsst/users/elles/qserv_install_local/output/step1_xxx/chunk_xxx.txt
 'position' table definition (.cfg, .schema): /sps/lsst/users/elles/qserv_install_local/qserv_testdata/tasks/task_75/sph_partition/
+
+How to manage a queue in SQL:
+https://stackoverflow.com/questions/423111/whats-the-best-way-of-implementing-a-messaging-queue-table-in-mysql
