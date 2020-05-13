@@ -13,3 +13,4 @@ csv files: /sps/lsst/users/elles/qserv_install_local/output/step1_xxx/chunk_xxx.
 
 How to manage a queue in SQL:
 https://stackoverflow.com/questions/423111/whats-the-best-way-of-implementing-a-messaging-queue-table-in-mysql
+-> replace process_id with pod_id
