@@ -3,23 +3,20 @@
 # POC for loading DC2 data inside Qserv
 # Based on https://confluence.lsstcorp.org/display/DM/Live+demo%3A+test+ingest+of+a+subset+of+one+track+of+the+HSC+Object+catalog
 
+# Load python-3
+. /stack/loadLSST.bash
+
 set -euxo pipefail
 
 DIR=$(cd "$(dirname "$0")"; pwd -P)
 . "$DIR"/env.sh
 
-curl https://stedolan.github.io/jq/download/linux64/jq > $JQ
-chmod +x "$JQ"
+# Create replication manager credentials
+touch ~/.lsst/qserv
 
 # Create database
-curl "$BASE_URL/ingest/v1/database" \
-  -X POST \
-  -H "Content-Type: application/json" \
-  -d "@$DIR/db.json"
+qingest.py --json "$QSERV_INGEST_DIR"/db.json "$BASE_URL"/ingest/v1/database post
 
 # Register table Position
 # TODO: recreate a table
-curl "$BASE_URL/ingest/v1/table" \
-  -X POST \
-  -H "Content-Type: application/json" \
-  -d "@$DIR/schema_position.json"
+qingest.py --json "$QSERV_INGEST_DIR"/schema_position.json "$BASE_URL"/ingest/v1/table post

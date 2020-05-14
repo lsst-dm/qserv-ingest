@@ -3,10 +3,15 @@
 set -euxo pipefail
 
 DIR=$(cd "$(dirname "$0")"; pwd -P)
+. ./env.sh
 
-INSTANCE="qserv"
+kubectl delete pod -l "app=qserv,tier=ingest,instance=$INSTANCE" --now
+kubectl apply -f $DIR/manifest/qserv-ingest.yaml
+while ! kubectl wait pod --for=condition=Ready --timeout="10s" -l "app=qserv,tier=ingest,instance=$INSTANCE"
+do
+  echo "Wait for Qserv ingest pod to be ready:"
+  kubectl get pod -l "app=qserv,tier=ingest,instance=$INSTANCE"
+  sleep 3
+done
 
-REPL_CTL_POD="${INSTANCE}-repl-ctl-0"
-
-kubectl cp "$DIR/resources" "$REPL_CTL_POD":/tmp
-kubectl exec -it "$REPL_CTL_POD" -- /tmp/resources/init-db.sh
+kubectl exec -it "$INGEST_POD" -- init-db.sh
