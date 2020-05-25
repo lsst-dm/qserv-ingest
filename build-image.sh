@@ -9,7 +9,7 @@ set -euxo pipefail
 DIR=$(cd "$(dirname "$0")"; pwd -P)
 . ./env.sh
 
-# CACHE_OPT="--no-cache"
-
+sed "s|REPLACE_IMAGE|$INGEST_IMAGE|g" "$DIR/manifest/pod.yaml.tpl" \
+    > "$DIR/manifest/pod.yaml"
 docker image build --build-arg REPLICATION_IMAGE="$REPLICATION_IMAGE" --tag "$INGEST_IMAGE" "$DIR"
 docker push "$INGEST_IMAGE"
