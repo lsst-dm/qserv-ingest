@@ -12,4 +12,4 @@ DIR=$(cd "$(dirname "$0")"; pwd -P)
 . "$DIR"/env.sh
 
 # Register database
-qingest.py "$BASE_URL"/ingest/v1/database/desc_dc2 put
+replctl "$BASE_URL"/ingest/v1/database/desc_dc2 put
