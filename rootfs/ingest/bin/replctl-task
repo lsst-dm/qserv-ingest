@@ -65,5 +65,4 @@ if __name__ == "__main__":
         logger.setLevel(logging.INFO)
     logger.addHandler(logging.StreamHandler())
 
-    payload = args.data or args.json or dict()
     ingest.ingest_task(args.url, args.database, args.chunk, args.chunk_path)

@@ -8,4 +8,7 @@ USER root
 RUN yum -y install curl jq vim && yum clean all
 USER 0
 
+ENV PYTHONPATH=/ingest/python
+ENV PATH="/ingest/bin:${PATH}"
+
 COPY rootfs /

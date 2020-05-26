@@ -36,7 +36,7 @@ if [ $# -ne 0 ] ; then
 fi
 
 echo "Running in development mode"
-MOUNTS="-v $DIR/rootfs/:/rootfs"
+MOUNTS="-v $DIR/rootfs/ingest:/ingest"
 
 docker pull "$INGEST_IMAGE"
 echo "oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO"

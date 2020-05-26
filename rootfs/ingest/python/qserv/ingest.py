@@ -37,10 +37,12 @@ import logging
 import os
 import subprocess
 import sys
+import urllib.parse
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
+import mysql.connector as mariadb
 import requests
 
 # ---------------------------------
@@ -56,6 +58,9 @@ def authorize():
         logging.debug("Cannot find %s", AUTH_PATH)
         authKey = getpass.getpass()
     return authKey
+
+def get_chunk():
+    mariadb_connection = mariadb.connect(user='python_user', password='some_pass', database='employees')
 
 
 def put(url):
@@ -82,8 +87,8 @@ def post(url, payload):
 
     return responseJson
 
-def start_transaction(base_url, database):
-    url = format("%s/ingest/v1/trans",base_url)
+def start_transaction(base_url, database): 
+    url = urllib.parse.urljoin(base_url,"ingest/v1/trans")
     payload={"database":database}
     responseJson = post(url,payload)
 
@@ -95,11 +100,12 @@ def start_transaction(base_url, database):
     return transaction_id
 
 def stop_transaction(base_url, database, transaction_id):
+    url = urllib.parse.urljoin(base_url,"ingest/v1/trans",transaction_id)
     url = format("%s/ingest/v1/trans/%s?abort=0&build-secondary-index=1", base_url, transaction_id)
     responseJson = put(url)
 
 def get_chunk_location(base_url, chunk, transaction_id):
-    url = format("%s/%s",base_url,"/ingest/v1/trans")
+    url = urllib.parse.urljoin(base_url,"ingest/v1/trans")
     payload={"transaction_id":transaction_id,"chunk":chunk} 
     responseJson = post(url,payload)
 
@@ -140,10 +146,8 @@ class DataAction(argparse.Action):
                 d[k] = v
         setattr(namespace, self.dest, d)
 
-
 class JsonAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string):
         with open(values, 'r') as f:
             x = json.load(f)
         setattr(namespace, self.dest, x)
-

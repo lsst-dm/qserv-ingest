@@ -6,7 +6,7 @@ DIR=$(cd "$(dirname "$0")"; pwd -P)
 . ./env.sh
 
 kubectl delete pod -l "app=qserv,tier=ingest,instance=$INSTANCE" --now
-kubectl apply -f $DIR/manifest/qserv-ingest.yaml
+kubectl apply -f $DIR/manifest/ingest.yaml
 while ! kubectl wait pod --for=condition=Ready --timeout="10s" -l "app=qserv,tier=ingest,instance=$INSTANCE"
 do
   echo "Wait for Qserv ingest pod to be ready:"
