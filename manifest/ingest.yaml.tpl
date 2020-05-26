@@ -12,7 +12,7 @@ spec:
   - command:
     - sleep
     - "3600"
-    image: <INGEST_IMAGE> 
+    image: <INGEST_IMAGE>
     imagePullPolicy: Always
     name: qserv-ingest
   
