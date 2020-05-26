@@ -85,12 +85,14 @@ def ingest_chunk(host, port, transaction_id, chunk_file):
                          stdout=subprocess.PIPE, 
                          universal_newlines=True)
 
+    # TODO get error code
+
 def ingest_task(base_url, database, chunk, chunk_path):
     logging.debug("Starting an ingest task: url: %s, db: %s, chunk: %s", base_url, database, chunk)
     transaction_id = start_transaction(base_url, database)
     try:
         (host, port) = get_chunk_location(base_url, chunk, database, transaction_id)
-        chunk_filename = "chunk_%s.txt".format(chunk)
+        chunk_filename = "chunk_{}.txt".format(chunk)
         chunk_file = os.path.join(chunk_path, chunk_filename)
         ingest_chunk(host, port, transaction_id, chunk_file)
         stop_transaction(base_url, database, transaction_id)
