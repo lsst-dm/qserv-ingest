@@ -1,9 +1,6 @@
+- Add CI, see TODO in python
 - Replace "True/False" in csv files with "1/0"
-- Write an orchestrator in python
 - Use FILE-LIST option to load multiple chunks on a worker, sequentially
 - Use MEMQ+JOB (number of job is workers/ingest-thread), where ingest-thread=ncore
-- Start transaction at the beginning of the job and stop it at the end
 - "LOAD DATA INFILE" use 20MB/sec per thread
-
-- Allow remote authenticated connection to repl ctl http service
 - Is czar db `root` access required for repl ctl or could the replication controller use lower privileges for czar db access?
