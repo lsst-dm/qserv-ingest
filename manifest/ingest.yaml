@@ -12,7 +12,7 @@ spec:
   - command:
     - sleep
     - "3600"
-    image: qserv/qserv-ingest:c009718 
+    image: qserv/qserv-ingest:43ac798-dirty 
     imagePullPolicy: Always
     name: qserv-ingest
   

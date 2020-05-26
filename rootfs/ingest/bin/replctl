@@ -65,6 +65,6 @@ if __name__ == "__main__":
     payload = args.data or args.json or dict()
     logging.debug("Starting a request: %s with %s", args.url, payload)
     if args.method == "post":
-        sys.exit(ingest.post(args.url, payload))
+        ingest.post(args.url, payload)
     elif args.method == "put":
-        sys.exit(ingest.put(args.url))
+        ingest.put(args.url)
