@@ -35,6 +35,7 @@ import getpass
 import json
 import logging
 import os
+import posixpath
 import subprocess
 import sys
 import urllib.parse
@@ -42,7 +43,7 @@ import urllib.parse
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-import mysql.connector as mariadb
+#import mysql.connector as mariadb
 import requests
 
 # ---------------------------------
@@ -59,9 +60,43 @@ def authorize():
         authKey = getpass.getpass()
     return authKey
 
-def get_chunk():
-    mariadb_connection = mariadb.connect(user='python_user', password='some_pass', database='employees')
+# def get_chunk():
+#     mariadb_connection = mariadb.connect(user='python_user', password='some_pass', database='employees')
+#     cursor = mariadb_connection.cursor()
+#     cursor.execute("SELECT first_name,last_name FROM employees WHERE first_name=%s", "toto")
 
+def get_chunk_location(base_url, chunk, database, transaction_id):
+    url = urllib.parse.urljoin(base_url,"ingest/v1/chunk")
+    payload={"chunk":chunk,
+             "database":database,
+             "transaction_id":transaction_id} 
+    responseJson = post(url,payload)
+
+    # Get location host and port
+    host = responseJson["location"]["host"]
+    port = responseJson["location"]["port"]
+    logging.info("Location for chunk %d: %s %d" % (chunk, host, port))
+    
+    return (host, port)
+
+def ingest_chunk(host, port, transaction_id, chunk_file):
+    cmd= ['qserv-replica-file-ingest', '--debug', '--verbose', 'FILE', host, str(port), str(transaction_id), "position", "P", chunk_file]
+    process = subprocess.run(cmd, 
+                         stdout=subprocess.PIPE, 
+                         universal_newlines=True)
+
+def ingest_task(base_url, database, chunk, chunk_path):
+    logging.debug("Starting an ingest task: url: %s, db: %s, chunk: %s", base_url, database, chunk)
+    transaction_id = start_transaction(base_url, database)
+    try:
+        (host, port) = get_chunk_location(base_url, chunk, database, transaction_id)
+        chunk_filename = "chunk_%s.txt".format(chunk)
+        chunk_file = os.path.join(chunk_path, chunk_filename)
+        ingest_chunk(host, port, transaction_id, chunk_file)
+        stop_transaction(base_url, database, transaction_id)
+    except Exception as e:
+        # TODO abort transaction
+        raise Exception('Error in ingest task: %s', e)
 
 def put(url):
     authKey = authorize()
@@ -76,8 +111,8 @@ def put(url):
 def post(url, payload):
     authKey = authorize()
     payload["auth_key"] = authKey
+    logging.debug(payload)
     response = requests.post(url, json=payload)
-    del payload["auth_key"]
     responseJson = response.json()
     if not responseJson["success"]:
         logging.critical(responseJson["error"])
@@ -100,36 +135,11 @@ def start_transaction(base_url, database):
     return transaction_id
 
 def stop_transaction(base_url, database, transaction_id):
-    url = urllib.parse.urljoin(base_url,"ingest/v1/trans",transaction_id)
-    url = format("%s/ingest/v1/trans/%s?abort=0&build-secondary-index=1", base_url, transaction_id)
+    tmp_url = posixpath.join("ingest/v1/trans/",str(transaction_id))
+    tmp_url += "?abort=0&build-secondary-index=1"
+    url = urllib.parse.urljoin(base_url, tmp_url)
     responseJson = put(url)
 
-def get_chunk_location(base_url, chunk, transaction_id):
-    url = urllib.parse.urljoin(base_url,"ingest/v1/trans")
-    payload={"transaction_id":transaction_id,"chunk":chunk} 
-    responseJson = post(url,payload)
-
-    # For catching the location host and port
-    if "location" in responseJson and "chunk" in payload:
-        host = responseJson["location"]["host"]
-        port = responseJson["location"]["port"]
-        logging.info("%d %s %d" % (payload["chunk"], host, port))
-    
-    return (host, port)
-
-def ingest_chunk(host, port, transaction_id, chunk_file):
-    cmd= ['qserv-replica-file-ingest', '--debug', '--verbose', 'FILE', host, port, transaction_id, "position", "P", chunk_file]
-    process = subprocess.run(cmd, 
-                         stdout=subprocess.PIPE, 
-                         universal_newlines=True)
-
-def ingest_task(base_url, database, chunk, chunk_path):
-    logging.debug("Starting an ingest task: url: %s, db: %s, chunk: %s", base_url, database, chunk)
-    transaction_id = start_transaction(base_url, database)
-    (host, port) = get_chunk_location(base_url, chunk, transaction_id)
-    chunk_file = os.path.join(chunk_path, format("chunk_%s.txt", chunk))
-    ingest_chunk(host, port, transaction_id, chunk_file)
-    stop_transaction(base_url, database, transaction_id)
 
 class DataAction(argparse.Action):
     """argparse action to attempt casting the values to floats and put into a dict"""

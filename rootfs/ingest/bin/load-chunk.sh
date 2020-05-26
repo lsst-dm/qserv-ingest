@@ -23,4 +23,4 @@ cd "$CHUNK_PATH"
 curl -lO https://raw.githubusercontent.com/lsst-dm/qserv-DC2/tickets/DM-24587/data/step1_1/$CHUNK_FILE
 curl -lO https://raw.githubusercontent.com/lsst-dm/qserv-DC2/tickets/DM-24587/data/step1_1/$CHUNK_FILE_OVERLAP
 
-replctl-task "$BASE_URL" "$DATABASE" "$CHUNK" "$CHUNK_PATH"
+replctl-task -v "$BASE_URL" "$DATABASE" "$CHUNK" "$CHUNK_PATH"

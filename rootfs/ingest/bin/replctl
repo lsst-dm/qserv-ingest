@@ -67,4 +67,4 @@ if __name__ == "__main__":
     if args.method == "post":
         sys.exit(ingest.post(args.url, payload))
     elif args.method == "put":
-        sys.exit(ingest.put(args.url, payload))
+        sys.exit(ingest.put(args.url))
