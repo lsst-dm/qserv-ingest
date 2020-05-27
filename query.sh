@@ -6,7 +6,7 @@ DIR=$(cd "$(dirname "$0")"; pwd -P)
 
 INSTANCE="qserv"
 
-CZAR_POD="${INSTANCE}-czar-0.${INSTANCE}-czar"
+CZAR_HOST="${INSTANCE}-czar-0.${INSTANCE}-czar"
 
 # FIXME restart qserv to refresh xrootd cache
 kubectl delete pod -l app=$INSTANCE
