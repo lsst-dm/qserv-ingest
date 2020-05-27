@@ -5,7 +5,6 @@ set -euxo pipefail
 DIR=$(cd "$(dirname "$0")"; pwd -P)
 . ./env.sh
 
-kubectl delete pod -l "app=qserv,tier=ingest,instance=$INSTANCE" --now
 kubectl apply -f $DIR/manifest/ingest.yaml
 while ! kubectl wait pod --for=condition=Ready --timeout="10s" -l "app=qserv,tier=ingest,instance=$INSTANCE"
 do
@@ -14,4 +13,4 @@ do
   sleep 3
 done
 # Create replication manager credentials
-kubectl exec -it qserv-ingest -- touch ~/.lsst/qserv
+kubectl exec -it qserv-ingest -- sh -c "touch /root/.lsst/qserv"
