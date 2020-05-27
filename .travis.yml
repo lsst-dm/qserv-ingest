@@ -11,6 +11,7 @@ before_script:
   - ./kind-travis-ci/kind/k8s-create.sh -s
 
 script:
+  - ./build-image.sh
   - ./create-ingest-pod.sh
   - ./init.sh
   - ./load-chunks.sh
