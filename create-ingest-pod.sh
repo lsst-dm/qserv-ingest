@@ -13,3 +13,5 @@ do
   kubectl get pod -l "app=qserv,tier=ingest,instance=$INSTANCE"
   sleep 3
 done
+# Create replication manager credentials
+kubectl exec -it qserv-ingest -- touch ~/.lsst/qserv

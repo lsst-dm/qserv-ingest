@@ -11,9 +11,6 @@ set -euxo pipefail
 DIR=$(cd "$(dirname "$0")"; pwd -P)
 . "$DIR"/env.sh
 
-# Create replication manager credentials
-touch ~/.lsst/qserv
-
 # Create database
 replctl -v --json "$QSERV_INGEST_DIR"/db.json "$BASE_URL"/ingest/v1/database post
 
