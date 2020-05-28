@@ -1,0 +1,329 @@
+   0.0 TEL | Telepresence 0.105 launched at Thu May 28 10:26:22 2020
+   0.0 TEL |   /usr/bin/telepresence --swap-deployment qserv-ingest --docker-run -it -v /home/fjammes/src/k8s-toolbox/homefs/qserv-DC2/rootfs/ingest:/ingest --rm -w /home/fjammes qserv/qserv-ingest:5eede6d-dirty
+   0.0 TEL | uname: uname_result(system='Linux', node='clrinfoport18', release='4.15.0-1081-oem', version='#91-Ubuntu SMP Fri May 1 02:03:58 UTC 2020', machine='x86_64', processor='x86_64')
+   0.0 TEL | Platform: linux
+   0.0 TEL | WSL: False
+   0.0 TEL | Python 3.6.9 (default, Apr 18 2020, 01:56:04)
+   0.0 TEL | [GCC 8.4.0]
+   0.0 TEL | BEGIN SPAN main.py:40(main)
+   0.0 TEL | BEGIN SPAN startup.py:83(set_kube_command)
+   0.0 TEL | Found kubectl -> /usr/local/bin/kubectl
+   0.0 TEL | [1] Capturing: kubectl config current-context
+   0.0 TEL | [1] captured in 0.03 secs.
+   0.0 TEL | [2] Capturing: kubectl --context kind-kind version --short
+   0.1 TEL | [2] captured in 0.05 secs.
+   0.1 TEL | [3] Capturing: kubectl --context kind-kind config view -o json
+   0.1 TEL | [3] captured in 0.03 secs.
+   0.1 TEL | [4] Capturing: kubectl --context kind-kind get ns default
+   0.2 TEL | [4] captured in 0.04 secs.
+   0.2 TEL | [5] Capturing: kubectl --context kind-kind api-versions
+   0.2 TEL | [5] captured in 0.06 secs.
+   0.2 TEL | Command: kubectl 1.18.0
+   0.2 TEL | Context: kind-kind, namespace: default, version: 1.18.0
+   0.2 TEL | Looks like we're in a local VM, e.g. minikube.
+   0.2 TEL | END SPAN startup.py:83(set_kube_command)    0.2s
+   0.2 TEL | Found ssh -> /usr/bin/ssh
+   0.2 TEL | [6] Capturing: ssh -V
+   0.2 TEL | [6] captured in 0.00 secs.
+   0.2 TEL | Found docker -> /usr/bin/docker
+   0.2 TEL | [7] Capturing: docker run --rm -v /tmp/tel-zb6we6xh:/tel alpine:3.6 cat /tel/session_id.txt
+   1.8   7 | 948a28d6a7e44f8d8d3f46d89f0bd3db
+   1.8 TEL | [7] captured in 1.62 secs.
+   1.8 TEL | Found sudo -> /usr/bin/sudo
+   1.8 TEL | [8] Running: sudo -n echo -n
+   1.9 TEL | [8] ran in 0.01 secs.
+   1.9 TEL | Found sshfs -> /usr/bin/sshfs
+   1.9 TEL | Found fusermount -> /bin/fusermount
+   1.9 >>> | Volumes are rooted at $TELEPRESENCE_ROOT. See https://telepresence.io/howto/volumes.html for details.
+   1.9 TEL | [9] Running: kubectl --context kind-kind --namespace default get pods telepresence-connectivity-check --ignore-not-found
+   1.9 TEL | [9] ran in 0.06 secs.
+   2.4 TEL | Scout info: {'latest_version': '0.105', 'application': 'telepresence', 'notices': []}
+   2.4 TEL | BEGIN SPAN deployment.py:283(supplant_deployment)
+   2.4 >>> | Starting network proxy to cluster by swapping out Deployment qserv-ingest with a proxy
+   2.4 TEL | BEGIN SPAN remote.py:75(get_deployment_json)
+   2.4 TEL | [10] Capturing: kubectl --context kind-kind --namespace default get deployment -o json qserv-ingest
+   2.6 TEL | [10] captured in 0.18 secs.
+   2.6 TEL | END SPAN remote.py:75(get_deployment_json)    0.2s
+   2.6 TEL | [11] Running: kubectl --context kind-kind --namespace default delete deployment qserv-ingest-948a28d6a7e44f8d8d3f46d89f0bd3db --ignore-not-found
+   2.7 TEL | [11] ran in 0.10 secs.
+   2.7 TEL | [12] Running: kubectl --context kind-kind --namespace default apply -f -
+   2.9  12 | deployment.apps/qserv-ingest-948a28d6a7e44f8d8d3f46d89f0bd3db created
+   2.9 TEL | [12] ran in 0.21 secs.
+   2.9 TEL | [13] Running: kubectl --context kind-kind --namespace default scale deployment qserv-ingest --replicas=0
+   3.0  13 | deployment.apps/qserv-ingest scaled
+   3.0 TEL | [13] ran in 0.08 secs.
+   3.0 TEL | END SPAN deployment.py:283(supplant_deployment)    0.6s
+   3.0 TEL | BEGIN SPAN remote.py:142(get_remote_info)
+   3.0 TEL | BEGIN SPAN remote.py:75(get_deployment_json)
+   3.0 TEL | [14] Capturing: kubectl --context kind-kind --namespace default get deployment -o json --selector=telepresence=948a28d6a7e44f8d8d3f46d89f0bd3db
+   3.0 TEL | [14] captured in 0.07 secs.
+   3.0 TEL | END SPAN remote.py:75(get_deployment_json)    0.1s
+   3.0 TEL | Searching for Telepresence pod:
+   3.0 TEL |   with name qserv-ingest-948a28d6a7e44f8d8d3f46d89f0bd3db-*
+   3.0 TEL |   with labels {'app': 'qserv', 'run': 'qserv-ingest', 'telepresence': '948a28d6a7e44f8d8d3f46d89f0bd3db', 'tier': 'ingest'}
+   3.0 TEL | [15] Capturing: kubectl --context kind-kind --namespace default get pod -o json --selector=telepresence=948a28d6a7e44f8d8d3f46d89f0bd3db
+   3.1 TEL | [15] captured in 0.06 secs.
+   3.1 TEL | Checking qserv-ingest-948a28d6a7e44f8d8d3f46d89f0bd3db-57bd9b57c9-c52mv
+   3.1 TEL | Looks like we've found our pod!
+   3.1 TEL | BEGIN SPAN remote.py:104(wait_for_pod)
+   3.1 TEL | [16] Capturing: kubectl --context kind-kind --namespace default get pod qserv-ingest-948a28d6a7e44f8d8d3f46d89f0bd3db-57bd9b57c9-c52mv -o json
+   3.2 TEL | [16] captured in 0.05 secs.
+   3.4 TEL | [17] Capturing: kubectl --context kind-kind --namespace default get pod qserv-ingest-948a28d6a7e44f8d8d3f46d89f0bd3db-57bd9b57c9-c52mv -o json
+   3.5 TEL | [17] captured in 0.05 secs.
+   3.7 TEL | [18] Capturing: kubectl --context kind-kind --namespace default get pod qserv-ingest-948a28d6a7e44f8d8d3f46d89f0bd3db-57bd9b57c9-c52mv -o json
+   3.8 TEL | [18] captured in 0.05 secs.
+   4.0 TEL | [19] Capturing: kubectl --context kind-kind --namespace default get pod qserv-ingest-948a28d6a7e44f8d8d3f46d89f0bd3db-57bd9b57c9-c52mv -o json
+   4.1 TEL | [19] captured in 0.07 secs.
+   4.3 TEL | [20] Capturing: kubectl --context kind-kind --namespace default get pod qserv-ingest-948a28d6a7e44f8d8d3f46d89f0bd3db-57bd9b57c9-c52mv -o json
+   4.4 TEL | [20] captured in 0.08 secs.
+   4.7 TEL | [21] Capturing: kubectl --context kind-kind --namespace default get pod qserv-ingest-948a28d6a7e44f8d8d3f46d89f0bd3db-57bd9b57c9-c52mv -o json
+   4.7 TEL | [21] captured in 0.05 secs.
+   5.0 TEL | [22] Capturing: kubectl --context kind-kind --namespace default get pod qserv-ingest-948a28d6a7e44f8d8d3f46d89f0bd3db-57bd9b57c9-c52mv -o json
+   5.0 TEL | [22] captured in 0.06 secs.
+   5.0 TEL | END SPAN remote.py:104(wait_for_pod)    1.9s
+   5.0 TEL | END SPAN remote.py:142(get_remote_info)    2.1s
+   5.0 TEL | BEGIN SPAN connect.py:37(connect)
+   5.0 TEL | [23] Launching kubectl logs: kubectl --context kind-kind --namespace default logs -f qserv-ingest-948a28d6a7e44f8d8d3f46d89f0bd3db-57bd9b57c9-c52mv --container qserv-ingest --tail=10
+   5.0 TEL | [24] Launching kubectl port-forward: kubectl --context kind-kind --namespace default port-forward qserv-ingest-948a28d6a7e44f8d8d3f46d89f0bd3db-57bd9b57c9-c52mv 45239:8022
+   5.0 TEL | [25] Running: ssh -F /dev/null -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -q -p 45239 telepresence@127.0.0.1 /bin/true
+   5.0 TEL | [25] exit 255 in 0.01 secs.
+   5.1  23 | 2020-05-28T08:26:27+0000 [-] Loading ./forwarder.py...
+   5.1  23 | 2020-05-28T08:26:27+0000 [-] /etc/resolv.conf changed, reparsing
+   5.1  23 | 2020-05-28T08:26:27+0000 [-] Resolver added ('10.96.0.10', 53) to server list
+   5.1  23 | 2020-05-28T08:26:27+0000 [-] SOCKSv5Factory starting on 9050
+   5.1  23 | 2020-05-28T08:26:27+0000 [socks.SOCKSv5Factory#info] Starting factory <socks.SOCKSv5Factory object at 0x7f11e1702ac8>
+   5.1  23 | 2020-05-28T08:26:27+0000 [-] DNSDatagramProtocol starting on 9053
+   5.1  23 | 2020-05-28T08:26:27+0000 [-] Starting protocol <twisted.names.dns.DNSDatagramProtocol object at 0x7f11e1702d68>
+   5.1  23 | 2020-05-28T08:26:27+0000 [-] Loaded.
+   5.1  23 | 2020-05-28T08:26:27+0000 [twisted.scripts._twistd_unix.UnixAppLogger#info] twistd 20.3.0 (/usr/bin/python3.6 3.6.8) starting up.
+   5.1  23 | 2020-05-28T08:26:27+0000 [twisted.scripts._twistd_unix.UnixAppLogger#info] reactor class: twisted.internet.epollreactor.EPollReactor.
+   5.1  24 | Forwarding from 127.0.0.1:45239 -> 8022
+   5.1  24 | Forwarding from [::1]:45239 -> 8022
+   5.3 TEL | [26] Running: ssh -F /dev/null -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -q -p 45239 telepresence@127.0.0.1 /bin/true
+   5.3  24 | Handling connection for 45239
+   5.5 TEL | [26] ran in 0.22 secs.
+   5.5 >>> | 
+   5.5 >>> | No traffic is being forwarded from the remote Deployment to your local machine. You can use the --expose option to specify which ports you want to forward.
+   5.5 >>> | 
+   5.5 TEL | Launching Web server for proxy poll
+   5.5 TEL | [27] Launching SSH port forward (socks and proxy poll): ssh -N -oServerAliveInterval=1 -oServerAliveCountMax=10 -F /dev/null -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -q -p 45239 telepresence@127.0.0.1 -L127.0.0.1:43303:127.0.0.1:9050 -R9055:127.0.0.1:34851
+   5.5 TEL | END SPAN connect.py:37(connect)    0.5s
+   5.5 TEL | BEGIN SPAN remote_env.py:29(get_remote_env)
+   5.5 TEL | [28] Capturing: kubectl --context kind-kind --namespace default exec qserv-ingest-948a28d6a7e44f8d8d3f46d89f0bd3db-57bd9b57c9-c52mv --container qserv-ingest -- python3 podinfo.py
+   5.5  24 | Handling connection for 45239
+   5.9 TEL | [28] captured in 0.36 secs.
+   5.9 TEL | END SPAN remote_env.py:29(get_remote_env)    0.4s
+   5.9 TEL | BEGIN SPAN mount.py:30(mount_remote_volumes)
+   5.9 TEL | [29] Running: sudo sshfs -p 45239 -F /dev/null -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -o allow_other telepresence@127.0.0.1:/ /tmp/tel-zb6we6xh/fs
+   5.9  24 | Handling connection for 45239
+   6.1 TEL | [29] ran in 0.19 secs.
+   6.1 TEL | END SPAN mount.py:30(mount_remote_volumes)    0.2s
+   6.1 TEL | BEGIN SPAN container.py:160(run_docker_command)
+   6.1 TEL | [30] Launching Network container: docker run --publish=127.0.0.1:34811:38022/tcp --hostname=qserv-ingest-948a28d6a7e44f8d8d3f46d89f0bd3db-57bd9b57c9-c52mv --dns-search=default.svc.cluster.local --dns-search=svc.cluster.local --dns-search=cluster.local --dns=10.96.0.10 --dns-opt=ndots:5 --rm --privileged --name=telepresence-1590654388-6859696-18113 datawire/telepresence-local:0.105 proxy '{"cidrs": ["0/0"], "expose_ports": [], "to_pod": [], "from_pod": []}'
+   6.1 TEL | [31] Running: ssh -F /dev/null -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -q -p 34811 root@127.0.0.1 /bin/true
+   6.1 TEL | [31] exit 255 in 0.01 secs.
+   6.4 TEL | [32] Running: ssh -F /dev/null -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -q -p 34811 root@127.0.0.1 /bin/true
+   7.2  30 | [INFO  tini (1)] Spawned child process 'python3' with pid '6'
+   7.3  30 |    0.0 TEL | Telepresence 0+unknown launched at Thu May 28 08:26:29 2020
+   7.3  30 |    0.0 TEL |   /usr/bin/entrypoint.py proxy '{"cidrs": ["0/0"], "expose_ports": [], "to_pod": [], "from_pod": []}'
+   7.3  30 |    0.0 TEL | uname: uname_result(system='Linux', node='qserv-ingest-948a28d6a7e44f8d8d3f46d89f0bd3db-57bd9b57c9-c52mv', release='4.15.0-1081-oem', version='#91-Ubuntu SMP Fri May 1 02:03:58 UTC 2020', machine='x86_64', processor='')
+   7.3  30 |    0.0 TEL | Platform: linux
+   7.3  30 |    0.0 TEL | WSL: False
+   7.3  30 |    0.0 TEL | Python 3.6.8 (default, Apr 22 2019, 10:28:12)
+   7.3  30 |    0.0 TEL | [GCC 6.3.0]
+   7.3  30 |    0.0 TEL | [1] Running: /usr/sbin/sshd -e
+   7.3  30 |    0.0 TEL | [1] ran in 0.00 secs.
+   7.3  30 |    0.0 TEL | [2] Running: ssh -F /dev/null -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -q -p 38023 telepresence@127.0.0.1 /bin/true
+   7.3  30 |    0.0 TEL | [2] exit 255 in 0.00 secs.
+   7.5 TEL | [32] ran in 1.17 secs.
+   7.5 TEL | [33] Launching Local SSH port forward: ssh -N -oServerAliveInterval=1 -oServerAliveCountMax=10 -F /dev/null -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -q -p 34811 root@127.0.0.1 -R 38023:127.0.0.1:45239
+   7.5 TEL | [34] Running: docker run --network=container:telepresence-1590654388-6859696-18113 --rm datawire/telepresence-local:0.105 wait
+   7.6  30 |    0.3 TEL | [3] Running: ssh -F /dev/null -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -q -p 38023 telepresence@127.0.0.1 /bin/true
+   7.6  30 |    0.3 TEL | [3] exit 255 in 0.00 secs.
+   7.9  30 |    0.5 TEL | [4] Running: ssh -F /dev/null -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null -q -p 38023 telepresence@127.0.0.1 /bin/true
+   7.9  24 | Handling connection for 45239
+   8.1  30 |    0.7 TEL | [4] ran in 0.22 secs.
+   8.1  30 |    0.7 TEL | [5] Capturing: netstat -n
+   8.1  30 |    0.7 TEL | [5] captured in 0.00 secs.
+   8.1  30 |    0.7 TEL | Everything launched. Waiting to exit...
+   8.1  30 |    0.8 TEL | BEGIN SPAN runner.py:726(wait_for_exit)
+   8.1  34 | [INFO  tini (1)] Spawned child process 'python3' with pid '6'
+   8.2  30 | Starting sshuttle proxy.
+   8.4  30 | firewall manager: Starting firewall with Python version 3.6.8
+   8.4  30 | firewall manager: ready method name nat.
+   8.4  30 | IPv6 enabled: False
+   8.4  30 | UDP enabled: False
+   8.4  30 | DNS enabled: True
+   8.4  30 | TCP redirector listening on ('127.0.0.1', 12300).
+   8.4  30 | DNS listening on ('127.0.0.1', 12300).
+   8.4  30 | Starting client with Python version 3.6.8
+   8.4  30 | c : connecting to server...
+   8.4  24 | Handling connection for 45239
+   8.4  30 | Warning: Permanently added '[127.0.0.1]:38023' (ECDSA) to the list of known hosts.
+   8.6  30 | Starting server with Python version 3.6.8
+   8.6  30 |  s: latency control setting = True
+   8.6  30 |  s: available routes:
+   8.6  30 |  s:   2/10.244.0.0/24
+   8.6  30 | c : Connected.
+   8.6  30 | firewall manager: setting up.
+   8.7  30 | >> iptables -t nat -N sshuttle-12300
+   8.7  30 | >> iptables -t nat -F sshuttle-12300
+   8.7  30 | >> iptables -t nat -I OUTPUT 1 -j sshuttle-12300
+   8.7  30 | >> iptables -t nat -I PREROUTING 1 -j sshuttle-12300
+   8.7  30 | >> iptables -t nat -A sshuttle-12300 -j RETURN --dest 172.17.0.2/32 -p tcp
+   8.7  30 | >> iptables -t nat -A sshuttle-12300 -j RETURN --dest 172.17.0.1/32 -p tcp
+   8.7  30 | >> iptables -t nat -A sshuttle-12300 -j RETURN --dest 127.0.0.1/32 -p tcp
+   8.7  30 | >> iptables -t nat -A sshuttle-12300 -j REDIRECT --dest 0.0.0.0/0 -p tcp --to-ports 12300 -m ttl ! --ttl 42
+   9.0  30 | >> iptables -t nat -A sshuttle-12300 -j REDIRECT --dest 10.96.0.10/32 -p udp --dport 53 --to-ports 12300 -m ttl ! --ttl 42
+   9.0  30 | >> iptables -t nat -A sshuttle-12300 -j REDIRECT --dest 224.0.0.252/32 -p udp --dport 5355 --to-ports 12300 -m ttl ! --ttl 42
+   9.0  30 | conntrack v1.4.4 (conntrack-tools): 0 flow entries have been deleted.
+  10.8  30 | c : DNS request from ('172.17.0.2', 47535) to None: 62 bytes
+  10.8  30 | c : DNS request from ('172.17.0.2', 35525) to None: 54 bytes
+  11.8  34 | [INFO  tini (1)] Main child exited normally (with status '100')
+  12.1 TEL | [34] exit 100 in 4.55 secs.
+  12.1 TEL | [35] Capturing: docker run --help
+  12.2 TEL | [35] captured in 0.06 secs.
+  12.2 TEL | END SPAN container.py:160(run_docker_command)    6.1s
+  12.2 >>> | Setup complete. Launching your container.
+  12.2 TEL | Everything launched. Waiting to exit...
+  12.2 TEL | BEGIN SPAN runner.py:726(wait_for_exit)
+  31.9 TEL | [36] Running: sudo -n echo -n
+  31.9 TEL | [36] ran in 0.02 secs.
+  34.8 TEL | (proxy checking local liveness)
+  34.8  23 | 2020-05-28T08:26:57+0000 [Poll#info] Checkpoint
+  45.7  30 | c : DNS request from ('172.17.0.2', 54672) to None: 69 bytes
+  45.7  30 | c : DNS request from ('172.17.0.2', 54672) to None: 69 bytes
+  45.7  30 | c : DNS request from ('172.17.0.2', 34537) to None: 61 bytes
+  45.7  30 | c : DNS request from ('172.17.0.2', 34537) to None: 61 bytes
+  45.7  30 | c : DNS request from ('172.17.0.2', 54102) to None: 57 bytes
+  45.7  30 | c : DNS request from ('172.17.0.2', 54102) to None: 57 bytes
+  45.7  30 | c : DNS request from ('172.17.0.2', 40598) to None: 43 bytes
+  45.7  30 | c : DNS request from ('172.17.0.2', 40598) to None: 43 bytes
+  45.7  30 | c : Accept TCP: 172.17.0.2:59768 -> 151.101.120.133:443.
+  46.1  30 | c : DNS request from ('172.17.0.2', 52419) to None: 69 bytes
+  46.1  30 | c : DNS request from ('172.17.0.2', 52419) to None: 69 bytes
+  46.1  30 | c : DNS request from ('172.17.0.2', 41628) to None: 61 bytes
+  46.1  30 | c : DNS request from ('172.17.0.2', 41628) to None: 61 bytes
+  46.1  30 | c : DNS request from ('172.17.0.2', 58951) to None: 57 bytes
+  46.1  30 | c : DNS request from ('172.17.0.2', 58951) to None: 57 bytes
+  46.1  30 | c : DNS request from ('172.17.0.2', 43588) to None: 43 bytes
+  46.1  30 | c : DNS request from ('172.17.0.2', 43588) to None: 43 bytes
+  46.2  30 | c : Accept TCP: 172.17.0.2:59782 -> 151.101.120.133:443.
+  46.5  30 |  s: SW#-1:151.101.120.133:443: deleting (3 remain)
+  46.5  30 |  s: SW'unknown':Mux#11: deleting (2 remain)
+  46.9  30 | c : DNS request from ('172.17.0.2', 52090) to None: 75 bytes
+  46.9  30 | c : Accept TCP: 172.17.0.2:48150 -> 10.244.0.34:25080.
+  46.9  30 | c : SW'unknown':Mux#11: deleting (5 remain)
+  46.9  30 | c : SW#-1:172.17.0.2:59768: deleting (4 remain)
+  46.9  30 | c : SW#-1:172.17.0.2:59768: error was: nowrite: [Errno 107] Socket not connected
+  46.9  30 | c : SW'unknown':Mux#20: deleting (3 remain)
+  46.9  30 | c : SW#-1:172.17.0.2:59782: deleting (2 remain)
+  46.9  30 | c : SW#-1:172.17.0.2:59782: error was: nowrite: [Errno 107] Socket not connected
+  61.9 TEL | [37] Running: sudo -n echo -n
+  62.0 TEL | [37] ran in 0.03 secs.
+  64.8 TEL | (proxy checking local liveness)
+  64.8  23 | 2020-05-28T08:27:27+0000 [Poll#info] Checkpoint
+  92.0 TEL | [38] Running: sudo -n echo -n
+  92.0 TEL | [38] ran in 0.03 secs.
+  94.8 TEL | (proxy checking local liveness)
+  94.8  23 | 2020-05-28T08:27:57+0000 [Poll#info] Checkpoint
+ 122.0 TEL | [39] Running: sudo -n echo -n
+ 122.0 TEL | [39] ran in 0.02 secs.
+ 124.8 TEL | (proxy checking local liveness)
+ 124.8  23 | 2020-05-28T08:28:27+0000 [Poll#info] Checkpoint
+ 152.0 TEL | [40] Running: sudo -n echo -n
+ 152.1 TEL | [40] ran in 0.02 secs.
+ 154.8 TEL | (proxy checking local liveness)
+ 154.8  23 | 2020-05-28T08:28:57+0000 [Poll#info] Checkpoint
+ 182.1 TEL | [41] Running: sudo -n echo -n
+ 182.1 TEL | [41] ran in 0.02 secs.
+ 184.8 TEL | (proxy checking local liveness)
+ 184.8  23 | 2020-05-28T08:29:27+0000 [Poll#info] Checkpoint
+ 212.1 TEL | [42] Running: sudo -n echo -n
+ 212.1 TEL | [42] ran in 0.01 secs.
+ 214.8 TEL | (proxy checking local liveness)
+ 214.8  23 | 2020-05-28T08:29:57+0000 [Poll#info] Checkpoint
+ 242.2 TEL | [43] Running: sudo -n echo -n
+ 242.2 TEL | [43] ran in 0.03 secs.
+ 244.8 TEL | (proxy checking local liveness)
+ 244.8  23 | 2020-05-28T08:30:27+0000 [Poll#info] Checkpoint
+ 272.2 TEL | [44] Running: sudo -n echo -n
+ 272.2 TEL | [44] ran in 0.02 secs.
+ 274.8 TEL | (proxy checking local liveness)
+ 274.8  23 | 2020-05-28T08:30:57+0000 [Poll#info] Checkpoint
+ 302.3 TEL | [45] Running: sudo -n echo -n
+ 302.3 TEL | [45] ran in 0.03 secs.
+ 304.8 TEL | (proxy checking local liveness)
+ 304.8  23 | 2020-05-28T08:31:27+0000 [Poll#info] Checkpoint
+ 332.3 TEL | [46] Running: sudo -n echo -n
+ 332.3 TEL | [46] ran in 0.03 secs.
+ 334.8 TEL | (proxy checking local liveness)
+ 334.8  23 | 2020-05-28T08:31:57+0000 [Poll#info] Checkpoint
+ 362.3 TEL | [47] Running: sudo -n echo -n
+ 362.4 TEL | [47] ran in 0.01 secs.
+ 364.8 TEL | (proxy checking local liveness)
+ 364.8  23 | 2020-05-28T08:32:27+0000 [Poll#info] Checkpoint
+ 392.4 TEL | [48] Running: sudo -n echo -n
+ 392.4 TEL | [48] ran in 0.03 secs.
+ 394.8 TEL | (proxy checking local liveness)
+ 394.8  23 | 2020-05-28T08:32:57+0000 [Poll#info] Checkpoint
+ 422.4 TEL | [49] Running: sudo -n echo -n
+ 422.4 TEL | [49] ran in 0.02 secs.
+ 424.8 TEL | (proxy checking local liveness)
+ 424.8  23 | 2020-05-28T08:33:27+0000 [Poll#info] Checkpoint
+ 452.5 TEL | [50] Running: sudo -n echo -n
+ 452.5 TEL | [50] ran in 0.03 secs.
+ 454.8 TEL | (proxy checking local liveness)
+ 454.8  23 | 2020-05-28T08:33:57+0000 [Poll#info] Checkpoint
+ 482.5 TEL | [51] Running: sudo -n echo -n
+ 482.5 TEL | [51] ran in 0.02 secs.
+ 484.8 TEL | (proxy checking local liveness)
+ 484.8  23 | 2020-05-28T08:34:27+0000 [Poll#info] Checkpoint
+ 512.6 TEL | [52] Running: sudo -n echo -n
+ 512.6 TEL | [52] ran in 0.01 secs.
+ 514.8 TEL | (proxy checking local liveness)
+ 514.8  23 | 2020-05-28T08:34:57+0000 [Poll#info] Checkpoint
+ 542.6 TEL | [53] Running: sudo -n echo -n
+ 542.6 TEL | [53] ran in 0.02 secs.
+ 544.8 TEL | (proxy checking local liveness)
+ 544.8  23 | 2020-05-28T08:35:27+0000 [Poll#info] Checkpoint
+ 572.6 TEL | [54] Running: sudo -n echo -n
+ 572.6 TEL | [54] ran in 0.03 secs.
+ 574.8 TEL | (proxy checking local liveness)
+ 574.8  23 | 2020-05-28T08:35:57+0000 [Poll#info] Checkpoint
+ 602.7 TEL | [55] Running: sudo -n echo -n
+ 602.7 TEL | [55] ran in 0.02 secs.
+ 604.8 TEL | (proxy checking local liveness)
+ 604.8  23 | 2020-05-28T08:36:27+0000 [Poll#info] Checkpoint
+ 632.7 TEL | [56] Running: sudo -n echo -n
+ 632.7 TEL | [56] ran in 0.02 secs.
+ 634.8 TEL | (proxy checking local liveness)
+ 634.8  23 | 2020-05-28T08:36:57+0000 [Poll#info] Checkpoint
+ 662.7 TEL | [57] Running: sudo -n echo -n
+ 662.8 TEL | [57] ran in 0.01 secs.
+ 664.8 TEL | (proxy checking local liveness)
+ 664.8  23 | 2020-05-28T08:37:27+0000 [Poll#info] Checkpoint
+ 692.8 TEL | [58] Running: sudo -n echo -n
+ 692.8 TEL | [58] ran in 0.02 secs.
+ 694.8 TEL | (proxy checking local liveness)
+ 694.8  23 | 2020-05-28T08:37:57+0000 [Poll#info] Checkpoint
+ 722.8 TEL | [59] Running: sudo -n echo -n
+ 722.8 TEL | [59] ran in 0.02 secs.
+ 724.8 TEL | (proxy checking local liveness)
+ 724.8  23 | 2020-05-28T08:38:27+0000 [Poll#info] Checkpoint
+ 752.9 TEL | [60] Running: sudo -n echo -n
+ 752.9 TEL | [60] ran in 0.01 secs.
+ 754.8 TEL | (proxy checking local liveness)
+ 754.8  23 | 2020-05-28T08:38:57+0000 [Poll#info] Checkpoint
+ 782.9 TEL | [61] Running: sudo -n echo -n
+ 782.9 TEL | [61] ran in 0.02 secs.
+ 784.8 TEL | (proxy checking local liveness)
+ 784.8  23 | 2020-05-28T08:39:27+0000 [Poll#info] Checkpoint
+ 812.9 TEL | [62] Running: sudo -n echo -n
+ 812.9 TEL | [62] ran in 0.02 secs.
+ 814.8 TEL | (proxy checking local liveness)
+ 814.8  23 | 2020-05-28T08:39:57+0000 [Poll#info] Checkpoint
+ 843.0 TEL | [63] Running: sudo -n echo -n
+ 843.0 TEL | [63] ran in 0.03 secs.
+ 844.8 TEL | (proxy checking local liveness)
+ 844.8  23 | 2020-05-28T08:40:27+0000 [Poll#info] Checkpoint

@@ -6,7 +6,7 @@ MAINTAINER Fabrice Jammes <fabrice.jammes@in2p3.fr>
 
 USER root
 RUN yum -y install curl jq vim && yum clean all
-USER 0
+USER qserv
 
 ENV PYTHONPATH=/ingest/python
 ENV PATH="/ingest/bin:${PATH}"

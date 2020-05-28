@@ -51,11 +51,12 @@ import requests
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="A thin python wrapper around Qserv REST web service")
 
-    parser.add_argument("url", type=str, help="Web Service root URL")
+    parser.add_argument("url", type=str, help="Replication controller root URL")
     parser.add_argument("database", type=str, help="Target database")
-    parser.add_argument("chunk", type=int, help="Chunk to load")
-    parser.add_argument("chunk_path", type=str, help="Path to chunk file")
     parser.add_argument("--verbose", "-v", action="store_true", help="Use debug logging")
+    parser.add_argument("connection", type=str, metavar="CONNECTION",
+                       help="Connection string in format mysql://user:pass@host:port/database.")
+
     args = parser.parse_args()
 
     logger = logging.getLogger()
@@ -65,4 +66,4 @@ if __name__ == "__main__":
         logger.setLevel(logging.INFO)
     logger.addHandler(logging.StreamHandler())
 
-    ingest.ingest_task(args.url, args.database, args.chunk, args.chunk_path)
+    ingest.ingest_task(args.url, args.database, args.connection)

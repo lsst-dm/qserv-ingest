@@ -12,7 +12,7 @@ before_script:
 
 script:
   - ./build-image.sh
-  - ./create-ingest-pod.sh
+  - ./create-ingest.sh
   - ./init.sh
   - ./load-chunks.sh
   - ./register.sh

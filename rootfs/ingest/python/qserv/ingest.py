@@ -43,8 +43,10 @@ import urllib.parse
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-#import mysql.connector as mariadb
 import requests
+import sqlalchemy
+from sqlalchemy.engine.url import make_url
+from .queue import *
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -69,26 +71,30 @@ def get_chunk_location(base_url, chunk, database, transaction_id):
     url = urllib.parse.urljoin(base_url,"ingest/v1/chunk")
     payload={"chunk":chunk,
              "database":database,
-             "transaction_id":transaction_id} 
+             "transaction_id":transaction_id}
     responseJson = post(url,payload)
 
     # Get location host and port
     host = responseJson["location"]["host"]
     port = responseJson["location"]["port"]
     logging.info("Location for chunk %d: %s %d" % (chunk, host, port))
-    
+
     return (host, port)
 
 def ingest_chunk(host, port, transaction_id, chunk_file):
     cmd= ['qserv-replica-file-ingest', '--debug', '--verbose', 'FILE', host, str(port), str(transaction_id), "position", "P", chunk_file]
-    process = subprocess.run(cmd, 
-                         stdout=subprocess.PIPE, 
+    process = subprocess.run(cmd,
+                         stdout=subprocess.PIPE,
                          universal_newlines=True)
 
     # TODO get error code
 
-def ingest_task(base_url, database, chunk, chunk_path):
-    logging.debug("Starting an ingest task: url: %s, db: %s, chunk: %s", base_url, database, chunk)
+def ingest_task(base_url, database, connection):
+    db_url = make_url(connection)
+    engine = sqlalchemy.create_engine(db_url)
+    queue_manager = QueueManager(engine)
+    logging.debug("Starting an ingest task: url: %s, db: %s", base_url, database)
+
     transaction_id = start_transaction(base_url, database)
     try:
         (host, port) = get_chunk_location(base_url, chunk, database, transaction_id)
@@ -124,7 +130,7 @@ def post(url, payload):
 
     return responseJson
 
-def start_transaction(base_url, database): 
+def start_transaction(base_url, database):
     url = urllib.parse.urljoin(base_url,"ingest/v1/trans")
     payload={"database":database}
     responseJson = post(url,payload)
@@ -133,7 +139,7 @@ def start_transaction(base_url, database):
     # Want to print responseJson["databases"]["hsc_test_w_2020_14_00"]["transactions"]
     transaction_id = responseJson["databases"][database]["transactions"][0]["id"]
     logging.debug(f"transaction ID: {transaction_id}")
-    
+
     return transaction_id
 
 def stop_transaction(base_url, database, transaction_id):
