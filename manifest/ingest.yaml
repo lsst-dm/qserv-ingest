@@ -18,7 +18,7 @@ metadata:
 spec:
   replicas: 1
   selector:
-    matchLabels: 
+    matchLabels:
      app: qserv
      instance: qserv
      run: qserv-ingest
@@ -35,7 +35,7 @@ spec:
       - command:
         - sleep
         - "3600"
-        image: qserv/qserv-ingest:5eede6d-dirty
+        image: qserv/qserv-ingest:78aff46-dirty
         imagePullPolicy: Always
         name: qserv-ingest
         volumeMounts:
@@ -45,5 +45,3 @@ spec:
         - name: repl-creds
           configMap:
             name: repl-creds
-
-  

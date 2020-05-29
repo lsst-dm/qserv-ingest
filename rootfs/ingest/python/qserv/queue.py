@@ -35,6 +35,7 @@ import json
 import logging
 import os
 import posixpath
+import socket
 import subprocess
 import sys
 import urllib.parse
@@ -43,8 +44,10 @@ import urllib.parse
 # Imports for other modules --
 # ----------------------------
 import sqlalchemy
+from sqlalchemy import MetaData, Table, Column, Integer
 from sqlalchemy.engine.url import make_url
-from lsst.db import utils
+from sqlalchemy.sql import table, column, select, update, insert
+
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -54,39 +57,50 @@ class QueueManager():
     """Class implementing chunk queue manager for Qserv ingest process
     """
 
-    def __init__(self, engine):
+    def __init__(self, connection):
 
-        self.engine = engine
+        db_url = make_url(connection)
+        self.engine = sqlalchemy.create_engine(db_url)
+        self.pod_name = socket.gethostname()
 
-        self.task = Table('task', metadata,
-        Column('chunk_id', Integer, primary_key=True),
-        Column('chunk_file_url', Integer, primary_key=True),
-        Column('database_name', String),
-        Column('pod_name', String),
-        Column('status', String),
-        Column('timestamp', String),
-        )
+        metadata = MetaData(bind=self.engine)
+        self.task = Table('task', metadata, autoload=True)
 
 
-    def add_chunk(self):
+    def insert_chunk(self):
+        sql = "DELETE FROM task"
+        result = self.engine.execute(sql)
+        # insert
+        db = "desc_dc2"
+        url = "https://raw.githubusercontent.com/lsst-dm/qserv-DC2/tickets/DM-24587/data/step1_1/"
+        result = self.engine.execute(self.task.insert(), {"database_name":db, "chunk_id":57892, "chunk_file_url":url})
+
 
     def lock_chunk(self):
-        """Returns current schema version.
+        """Lock a chunk in queue and returns its id and file base url on an S3 storage
         Returns
         -------
-        Integer number
+        Integer number, String
         """
 
-        # Initial qservw_worker implementation did not have version number stored at all,
-        # and we call this version 0. Since version=1 version number is stored in
-        # QMetadata table with key="version"
-        if not utils.tableExists(self.engine, "QMetadata"):
-            _log.debug("QMetadata missing: version=0")
-            return 0
+        sql = "UPDATE task SET pod_name = '{}', status = {} WHERE pod_name IS NULL AND status IS NULL ORDER BY chunk_id ASC LIMIT 1;"
+        result = self.engine.execute(sql.format(self.pod_name, 1))
+
+        sql = "SELECT chunk_id, chunk_file_url FROM task WHERE pod_name = ?"
+        query = select([self.task.c.chunk_id, self.task.c.chunk_file_url])
+        query = query.where(self.task.c.pod_name == self.pod_name)
+        result = self.engine.execute(query)
+        row = result.first()
+        if row:
+            logging.debug("lock chunk in queue: %s", row[0], row[1])
+            chunk=(int(row[0]),row[1])
         else:
-            query = "SELECT value FROM QMetadata WHERE metakey = 'version'"
-            result = self.engine.execute(query)
-            row = result.first()
-            if row:
-                _log.debug("found version in database: %s", row[0])
-                return int(row[0])
+            chunk=None
+        return chunk
+
+    def release_chunk(self):
+
+        query = update(self.task)
+        query = query.values({"status": self.task.c.status})
+        query = query.where(self.task.c.pod_name == self.pod_name)
+        result = self.engine.execute(query)

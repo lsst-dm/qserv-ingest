@@ -3,16 +3,10 @@
 # POC for loading DC2 data inside Qserv
 # Based on https://confluence.lsstcorp.org/display/DM/Live+demo%3A+test+ingest+of+a+subset+of+one+track+of+the+HSC+Object+catalog
 
-# Enable python3 and mysqlclient
-. /stack/loadLSST.bash
-setup db
-setup python_mysqlclient
-setup sqlalchemy
-
-set -euxo pipefail
-
 DIR=$(cd "$(dirname "$0")"; pwd -P)
 . "$DIR"/env.sh
+
+set -euxo pipefail
 
 DATABASE="desc_dc2"
 

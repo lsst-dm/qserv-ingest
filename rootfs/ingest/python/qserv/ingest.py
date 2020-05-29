@@ -62,11 +62,6 @@ def authorize():
         authKey = getpass.getpass()
     return authKey
 
-# def get_chunk():
-#     mariadb_connection = mariadb.connect(user='python_user', password='some_pass', database='employees')
-#     cursor = mariadb_connection.cursor()
-#     cursor.execute("SELECT first_name,last_name FROM employees WHERE first_name=%s", "toto")
-
 def get_chunk_location(base_url, chunk, database, transaction_id):
     url = urllib.parse.urljoin(base_url,"ingest/v1/chunk")
     payload={"chunk":chunk,
@@ -86,25 +81,43 @@ def ingest_chunk(host, port, transaction_id, chunk_file):
     process = subprocess.run(cmd,
                          stdout=subprocess.PIPE,
                          universal_newlines=True)
-
     # TODO get error code
 
 def ingest_task(base_url, database, connection):
-    db_url = make_url(connection)
-    engine = sqlalchemy.create_engine(db_url)
-    queue_manager = QueueManager(engine)
+    queue_manager = QueueManager(connection)
+    queue_manager.insert_chunk()
+    
     logging.debug("Starting an ingest task: url: %s, db: %s", base_url, database)
 
-    transaction_id = start_transaction(base_url, database)
+    (chunk_id, chunk_base_url) = queue_manager.lock_chunk()
     try:
-        (host, port) = get_chunk_location(base_url, chunk, database, transaction_id)
-        chunk_filename = "chunk_{}.txt".format(chunk)
-        chunk_file = os.path.join(chunk_path, chunk_filename)
+        transaction_id = start_transaction(base_url, database)
+        (host, port) = get_chunk_location(base_url, chunk_id, database, transaction_id)
+        chunk_file = download_file(chunk_base_url, chunk_id)
         ingest_chunk(host, port, transaction_id, chunk_file)
         stop_transaction(base_url, database, transaction_id)
     except Exception as e:
-        # TODO abort transaction
+        abort_transaction(base_url, database, transaction_id)
         raise Exception('Error in ingest task: %s', e)
+
+    queue_manager.release_chunk()
+
+def download_file(base_url, chunk_id):
+    chunk_filename = "chunk_{}.txt".format(chunk_id)
+    chunk_url = urllib.parse.urljoin(base_url, chunk_filename)
+    r = requests.get(chunk_url)
+    chunk_path = "/tmp"
+    chunk_file = os.path.join(chunk_path, chunk_filename)
+
+    logging.debug("Download %s", chunk_url)
+    with open(chunk_file, 'wb') as f:
+        f.write(r.content)
+
+    if (r.status_code != 200):
+        logging.fatal("Unable to download file, error %s", r.status_code)
+        raise Exception('Unable to download file', chunk_url, r.status_code)
+
+    return chunk_file
 
 def put(url):
     authKey = authorize()
@@ -145,6 +158,12 @@ def start_transaction(base_url, database):
 def stop_transaction(base_url, database, transaction_id):
     tmp_url = posixpath.join("ingest/v1/trans/",str(transaction_id))
     tmp_url += "?abort=0&build-secondary-index=1"
+    url = urllib.parse.urljoin(base_url, tmp_url)
+    responseJson = put(url)
+
+def abort_transaction(base_url, database, transaction_id):
+    tmp_url = posixpath.join("ingest/v1/trans/",str(transaction_id))
+    tmp_url += "?abort=1"
     url = urllib.parse.urljoin(base_url, tmp_url)
     responseJson = put(url)
 
