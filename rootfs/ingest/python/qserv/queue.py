@@ -53,6 +53,9 @@ from sqlalchemy.sql import table, column, select, update, insert
 # Local non-exported definitions --
 # ---------------------------------
 
+STATUS_IN_PROGRESS=1
+STATUS_COMPLETED=2
+
 class QueueManager():
     """Class implementing chunk queue manager for Qserv ingest process
     """
@@ -67,13 +70,12 @@ class QueueManager():
         self.task = Table('task', metadata, autoload=True)
 
 
-    def insert_chunk(self):
+    def insert_chunks(self, database, url):
         sql = "DELETE FROM task"
         result = self.engine.execute(sql)
-        # insert
-        db = "desc_dc2"
-        url = "https://raw.githubusercontent.com/lsst-dm/qserv-DC2/tickets/DM-24587/data/step1_1/"
-        result = self.engine.execute(self.task.insert(), {"database_name":db, "chunk_id":57892, "chunk_file_url":url})
+        
+        result = self.engine.execute(self.task.insert(), {"database_name":database, "chunk_id":57892, "chunk_file_url":url})
+        result = self.engine.execute(self.task.insert(), {"database_name":database, "chunk_id":62654, "chunk_file_url":url})
 
 
     def lock_chunk(self):
@@ -84,23 +86,32 @@ class QueueManager():
         """
 
         sql = "UPDATE task SET pod_name = '{}', status = {} WHERE pod_name IS NULL AND status IS NULL ORDER BY chunk_id ASC LIMIT 1;"
-        result = self.engine.execute(sql.format(self.pod_name, 1))
+        result = self.engine.execute(sql.format(self.pod_name, STATUS_IN_PROGRESS))
+        if not result:
+            logging.warn("Unable to lock chunk")
 
-        sql = "SELECT chunk_id, chunk_file_url FROM task WHERE pod_name = ?"
+        # "SELECT chunk_id, chunk_file_url FROM task WHERE pod_name = ?"
         query = select([self.task.c.chunk_id, self.task.c.chunk_file_url])
         query = query.where(self.task.c.pod_name == self.pod_name)
+        query = query.where(self.task.c.status == 1)
         result = self.engine.execute(query)
         row = result.first()
         if row:
-            logging.debug("lock chunk in queue: %s", row[0], row[1])
+            logging.debug("Lock chunk in queue: %s %s", row[0], row[1])
             chunk=(int(row[0]),row[1])
         else:
+            logging.debug("No chunk to load in queue")
             chunk=None
         return chunk
 
-    def release_chunk(self):
-
+    def unlock_chunk(self):
+        """Release a chunk in queue and marks its status as 'completed'
+        Returns
+        -------
+        Integer number, String
+        """
+        logging.debug("Unlock chunk in queue")
         query = update(self.task)
-        query = query.values({"status": self.task.c.status})
+        query = query.values({"status": STATUS_COMPLETED})
         query = query.where(self.task.c.pod_name == self.pod_name)
         result = self.engine.execute(query)

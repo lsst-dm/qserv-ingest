@@ -21,9 +21,7 @@
 # see <http://www.lsstcorp.org/LegalNotices/>.
 
 """
-User-friendly client for Qserv replication service.
-
-Launch an ingest task:
+Loop on ingest task while ingest queue is not empty:
 - start a super-transaction
 - get location for a chunk
 - launch chunk ingest
@@ -47,6 +45,7 @@ import sys
 # ----------------------------
 import qserv.ingest as ingest
 import requests
+from qserv.queue import QueueManager
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="A thin python wrapper around Qserv REST web service")
@@ -66,4 +65,6 @@ if __name__ == "__main__":
         logger.setLevel(logging.INFO)
     logger.addHandler(logging.StreamHandler())
 
-    ingest.ingest_task(args.url, args.database, args.connection)
+    chunk_to_load = True
+    while chunk_to_load:
+        chunk_to_load = ingest.ingest_task(args.url, args.database, args.connection)

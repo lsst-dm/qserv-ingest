@@ -44,9 +44,7 @@ import urllib.parse
 # Imports for other modules --
 # ----------------------------
 import requests
-import sqlalchemy
-from sqlalchemy.engine.url import make_url
-from .queue import *
+from .queue import QueueManager
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -77,19 +75,32 @@ def get_chunk_location(base_url, chunk, database, transaction_id):
     return (host, port)
 
 def ingest_chunk(host, port, transaction_id, chunk_file):
+    
     cmd= ['qserv-replica-file-ingest', '--debug', '--verbose', 'FILE', host, str(port), str(transaction_id), "position", "P", chunk_file]
-    process = subprocess.run(cmd,
-                         stdout=subprocess.PIPE,
-                         universal_newlines=True)
-    # TODO get error code
+    logging.debug("Launch unix process %s", cmd)
+
+    result = subprocess.run(cmd,
+                         capture_output=True,
+                         universal_newlines=True,
+                         check=True)
+    logging.debug("stdout %s", result.stdout)
+    logging.debug("stderr %s", result.stderr)
 
 def ingest_task(base_url, database, connection):
+    """Get a chunk from a queue server, load it inside Qserv, during a super-transation
+        Returns
+        -------
+        Integer number: 0 if no chunk to load, 1 if chunk was loaded successfully
+    """
     queue_manager = QueueManager(connection)
-    queue_manager.insert_chunk()
     
     logging.debug("Starting an ingest task: url: %s, db: %s", base_url, database)
 
-    (chunk_id, chunk_base_url) = queue_manager.lock_chunk()
+    chunk_info = queue_manager.lock_chunk()
+    if not chunk_info:
+        return 0
+    (chunk_id, chunk_base_url) = chunk_info
+    transaction_id = None
     try:
         transaction_id = start_transaction(base_url, database)
         (host, port) = get_chunk_location(base_url, chunk_id, database, transaction_id)
@@ -97,10 +108,12 @@ def ingest_task(base_url, database, connection):
         ingest_chunk(host, port, transaction_id, chunk_file)
         stop_transaction(base_url, database, transaction_id)
     except Exception as e:
-        abort_transaction(base_url, database, transaction_id)
+        if transaction_id:
+            abort_transaction(base_url, database, transaction_id)
         raise Exception('Error in ingest task: %s', e)
 
-    queue_manager.release_chunk()
+    queue_manager.unlock_chunk()
+    return 1
 
 def download_file(base_url, chunk_id):
     chunk_filename = "chunk_{}.txt".format(chunk_id)
