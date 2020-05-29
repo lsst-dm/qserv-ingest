@@ -5,6 +5,6 @@ TAG=${OP_VERSION:-${GIT_HASH}}
 REPLICATION_IMAGE="qserv/replica:tools-w.2018.16-1307-g3b2335a-dirty"
 INGEST_IMAGE="qserv/qserv-ingest:$TAG"
 
-INGEST_POD="qserv-ingest"
+INGEST_POD=$(kubectl get pods -l tier=ingest -o jsonpath="{.items[0].metadata.name}")
 
 INSTANCE="qserv"

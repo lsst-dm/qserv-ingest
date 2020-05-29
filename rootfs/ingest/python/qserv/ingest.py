@@ -112,7 +112,7 @@ def ingest_task(base_url, database, connection):
             abort_transaction(base_url, database, transaction_id)
         raise Exception('Error in ingest task: %s', e)
 
-    queue_manager.unlock_chunk()
+    queue_manager.delete_chunk()
     return 1
 
 def download_file(base_url, chunk_id):
