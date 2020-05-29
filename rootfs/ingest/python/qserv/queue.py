@@ -46,7 +46,7 @@ import urllib.parse
 import sqlalchemy
 from sqlalchemy import MetaData, Table, Column, Integer
 from sqlalchemy.engine.url import make_url
-from sqlalchemy.sql import table, column, select, update, insert
+from sqlalchemy.sql import table, column, select, update, insert, delete
 
 
 # ---------------------------------
@@ -77,6 +77,13 @@ class QueueManager():
         result = self.engine.execute(self.task.insert(), {"database_name":database, "chunk_id":57892, "chunk_file_url":url})
         result = self.engine.execute(self.task.insert(), {"database_name":database, "chunk_id":62654, "chunk_file_url":url})
 
+    def _log_chunk_task(self):
+        query = select([self.task.c.chunk_id, self.task.c.chunk_file_url, self.task.c.pod_name, self.task.c.status])
+        query = query.where(self.task.c.pod_name == self.pod_name)
+        result = self.engine.execute(query)
+        row = result.first()
+        if row:
+            logging.debug("Chunk for pod: %s", row)
 
     def lock_chunk(self):
         """Lock a chunk in queue and returns its id and file base url on an S3 storage
@@ -84,6 +91,7 @@ class QueueManager():
         -------
         Integer number, String
         """
+        self._log_chunk_task()
 
         sql = "UPDATE task SET pod_name = '{}', status = {} WHERE pod_name IS NULL AND status IS NULL ORDER BY chunk_id ASC LIMIT 1;"
         result = self.engine.execute(sql.format(self.pod_name, STATUS_IN_PROGRESS))
@@ -104,14 +112,13 @@ class QueueManager():
             chunk=None
         return chunk
 
-    def unlock_chunk(self):
-        """Release a chunk in queue and marks its status as 'completed'
+    def delete_chunk(self):
+        """Delete a chunk in queue when it has been ingested
         Returns
         -------
         Integer number, String
         """
         logging.debug("Unlock chunk in queue")
-        query = update(self.task)
-        query = query.values({"status": STATUS_COMPLETED})
+        query = delete(self.task)
         query = query.where(self.task.c.pod_name == self.pod_name)
         result = self.engine.execute(query)

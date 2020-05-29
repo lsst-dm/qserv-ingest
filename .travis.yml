@@ -13,8 +13,9 @@ before_script:
 script:
   - ./build-image.sh
   - ./create-ingest.sh
+  - ./load-queue.sh
   - ./init.sh
-  - ./load-chunks.sh
+  - ./ingest-chunks.sh
   - ./register.sh
   - ./query.sh
 
