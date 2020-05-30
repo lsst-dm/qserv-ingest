@@ -15,12 +15,16 @@ before_script:
   - ./qserv-operator/wait-qserv-ready.sh
 
 script:
+  - . ./env.sh
   - ./build-image.sh
   - ./create-ingest.sh
   - ./load-queue.sh
   - ./init.sh
   - ./ingest-chunks.sh
   - ./register.sh
+  # FIXME restart qserv to refresh xrootd cache
+  - kubectl delete pod -l app=$INSTANCE
+  - ./qserv-operator/wait-qserv-ready.sh
   - ./query.sh
 
 
