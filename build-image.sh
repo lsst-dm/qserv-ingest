@@ -7,7 +7,7 @@
 set -euxo pipefail
 
 DIR=$(cd "$(dirname "$0")"; pwd -P)
-. ./env-build.sh
+. ./env.sh
 
 sed "s|<INGEST_IMAGE>|$INGEST_IMAGE|g" "$DIR/manifest/ingest.yaml.tpl" \
     > "$DIR/manifest/ingest.yaml"
