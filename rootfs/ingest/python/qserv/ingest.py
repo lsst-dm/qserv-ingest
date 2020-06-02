@@ -104,7 +104,9 @@ def ingest_task(base_url, database, connection):
     try:
         transaction_id = start_transaction(base_url, database)
         (host, port) = get_chunk_location(base_url, chunk_id, database, transaction_id)
-        chunk_file = download_file(chunk_base_url, chunk_id)
+        chunk_file = download_file(chunk_base_url, chunk_id, "chunk_{}.txt")
+        ingest_chunk(host, port, transaction_id, chunk_file)
+        chunk_file = download_file(chunk_base_url, chunk_id, "chunk_{}_overlap.txt")
         ingest_chunk(host, port, transaction_id, chunk_file)
         stop_transaction(base_url, database, transaction_id)
     except Exception as e:
@@ -115,8 +117,8 @@ def ingest_task(base_url, database, connection):
     queue_manager.delete_chunk()
     return 1
 
-def download_file(base_url, chunk_id):
-    chunk_filename = "chunk_{}.txt".format(chunk_id)
+def download_file(base_url, chunk_id, file_format):
+    chunk_filename = file_format.format(chunk_id)
     chunk_url = urllib.parse.urljoin(base_url, chunk_filename)
     r = requests.get(chunk_url)
     chunk_path = "/tmp"
