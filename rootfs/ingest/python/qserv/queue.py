@@ -73,9 +73,13 @@ class QueueManager():
     def insert_chunks(self, database, url):
         sql = "DELETE FROM task"
         result = self.engine.execute(sql)
-        
-        result = self.engine.execute(self.task.insert(), {"database_name":database, "chunk_id":57892, "chunk_file_url":url})
-        result = self.engine.execute(self.task.insert(), {"database_name":database, "chunk_id":62654, "chunk_file_url":url})
+
+        chunks = [57892, 61973, 62654, 65383, 76932, 78976]
+        for chunk_id in chunks:
+            result = self.engine.execute(self.task.insert(),
+                                         {"database_name":database,
+                                          "chunk_id":chunk_id,
+                                          "chunk_file_url":url})
 
     def _get_current_chunk(self):
         # "SELECT chunk_id, chunk_file_url FROM task WHERE pod_name = ?"
