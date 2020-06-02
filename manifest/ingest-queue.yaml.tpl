@@ -6,41 +6,32 @@ metadata:
 data:
   qserv: ''
 ---
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: batch/v1
+kind: Job
 metadata:
-  name: qserv-ingest
+  name: ingest-queue
   labels:
     app: qserv
     instance: qserv
-    run: qserv-ingest
-    tier: ingest
+    tier: init-ingest
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-     app: qserv
-     instance: qserv
-     run: qserv-ingest
-     tier: ingest
   template:
     metadata:
       labels:
         app: qserv
         instance: qserv
-        run: qserv-ingest
         tier: ingest
     spec:
       containers:
       - command:
-        - sleep
-        - "3600"
-        image: qserv/qserv-ingest:501953a-dirty
+        - load-queue.sh 
+        image: <INGEST_IMAGE>
         imagePullPolicy: Always
         name: qserv-ingest
         volumeMounts:
           - name: repl-creds
             mountPath: /qserv/.lsst
+      restartPolicy: OnFailure
       volumes:
         - name: repl-creds
           configMap:
