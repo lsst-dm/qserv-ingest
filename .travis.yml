@@ -21,6 +21,7 @@ script:
   - ./init.sh
   - ./ingest-chunks.sh
   - ./register.sh
+  - ./copy-emptychunk.sh
   # FIXME restart qserv to refresh xrootd cache
   - kubectl delete pod -l app=$INSTANCE
   - ./qserv-operator/wait-qserv-ready.sh
