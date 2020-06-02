@@ -81,6 +81,7 @@ class QueueManager():
                                           "chunk_id":chunk_id,
                                           "chunk_file_url":url})
 
+
     def _get_current_chunk(self):
         # "SELECT chunk_id, chunk_file_url FROM task WHERE pod_name = ?"
         query = select([self.task.c.chunk_id, self.task.c.chunk_file_url])
