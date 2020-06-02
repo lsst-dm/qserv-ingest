@@ -17,7 +17,6 @@ before_script:
 script:
   - . ./env.sh
   - ./build-image.sh
-  - ./create-ingest.sh
   - ./load-queue.sh
   - ./init.sh
   - ./ingest-chunks.sh

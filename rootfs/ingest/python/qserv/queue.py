@@ -92,7 +92,6 @@ class QueueManager():
             chunk=(int(row[0]),row[1])
         else:
             chunk=None
-        logging.debug("Chunk for pod %s: %s", self.pod_name, chunk)
         return chunk
 
     def lock_chunk(self):
@@ -109,11 +108,13 @@ class QueueManager():
         if not current_chunk:
             sql = "UPDATE task SET pod_name = '{}', status = {} WHERE pod_name IS NULL AND status IS NULL ORDER BY chunk_id ASC LIMIT 1;"
             result = self.engine.execute(sql.format(self.pod_name, STATUS_IN_PROGRESS))
-            if not result:
-                logging.info("Chunk queue is empty")
+            
             current_chunk = self._get_current_chunk()
-            logging.debug("Lock chunk in queue")
 
+        if not current_chunk:
+            logging.info("Chunk queue is empty")
+        else:
+            logging.debug("Chunk for pod %s: %s", self.pod_name, current_chunk)
         return current_chunk
 
     def delete_chunk(self):
