@@ -4,4 +4,6 @@ set -euxo pipefail
 
 DIR=$(cd "$(dirname "$0")"; pwd -P)
 
-kubectl apply -f $DIR/manifest/ingest-register.yaml
+JOB="ingest-register"
+kubectl apply -f "$DIR/manifest/$JOB.yaml"
+kubectl wait --for=condition=complete "job/$JOB"

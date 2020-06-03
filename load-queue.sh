@@ -4,4 +4,6 @@ set -euxo pipefail
 
 DIR=$(cd "$(dirname "$0")"; pwd -P)
 
-kubectl apply -f $DIR/manifest/ingest-queue.yaml
+JOB="ingest-queue"
+kubectl apply -f "$DIR/manifest/$JOB.yaml"
+kubectl wait --for=condition=complete "job/$JOB"
