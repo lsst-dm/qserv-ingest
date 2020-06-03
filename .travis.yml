@@ -17,10 +17,10 @@ before_script:
 script:
   - . ./env.sh
   - ./build-image.sh
-  - ./load-queue.sh
-  - ./init.sh
-  - ./ingest-chunks.sh
-  - ./register.sh
+  - ./job.sh queue
+  - ./job.sh init
+  - ./job.sh chunks
+  - ./job.sh register
   - ./copy-emptychunk.sh
   # FIXME restart qserv to refresh xrootd cache
   - kubectl delete pod -l app=$INSTANCE
