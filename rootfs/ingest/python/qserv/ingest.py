@@ -74,6 +74,7 @@ def get_chunk_location(base_url, chunk, database, transaction_id):
 
     return (host, port)
 
+
 def ingest_chunk(host, port, transaction_id, chunk_file):
     
     cmd= ['qserv-replica-file-ingest', '--debug', '--verbose', 'FILE', host, str(port), str(transaction_id), "position", "P", chunk_file]
@@ -104,9 +105,9 @@ def ingest_task(base_url, database, connection):
     try:
         transaction_id = start_transaction(base_url, database)
         (host, port) = get_chunk_location(base_url, chunk_id, database, transaction_id)
-        chunk_file = download_file(chunk_base_url, chunk_id, "chunk_{}.txt")
+        chunk_file = download_chunk(chunk_base_url, chunk_id, "chunk_{}.txt")
         ingest_chunk(host, port, transaction_id, chunk_file)
-        chunk_file = download_file(chunk_base_url, chunk_id, "chunk_{}_overlap.txt")
+        chunk_file = download_chunk(chunk_base_url, chunk_id, "chunk_{}_overlap.txt")
         ingest_chunk(host, port, transaction_id, chunk_file)
         stop_transaction(base_url, database, transaction_id)
     except Exception as e:
@@ -117,22 +118,23 @@ def ingest_task(base_url, database, connection):
     queue_manager.delete_chunk()
     return 1
 
-def download_file(base_url, chunk_id, file_format):
+def download_chunk(base_url, chunk_id, file_format):
     chunk_filename = file_format.format(chunk_id)
-    chunk_url = urllib.parse.urljoin(base_url, chunk_filename)
-    r = requests.get(chunk_url)
-    chunk_path = "/tmp"
-    chunk_file = os.path.join(chunk_path, chunk_filename)
+    abs_filename = download_file(base_url, chunk_filename)
+    return abs_filename
 
-    logging.debug("Download %s", chunk_url)
-    with open(chunk_file, 'wb') as f:
+def download_file(base_url, filename):
+    file_url = urllib.parse.urljoin(base_url, filename)
+    logging.debug("Download %s", file_url)
+    r = requests.get(file_url)
+    abs_filename = os.path.join(TMP_DIR, filename)
+    with open(abs_filename, 'wb') as f:
         f.write(r.content)
 
     if (r.status_code != 200):
         logging.fatal("Unable to download file, error %s", r.status_code)
-        raise Exception('Unable to download file', chunk_url, r.status_code)
-
-    return chunk_file
+        raise Exception('Unable to download file', file_url, r.status_code)
+    return abs_filename
 
 def put(url):
     authKey = authorize()

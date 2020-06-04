@@ -1,0 +1,11 @@
+{
+  "database": "dc2_run2.1i_dr1b",
+  "tables": {
+    "director": "('position','step1_*')",
+    "partitioned": [
+      "('dpdd_forced','step2_*')",
+      "('dpdd_ref','step2_*')"
+    ],
+    "unpartitioned": []
+  }
+}

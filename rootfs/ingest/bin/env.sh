@@ -6,7 +6,6 @@ setup sqlalchemy
 
 PORT="25080"
 BASE_URL="http://qserv-repl-ctl-0.qserv-repl-ctl:${PORT}"
-CHUNK_URL="https://raw.githubusercontent.com/lsst-dm/qserv-DC2/tickets/DM-24587/data/step1_1/"
-DATABASE="desc_dc2"
+CHUNKS_URL="https://raw.githubusercontent.com/lsst-dm/qserv-DC2/tickets/DM-24587/data/example_db"
 QSERV_INGEST_DIR="/ingest/data"
 

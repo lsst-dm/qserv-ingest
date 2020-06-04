@@ -69,6 +69,13 @@ class QueueManager():
         metadata = MetaData(bind=self.engine)
         self.task = Table('task', metadata, autoload=True)
 
+    def load(self, chunks_url):
+        """Load chunks in task queue
+           Chunks description should be available at chunks_url
+        Returns
+        -------
+        Integer number
+        """
 
     def insert_chunks(self, database, url):
         sql = "DELETE FROM task"

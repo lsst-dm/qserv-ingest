@@ -21,7 +21,7 @@
 # see <http://www.lsstcorp.org/LegalNotices/>.
 
 """
-Load ingest queue with list of chunks to load
+Tools used by ingest algorithm
 
 @author  Fabrice Jammes, IN2P3
 """
@@ -34,29 +34,31 @@ import getpass
 import json
 import logging
 import os
+import posixpath
+import subprocess
 import sys
+import urllib.parse
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-from qserv.queue import QueueManager
+import requests
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="A thin python wrapper around Qserv REST web service")
+# ---------------------------------
+# Local non-exported definitions --
+# ---------------------------------
 
-    parser.add_argument("url", type=str, help="Chunk repository root url")
-    parser.add_argument("--verbose", "-v", action="store_true", help="Use debug logging")
-    parser.add_argument("connection", type=str, metavar="CONNECTION",
-                       help="Connection string in format mysql://user:pass@host:port/database.")
+TMP_DIR = "/tmp"
 
-    args = parser.parse_args()
+def download_file(base_url, filename):
+    file_url = urllib.parse.urljoin(base_url, filename)
+    logging.debug("Download %s", file_url)
+    r = requests.get(file_url)
+    abs_filename = os.path.join(TMP_DIR, filename)
+    with open(abs_filename, 'wb') as f:
+        f.write(r.content)
 
-    logger = logging.getLogger()
-    if args.verbose:
-        logger.setLevel(logging.DEBUG)
-    else:
-        logger.setLevel(logging.INFO)
-    logger.addHandler(logging.StreamHandler())
-
-    queue_manager = QueueManager(args.connection)
-    queue_manager.load(args.url)
+    if (r.status_code != 200):
+        logging.fatal("Unable to download file, error %s", r.status_code)
+        raise Exception('Unable to download file', file_url, r.status_code)
+    return abs_filename
