@@ -10,8 +10,8 @@ DIR=$(cd "$(dirname "$0")"; pwd -P)
 set -euxo pipefail
 
 # Create database
-replctl -v --json "$QSERV_INGEST_DIR"/db.json "$BASE_URL"/ingest/v1/database post
+replctl -v --json "$QSERV_INGEST_DIR"/db.json "$BASE_URL"/ingest/database post
 
 # Register table Position
 # TODO: recreate a table
-replctl -v --json "$QSERV_INGEST_DIR"/schema_position.json "$BASE_URL"/ingest/v1/table post
+replctl -v --json "$QSERV_INGEST_DIR"/schema_position.json "$BASE_URL"/ingest/table post

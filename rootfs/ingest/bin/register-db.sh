@@ -9,4 +9,4 @@ DIR=$(cd "$(dirname "$0")"; pwd -P)
 set -euxo pipefail
 
 # Register database
-replctl -v "$BASE_URL"/ingest/v1/database/desc_dc2 put
+replctl -v "$BASE_URL"/ingest/database/"$DATABASE" put

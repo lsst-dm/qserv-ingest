@@ -61,7 +61,7 @@ def authorize():
     return authKey
 
 def get_chunk_location(base_url, chunk, database, transaction_id):
-    url = urllib.parse.urljoin(base_url,"ingest/v1/chunk")
+    url = urllib.parse.urljoin(base_url,"ingest/chunk")
     payload={"chunk":chunk,
              "database":database,
              "transaction_id":transaction_id}
@@ -159,7 +159,7 @@ def post(url, payload):
     return responseJson
 
 def start_transaction(base_url, database):
-    url = urllib.parse.urljoin(base_url,"ingest/v1/trans")
+    url = urllib.parse.urljoin(base_url,"ingest/trans")
     payload={"database":database}
     responseJson = post(url,payload)
 
@@ -171,7 +171,7 @@ def start_transaction(base_url, database):
     return transaction_id
 
 def stop_transaction(base_url, database, transaction_id):
-    tmp_url = posixpath.join("ingest/v1/trans/",str(transaction_id))
+    tmp_url = posixpath.join("ingest/trans/",str(transaction_id))
     tmp_url += "?abort=0&build-secondary-index=1"
     url = urllib.parse.urljoin(base_url, tmp_url)
     responseJson = put(url)
