@@ -138,11 +138,13 @@ def download_file(base_url, filename):
 
 def put(url):
     authKey = authorize()
-    response = requests.put(url, json={"auth_key": authKey})
-    responseJson = response.json()
+    r = requests.put(url, json={"auth_key": authKey})
+    if (r.status_code != 200):
+        raise Exception('Error in replication controller HTTP response (PUT)', url, r.status_code)
+    responseJson = r.json()
     if not responseJson['success']:
         logging.critical("%s %s", url, responseJson['error'])
-        raise Exception('Error in replication controller response (PUT)', url, responseJson["error"])
+        raise Exception('Error in replication controller JSON response (PUT)', url, responseJson["error"])
     logging.debug(responseJson)
     logging.info("success")
 
@@ -150,8 +152,10 @@ def post(url, payload):
     authKey = authorize()
     payload["auth_key"] = authKey
     logging.debug(payload)
-    response = requests.post(url, json=payload)
-    responseJson = response.json()
+    r = requests.post(url, json=payload)
+    if (r.status_code != 200):
+        raise Exception('Error in replication controller HTTP response (POST)', url, r.status_code)
+    responseJson = r.json()
     if not responseJson["success"]:
         logging.critical(responseJson["error"])
         raise Exception('Error in replication controller response (POST)', url, responseJson["error"])
