@@ -1,4 +1,6 @@
-- Add CI, see TODO in python
+- List chunk files via HTTP?
+- Check what happen on repl-task error?
+
 - Replace "True/False" in csv files with "1/0"
 - Use FILE-LIST option to load multiple chunks on a worker, sequentially
 - Use MEMQ+JOB (number of job is workers/ingest-thread), where ingest-thread=ncore
