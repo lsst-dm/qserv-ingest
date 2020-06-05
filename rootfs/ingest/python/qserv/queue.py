@@ -77,18 +77,20 @@ class QueueManager():
         -------
         Integer number
         """
-        metadata.Metadata(data_url)
+        metadata = ChunkMetadata(data_url)
 
-    def insert_chunks(self, database, url):
         sql = "DELETE FROM task"
         result = self.engine.execute(sql)
 
         chunks = [57892, 61973, 62654, 65383, 76932, 78976]
         for chunk_id in chunks:
-            result = self.engine.execute(self.task.insert(),
-                                         {"database_name":database,
-                                          "chunk_id":chunk_id,
-                                          "chunk_file_url":url})
+            for directory in metadata.dir_director:
+                url = urllib.parse.urljoin(data_url, directory)
+                result = self.engine.execute(self.task.insert(),
+                                            {"database_name":metadata.database,
+                                            "chunk_id":chunk_id,
+                                            "chunk_file_url":url})
+
 
 
     def _get_current_chunk(self):

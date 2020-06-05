@@ -63,4 +63,4 @@ class ChunkMetadata():
         _LOG.debug("Director table: %s", self.metadata['tables'])
         filename = self.metadata['tables']['director']['schema']
         self.json_director = json_response(metadata_url, filename)
-
+        self.dir_director = self.metadata['tables']['director']['datadir']
