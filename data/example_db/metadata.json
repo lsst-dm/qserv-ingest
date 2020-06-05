@@ -1,5 +1,5 @@
 {
-  "database": "dc2_run2.1i_dr1b",
+  "database": "dc2_run2.1i_dr1b.json",
   "tables": {
     "director": { 
       "schema": "position.json",

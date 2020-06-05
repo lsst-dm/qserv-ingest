@@ -57,10 +57,10 @@ class Metadata():
         self.database = self.metadata['database']
         _LOG.debug("Metadata: %s", self.metadata)
 
-        db_filename = "{}.json".format(self.metadata['database'])
-        self.json_db = json_response(metadata_url, db_filename)
+        filename = self.metadata['database']
+        self.json_db = json_response(metadata_url, filename)
 
         _LOG.debug("Director table: %s", self.metadata['tables'])
-        director_filename = "{}.json".format(self.metadata['tables']['director']['schema'])
-        self.json_director = json_response(metadata_url, director_filename)
+        filename = "{}.json".format(self.metadata['tables']['director']['schema'])
+        self.json_director = json_response(metadata_url, filename)
 
