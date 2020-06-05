@@ -69,7 +69,7 @@ def get_chunk_location(base_url, chunk, database, transaction_id):
     payload={"chunk":chunk,
              "database":database,
              "transaction_id":transaction_id}
-    responseJson = post(url,payload)
+    responseJson = post(url, payload)
 
     # Get location host and port
     host = responseJson["location"]["host"]
@@ -159,7 +159,7 @@ def post(url, payload):
 def start_transaction(base_url, database):
     url = urllib.parse.urljoin(base_url,"ingest/trans")
     payload={"database":database}
-    responseJson = post(url,payload)
+    responseJson = post(url, payload)
 
     # For catching the super transaction ID
     # Want to print responseJson["databases"]["hsc_test_w_2020_14_00"]["transactions"]
