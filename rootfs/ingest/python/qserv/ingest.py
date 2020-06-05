@@ -53,6 +53,7 @@ TMP_DIR="/tmp"
 # Local non-exported definitions --
 # ---------------------------------
 AUTH_PATH = "~/.lsst/qserv"
+_LOG = logging.getLogger(__name__)
 
 def authorize():
     try:
@@ -98,7 +99,7 @@ def ingest_task(base_url, connection):
     """
     queue_manager = QueueManager(connection)
     
-    logging.debug("Starting an ingest task: url: %s", base_url)
+    _LOG.debug("Starting an ingest task: url: %s", base_url)
 
     chunk_info = queue_manager.lock_chunk()
     if not chunk_info:
@@ -113,10 +114,11 @@ def ingest_task(base_url, connection):
         chunk_file = download_chunk(chunk_base_url, chunk_id, "chunk_{}_overlap.txt")
         ingest_chunk(host, port, transaction_id, chunk_file)
         stop_transaction(base_url, database, transaction_id)
-    except Exception as e:
+    except:
         if transaction_id:
             abort_transaction(base_url, database, transaction_id)
-        raise Exception('Error in ingest task: %s', e)
+        _LOG.critical('Error in ingest task for chunk %s', chunk_info)
+        raise
 
     queue_manager.delete_chunk()
     return 1

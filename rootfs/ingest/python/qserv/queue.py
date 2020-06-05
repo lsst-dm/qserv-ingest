@@ -43,6 +43,7 @@ import urllib.parse
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
+import qserv.util as util
 import sqlalchemy
 from sqlalchemy import MetaData, Table, Column, Integer
 from sqlalchemy.engine.url import make_url
@@ -77,6 +78,7 @@ class QueueManager():
         -------
         Integer number
         """
+        data_url = util.trailing_slash(data_url)
         metadata = ChunkMetadata(data_url)
 
         sql = "DELETE FROM task"
