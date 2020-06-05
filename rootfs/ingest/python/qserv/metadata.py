@@ -61,6 +61,6 @@ class Metadata():
         self.json_db = json_response(metadata_url, filename)
 
         _LOG.debug("Director table: %s", self.metadata['tables'])
-        filename = "{}.json".format(self.metadata['tables']['director']['schema'])
+        filename = self.metadata['tables']['director']['schema']
         self.json_director = json_response(metadata_url, filename)
 
