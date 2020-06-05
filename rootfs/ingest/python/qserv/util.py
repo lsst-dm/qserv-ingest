@@ -51,7 +51,6 @@ import requests
 TMP_DIR = "/tmp"
 
 def download_file(base_url, filename):
-    base_url = trailing_slash(base_url)
     file_url = urllib.parse.urljoin(base_url, filename)
     logging.debug("Download %s", file_url)
     r = requests.get(file_url)
@@ -67,7 +66,6 @@ def download_file(base_url, filename):
 def json_response(base_url, filename):
     """Load json file at a given URL
     """
-    base_url = trailing_slash(base_url)
     file_url = urllib.parse.urljoin(base_url, filename)
     r = requests.get(file_url)
     return r.json()

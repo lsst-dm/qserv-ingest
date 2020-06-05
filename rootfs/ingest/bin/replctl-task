@@ -44,13 +44,14 @@ import sys
 # Imports for other modules --
 # ----------------------------
 import qserv.ingest as ingest
+import qserv.util as util
 import requests
 from qserv.queue import QueueManager
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="A thin python wrapper around Qserv REST web service")
 
-    parser.add_argument("url", type=str, help="Replication controller root URL")
+    parser.add_argument("url", type=str, help="Replication controller root URL", action = util.BaseUrlAction)
     parser.add_argument("--verbose", "-v", action="store_true", help="Use debug logging")
     parser.add_argument("connection", type=str, metavar="CONNECTION",
                        help="Connection string in format mysql://user:pass@host:port/database.")
