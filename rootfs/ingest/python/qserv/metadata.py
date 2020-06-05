@@ -30,11 +30,12 @@ Manage metadata related to input data
 #  Imports of standard modules --
 # -------------------------------
 import json
+import requests
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-from .util import download_file
+from .util import json_response
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -49,17 +50,13 @@ class Metadata():
         """Download metadata located at 'chunks_url' and describing database, tables
            and chunks files, and then load it in a dictionnary.
         """
-        self.metadata_url = metadata_url
-        metadata_file = download_file(metadata_url, METADATA_FILENAME)
-        with open(metadata_file) as json_file:
-            self.metadata = json.load(json_file)
-    
-        db_filename = "{}.json".format(self.metadata['database'])
-        db_file = download_file(self.metadata_url, db_file)
-        with open(db_file) as json_file:
-            self.json_db = json.load(db_file)
+        self.metadata = json_response(metadata_url, METADATA_FILENAME)
+        self.database = self.metadata['database']
 
-        director_table = "{}.json".format(self.metadata['tables']['director'])
-        db_file = download_file(self.metadata_url, db_file)
-        with open(db_file) as json_file:
-            self.metadata_db = json.load(db_file)
+        db_filename = "{}.json".format(self.metadata['database'])
+        self.json_db = json_response(metadata_url, db_filename)
+
+        print(self.metadata['tables'])
+        director_filename = "{}.json".format(self.metadata['tables']['director']['schema'])
+        self.json_director = json_response(metadata_url, director_filename)
+

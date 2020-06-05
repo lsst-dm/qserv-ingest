@@ -62,3 +62,10 @@ def download_file(base_url, filename):
         logging.fatal("Unable to download file, error %s", r.status_code)
         raise Exception('Unable to download file', file_url, r.status_code)
     return abs_filename
+
+def json_response(base_url, filename):
+    """Load json at a given URL
+    """
+    file_url = urllib.parse.urljoin(base_url, filename)
+    r = requests.get(file_url)
+    return r.json()
