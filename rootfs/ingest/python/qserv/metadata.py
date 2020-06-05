@@ -53,14 +53,16 @@ class ChunkMetadata():
         """Download metadata located at 'chunks_url' and describing database, tables
            and chunks files, and then load it in a dictionnary.
         """
-        self.metadata = json_response(metadata_url, METADATA_FILENAME)
+        self.url = metadata_url
+
+        self.metadata = json_response(self.url, METADATA_FILENAME)
         _LOG.debug("Metadata: %s", self.metadata)
 
         filename = self.metadata['database']
-        self.json_db = json_response(metadata_url, filename)
+        self.json_db = json_response(self.url, filename)
         self.database = self.json_db['database']
 
         _LOG.debug("Director table: %s", self.metadata['tables'])
         filename = self.metadata['tables']['director']['schema']
-        self.json_director = json_response(metadata_url, filename)
+        self.json_director = json_response(self.url, filename)
         self.dir_director = self.metadata['tables']['director']['datadir']

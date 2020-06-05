@@ -85,6 +85,7 @@ class QueueManager():
         chunks = [57892, 61973, 62654, 65383, 76932, 78976]
         for chunk_id in chunks:
             for directory in metadata.dir_director:
+                # TODO add / to directory (function in utils)
                 url = urllib.parse.urljoin(data_url, directory)
                 result = self.engine.execute(self.task.insert(),
                                             {"database_name":metadata.database,
@@ -95,12 +96,12 @@ class QueueManager():
 
     def _get_current_chunk(self):
         # "SELECT chunk_id, chunk_file_url FROM task WHERE pod_name = ?"
-        query = select([self.task.c.chunk_id, self.task.c.chunk_file_url])
+        query = select([self.task.c.database_name, self.task.c.chunk_id, self.task.c.chunk_file_url])
         query = query.where(self.task.c.pod_name == self.pod_name)
         result = self.engine.execute(query)
         row = result.first()
         if row:
-            chunk=(int(row[0]),row[1])
+            chunk=(row[0], int(row[1]),row[2])
         else:
             chunk=None
         return chunk
@@ -110,7 +111,7 @@ class QueueManager():
            if not, lock it then return its id and file base url, or None if queue is empty
         Returns
         -------
-        Integer number, String
+        Integer number, String,  String
         """
 
         # Check if a chunk was previously locked for this pod

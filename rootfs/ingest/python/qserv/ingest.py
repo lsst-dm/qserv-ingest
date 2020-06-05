@@ -45,6 +45,9 @@ import urllib.parse
 # ----------------------------
 import requests
 from .queue import QueueManager
+from .util import trailing_slash
+
+TMP_DIR="/tmp"
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -87,7 +90,7 @@ def ingest_chunk(host, port, transaction_id, chunk_file):
     logging.debug("stdout %s", result.stdout)
     logging.debug("stderr %s", result.stderr)
 
-def ingest_task(base_url, database, connection):
+def ingest_task(base_url, connection):
     """Get a chunk from a queue server, load it inside Qserv, during a super-transation
         Returns
         -------
@@ -95,12 +98,12 @@ def ingest_task(base_url, database, connection):
     """
     queue_manager = QueueManager(connection)
     
-    logging.debug("Starting an ingest task: url: %s, db: %s", base_url, database)
+    logging.debug("Starting an ingest task: url: %s", base_url)
 
     chunk_info = queue_manager.lock_chunk()
     if not chunk_info:
         return 0
-    (chunk_id, chunk_base_url) = chunk_info
+    (database, chunk_id, chunk_base_url) = chunk_info
     transaction_id = None
     try:
         transaction_id = start_transaction(base_url, database)
@@ -124,6 +127,7 @@ def download_chunk(base_url, chunk_id, file_format):
     return abs_filename
 
 def download_file(base_url, filename):
+    base_url = trailing_slash(base_url)
     file_url = urllib.parse.urljoin(base_url, filename)
     logging.debug("Download %s", file_url)
     r = requests.get(file_url)

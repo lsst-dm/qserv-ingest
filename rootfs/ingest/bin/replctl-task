@@ -51,7 +51,6 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="A thin python wrapper around Qserv REST web service")
 
     parser.add_argument("url", type=str, help="Replication controller root URL")
-    parser.add_argument("database", type=str, help="Target database")
     parser.add_argument("--verbose", "-v", action="store_true", help="Use debug logging")
     parser.add_argument("connection", type=str, metavar="CONNECTION",
                        help="Connection string in format mysql://user:pass@host:port/database.")
@@ -67,4 +66,4 @@ if __name__ == "__main__":
 
     chunk_to_load = True
     while chunk_to_load:
-        chunk_to_load = ingest.ingest_task(args.url, args.database, args.connection)
+        chunk_to_load = ingest.ingest_task(args.url, args.connection)

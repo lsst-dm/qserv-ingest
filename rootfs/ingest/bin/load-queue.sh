@@ -8,4 +8,4 @@ DIR=$(cd "$(dirname "$0")"; pwd -P)
 
 set -euxo pipefail
 
-load-queue -v "$CHUNKS_URL" mysql://qsingest:@qserv-ingest-db-0.qserv-ingest-db:3306/qservIngest
+load-queue -v "$DATA_URL" mysql://qsingest:@qserv-ingest-db-0.qserv-ingest-db:3306/qservIngest
