@@ -12,5 +12,6 @@ DIR=$(cd "$(dirname "$0")"; pwd -P)
 CZAR_POD="${INSTANCE}-czar-0"
 REPL_CTL_POD="${INSTANCE}-repl-ctl-0"
 
-kubectl cp "$REPL_CTL_POD":/qserv/data/qserv/empty_desc_dc2.txt  /tmp/empty_desc_dc2.txt 
-kubectl cp /tmp/empty_desc_dc2.txt "$CZAR_POD":/qserv/data/qserv/
+EMPTYCHUNK_FILE="empty_dc2_run2_1i_dr1b.txt"
+kubectl cp "$REPL_CTL_POD":/qserv/data/qserv/"$EMPTYCHUNK_FILE" /tmp/"$EMPTYCHUNK_FILE"
+kubectl cp /tmp/"$EMPTYCHUNK_FILE" "$CZAR_POD":/qserv/data/qserv/"$EMPTYCHUNK_FILE"

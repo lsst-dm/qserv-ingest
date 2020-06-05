@@ -41,17 +41,18 @@ import sys
 # Imports for other modules --
 # ----------------------------
 import qserv.ingest as ingest
+import qserv.util as util
 import requests
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="A thin python wrapper around Qserv REST web service")
 
-    parser.add_argument("url", type=str, help="Web Service URL")
-    parser.add_argument("method", type=str, help="Request type", choices=["post", "put"])
+    parser.add_argument("url", type=str, help="Web Service URL", action = util.BaseUrlAction)
+    parser.add_argument("method", type=str, help="Request type", choices = ["post", "put"])
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--data", help="Key-value pairs to pass configs with the request",
-                       metavar="KEY=VALUE", nargs="*", action=ingest.DataAction)
-    group.add_argument("--json", type=str, help="Json file with the request configs", action=ingest.JsonAction)
+                       metavar="KEY=VALUE", nargs="*", action=util.DataAction)
+    group.add_argument("--json", type=str, help="Json file with the request configs", action=util.JsonAction)
     parser.add_argument("--verbose", "-v", action="store_true", help="Use debug logging")
     args = parser.parse_args()
 

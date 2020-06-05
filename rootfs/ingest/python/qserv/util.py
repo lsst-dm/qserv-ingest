@@ -76,3 +76,29 @@ def trailing_slash(url):
     if not url.endswith('/'):
         url += '/'
     return url
+
+class BaseUrlAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string):
+        x = trailing_slash(values)
+        setattr(namespace, self.dest, x)
+
+class DataAction(argparse.Action):
+    """argparse action to attempt casting the values to floats and put into a dict"""
+
+    def __call__(self, parser, namespace, values, option_string):
+        d = dict()
+        for item in values:
+            k, v = item.split("=")
+            try:
+                v = float(v)
+            except ValueError:
+                pass
+            finally:
+                d[k] = v
+        setattr(namespace, self.dest, d)
+
+class JsonAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string):
+        with open(values, 'r') as f:
+            x = json.load(f)
+        setattr(namespace, self.dest, x)
