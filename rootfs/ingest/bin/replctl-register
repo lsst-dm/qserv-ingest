@@ -62,13 +62,13 @@ if __name__ == "__main__":
     logger.debug("Loading metadata")
     metadata = metadata.Metadata(args.data_url)
 
-    path = "/ingest/database/%s".format(metadata.db)
+    path = "/ingest/database/{}".format(metadata.database)
     json = metadata.json_db
     url = urllib.parse.urljoin(args.url, path)
     logger.debug("Starting a request: %s with %s", url, json)
     ingest.post(url, json)
 
-    path = "/ingest/table/%s".format(metadata.json_director["table"])
+    path = "/ingest/table/{}".format(metadata.json_director["table"])
     json = metadata.json_director
     url = urllib.parse.urljoin(args.url, path)
     logger.debug("Starting a request: %s with %s", url, json)

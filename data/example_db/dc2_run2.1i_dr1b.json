@@ -1,1 +1,7 @@
-{"database":"desc_dc2","num_stripes":340,"num_sub_stripes":12,"overlap":0.01667,"auth_key":""}
+{
+"database":"dc2_run2.1i_dr1b",
+"num_stripes":340,
+"num_sub_stripes":12,
+"overlap":0.01667,
+"auth_key":""
+}

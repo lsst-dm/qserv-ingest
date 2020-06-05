@@ -54,11 +54,11 @@ class Metadata():
            and chunks files, and then load it in a dictionnary.
         """
         self.metadata = json_response(metadata_url, METADATA_FILENAME)
-        self.database = self.metadata['database']
         _LOG.debug("Metadata: %s", self.metadata)
 
         filename = self.metadata['database']
         self.json_db = json_response(metadata_url, filename)
+        self.database = self.json_db['database']
 
         _LOG.debug("Director table: %s", self.metadata['tables'])
         filename = self.metadata['tables']['director']['schema']
