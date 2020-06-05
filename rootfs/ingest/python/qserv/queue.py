@@ -47,6 +47,7 @@ import sqlalchemy
 from sqlalchemy import MetaData, Table, Column, Integer
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.sql import table, column, select, update, insert, delete
+from .metadata import ChunkMetadata
 
 
 # ---------------------------------
@@ -69,13 +70,14 @@ class QueueManager():
         metadata = MetaData(bind=self.engine)
         self.task = Table('task', metadata, autoload=True)
 
-    def load(self, chunks_url):
+    def load(self, data_url):
         """Load chunks in task queue
            Chunks description should be available at chunks_url
         Returns
         -------
         Integer number
         """
+        metadata.Metadata(data_url)
 
     def insert_chunks(self, database, url):
         sql = "DELETE FROM task"

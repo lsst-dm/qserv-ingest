@@ -40,7 +40,7 @@ import sys
 # Imports for other modules --
 # ----------------------------
 import qserv.ingest as ingest
-import qserv.metadata as metadata
+from qserv.metadata import ChunkMetadata
 import requests
 import urllib
 
@@ -60,7 +60,7 @@ if __name__ == "__main__":
     logger.addHandler(logging.StreamHandler())
 
     logger.debug("Loading metadata")
-    metadata = metadata.Metadata(args.data_url)
+    metadata = ChunkMetadata(args.data_url)
 
     path = "/ingest/database/"
     json = metadata.json_db

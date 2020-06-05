@@ -44,7 +44,7 @@ from qserv.queue import QueueManager
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="A thin python wrapper around Qserv REST web service")
 
-    parser.add_argument("url", type=str, help="Chunk repository root url")
+    parser.add_argument("url", type=str, help="Input data repository root url")
     parser.add_argument("--verbose", "-v", action="store_true", help="Use debug logging")
     parser.add_argument("connection", type=str, metavar="CONNECTION",
                        help="Connection string in format mysql://user:pass@host:port/database.")

@@ -45,7 +45,7 @@ METADATA_FILENAME = "metadata.json"
 
 _LOG = logging.getLogger(__name__)
 
-class Metadata():
+class ChunkMetadata():
     """Manage metadata related to data to ingest (database, tables and chunk files)
     """
 
