@@ -45,6 +45,7 @@ import urllib.parse
 # ----------------------------
 import requests
 from .queue import QueueManager
+from .util import download_file
 
 TMP_DIR="/tmp"
 
@@ -123,19 +124,6 @@ def ingest_task(base_url, connection):
 def download_chunk(base_url, chunk_id, file_format):
     chunk_filename = file_format.format(chunk_id)
     abs_filename = download_file(base_url, chunk_filename)
-    return abs_filename
-
-def download_file(base_url, filename):
-    file_url = urllib.parse.urljoin(base_url, filename)
-    logging.debug("Download %s", file_url)
-    r = requests.get(file_url)
-    abs_filename = os.path.join(TMP_DIR, filename)
-    with open(abs_filename, 'wb') as f:
-        f.write(r.content)
-
-    if (r.status_code != 200):
-        logging.fatal("Unable to download file, error %s", r.status_code)
-        raise Exception('Unable to download file', file_url, r.status_code)
     return abs_filename
 
 def put(url):
