@@ -1,9 +1,10 @@
 {
   "database": "dc2_run2.1i_dr1b",
   "tables": {
-    "director": 
+    "director": { 
       "schema": "position.json",
       "data": "step1_*",
+    }
     "partitioned": [
       {
       "schema": "dpdd_forced.json",
