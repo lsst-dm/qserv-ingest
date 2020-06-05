@@ -8,5 +8,5 @@ DIR=$(cd "$(dirname "$0")"; pwd -P)
 
 set -euxo pipefail
 
-# Register database
-replctl -v "$BASE_URL"/ingest/database/"$DATABASE" put
+# Publish database
+replctl-publish -v "$REPL_URL" "$DATA_URL"

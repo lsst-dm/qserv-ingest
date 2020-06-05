@@ -10,4 +10,4 @@ DIR=$(cd "$(dirname "$0")"; pwd -P)
 set -euxo pipefail
 
 # Register database and table
-replctl-register -v "$REPL_URL/" "$DATA_URL"
+replctl-register -v "$REPL_URL" "$DATA_URL"
