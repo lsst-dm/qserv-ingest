@@ -9,7 +9,7 @@
       {
       "schema": "dpdd_forced.json",
       "data": "step2_*"
-      }
+      },
       {
       "schema": "dpdd_ref.json",
       "data": "step2_*"
