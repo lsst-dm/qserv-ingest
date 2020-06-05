@@ -3,16 +3,16 @@
   "tables": {
     "director": { 
       "schema": "position.json",
-      "data": "step1_*",
+      "data": "step1_*"
     }
     "partitioned": [
       {
       "schema": "dpdd_forced.json",
-      "data": "step2_*",
+      "data": "step2_*"
       }
       {
       "schema": "dpdd_ref.json",
-      "data": "step2_*",
+      "data": "step2_*"
       }
     "unpartitioned": []
   }

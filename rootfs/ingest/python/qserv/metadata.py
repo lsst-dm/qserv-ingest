@@ -30,6 +30,7 @@ Manage metadata related to input data
 #  Imports of standard modules --
 # -------------------------------
 import json
+import logging
 import requests
 
 # ----------------------------
@@ -42,6 +43,8 @@ from .util import json_response
 # ---------------------------------
 METADATA_FILENAME = "metadata.json"
 
+_LOG = logging.getLogger(__name__)
+
 class Metadata():
     """Manage metadata related to data to ingest (database, tables and chunk files)
     """
@@ -52,11 +55,12 @@ class Metadata():
         """
         self.metadata = json_response(metadata_url, METADATA_FILENAME)
         self.database = self.metadata['database']
+        _LOG.debug("Metadata: %s", self.metadata)
 
         db_filename = "{}.json".format(self.metadata['database'])
         self.json_db = json_response(metadata_url, db_filename)
 
-        print(self.metadata['tables'])
+        _LOG.debug("Director table: %s", self.metadata['tables'])
         director_filename = "{}.json".format(self.metadata['tables']['director']['schema'])
         self.json_director = json_response(metadata_url, director_filename)
 
