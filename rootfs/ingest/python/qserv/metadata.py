@@ -47,8 +47,6 @@ _DIRECTOR = "director"
 
 _LOG = logging.getLogger(__name__)
 
-
-
 class ChunkMetadata():
     """Manage metadata related to data to ingest (database, tables and chunk files)
     """

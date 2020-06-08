@@ -54,8 +54,10 @@ from .metadata import ChunkMetadata
 # Local non-exported definitions --
 # ---------------------------------
 
-STATUS_IN_PROGRESS=1
+_STATUS_IN_PROGRESS=1
 STATUS_COMPLETED=2
+
+_LOG = logging.getLogger(__name__)
 
 class QueueManager():
     """Class implementing chunk queue manager for Qserv ingest process
@@ -69,6 +71,7 @@ class QueueManager():
 
         metadata = MetaData(bind=self.engine)
         self.task = Table('task', metadata, autoload=True)
+
 
     def load(self, data_url):
         """Load chunks in task queue
@@ -85,11 +88,11 @@ class QueueManager():
 
         for (url, chunks, table_type) in metadata.get_chunks():
             for c in chunks:
+                _LOG.debug("Insert chunk %s in queue", c)
                 result = self.engine.execute(self.task.insert(),
                                             {"database_name":metadata.database,
                                             "chunk_id":c,
                                             "chunk_file_url":url})
-
 
 
     def _get_current_chunk(self):
@@ -117,7 +120,7 @@ class QueueManager():
 
         if not current_chunk:
             sql = "UPDATE task SET pod_name = '{}', status = {} WHERE pod_name IS NULL AND status IS NULL ORDER BY chunk_id ASC LIMIT 1;"
-            result = self.engine.execute(sql.format(self.pod_name, STATUS_IN_PROGRESS))
+            result = self.engine.execute(sql.format(self.pod_name, _STATUS_IN_PROGRESS))
             
             current_chunk = self._get_current_chunk()
 
