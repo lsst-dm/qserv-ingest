@@ -32,37 +32,55 @@ Manage metadata related to input data
 import json
 import logging
 import requests
+import urllib.parse
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-from .util import json_response
+from .util import json_response, trailing_slash
 
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
-METADATA_FILENAME = "metadata.json"
+_METADATA_FILENAME = "metadata.json"
+_DIRECTOR = "director"
 
 _LOG = logging.getLogger(__name__)
+
+
 
 class ChunkMetadata():
     """Manage metadata related to data to ingest (database, tables and chunk files)
     """
 
-    def __init__(self, metadata_url):
-        """Download metadata located at 'chunks_url' and describing database, tables
+    def __init__(self, data_url):
+        """Download metadata located at 'data_url' and describing database, tables
            and chunks files, and then load it in a dictionnary.
         """
-        self.url = metadata_url
+        self.url = trailing_slash(data_url)
 
-        self.metadata = json_response(self.url, METADATA_FILENAME)
+        self.metadata = json_response(self.url, _METADATA_FILENAME)
         _LOG.debug("Metadata: %s", self.metadata)
 
         filename = self.metadata['database']
         self.json_db = json_response(self.url, filename)
         self.database = self.json_db['database']
 
-        _LOG.debug("Director table: %s", self.metadata['tables'])
-        filename = self.metadata['tables']['director']['schema']
-        self.json_director = json_response(self.url, filename)
-        self.dir_director = self.metadata['tables']['director']['datadir']
+        for table in self.metadata['tables']:
+            _LOG.debug("Table: %s", table)
+            if table['type'] == _DIRECTOR:
+                _LOG.debug("Director table: %s", table)
+                filename = table['schema']
+                self.json_director = json_response(self.url, filename)
+                self.data_director = table['data']
+
+    def get_chunks(self):
+        #TODO add iterator over all chunks?
+        chunks = []
+        table = self.data_director
+        for d in table['data']:
+            directory = d['directory']
+            url = urllib.parse.urljoin(self.url, directory)
+            url = trailing_slash(url)
+            chunks.append((url, table['chunks']), None)
+        return chunks

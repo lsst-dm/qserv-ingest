@@ -1,20 +1,32 @@
 {
   "database": "dc2_run2_1i_dr1b.json",
-  "tables": {
-    "director": { 
+  "tables": [
+    { 
       "schema": "position.json",
-      "datadir": ["step1_1"]
+      "data": [
+        {"directory": "step1_1",
+         "chunks": [57892, 61973, 62654, 65383, 76932, 78976]
+        }
+      ],
+      "type": "director"
     },
-    "partitioned": [
-      {
+    {
       "schema": "dpdd_forced.json",
-      "datadir": ["step2_1"]
-      },
-      {
+      "data": [
+        {"directory": "step2_1",
+         "chunks": [57892, 61973, 62654, 65383, 76932, 78976]
+        }
+      ],
+      "type": "partition"
+    },
+    {
       "schema": "dpdd_ref.json",
-      "datadir": ["step2_1"]
-      }
-    ],
-    "unpartitioned": []
-  }
+      "data": [
+        {"directory": "step2_1",
+         "chunks": [57892, 61973, 62654, 65383, 76932, 78976]
+        }
+      ],
+      "type": "partition"
+    }
+  ]
 }
