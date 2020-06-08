@@ -72,15 +72,15 @@ class ChunkMetadata():
                 _LOG.debug("Director table: %s", table)
                 filename = table['schema']
                 self.json_director = json_response(self.url, filename)
-                self.data_director = table['data']
+                self.table_director = table
 
     def get_chunks(self):
         #TODO add iterator over all chunks?
         chunks = []
-        table = self.data_director
+        table = self.table_director
         for d in table['data']:
             directory = d['directory']
             url = urllib.parse.urljoin(self.url, directory)
             url = trailing_slash(url)
-            chunks.append((url, table['chunks']), None)
+            chunks.append((url, d['chunks'], None))
         return chunks
