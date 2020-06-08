@@ -1,4 +1,4 @@
-- List chunk files via HTTP?
+- Add support for telepresence
 - Check what happen on repl-task error?
 
 - Replace "True/False" in csv files with "1/0"
