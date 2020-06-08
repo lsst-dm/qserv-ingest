@@ -4,6 +4,6 @@ set -euxo pipefail
 
 DIR=$(cd "$(dirname "$0")"; pwd -P)
 
-JOB="ingest-$1"
-kubectl apply -f "$DIR/manifest/$JOB.yaml"
-kubectl wait --for=condition=complete --timeout=-1s "job/$JOB"
+JOB="$1"
+kubectl apply -k "$DIR/base/$JOB"
+kubectl wait --for=condition=complete --timeout=-1s "job/ingest-$JOB"

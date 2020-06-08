@@ -1,0 +1,5 @@
+nameSuffix: -register
+bases:
+- ../../base
+patchesStrategicMerge:
+- ingest.yaml

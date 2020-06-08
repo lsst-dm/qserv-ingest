@@ -1,0 +1,16 @@
+commonLabels:
+  org: lsst
+  app: qserv
+
+resources:
+- init.yaml
+
+secretGenerator:
+- name: repl-creds 
+  files:
+  - qserv 
+generatorOptions:
+  labels:
+    kustomize.generated.resources: qserv
+  disableNameSuffixHash: true
+

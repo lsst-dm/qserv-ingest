@@ -1,0 +1,6 @@
+commonLabels:
+  org: lsst
+  app: qserv
+
+resources:
+- publish.yaml
