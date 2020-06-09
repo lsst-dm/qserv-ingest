@@ -47,6 +47,7 @@ _DIRECTOR = "director"
 
 _LOG = logging.getLogger(__name__)
 
+
 class ChunkMetadata():
     """Manage metadata related to data to ingest (database, tables and chunk files)
     """
@@ -73,7 +74,7 @@ class ChunkMetadata():
                 self.table_director = table
 
     def get_chunks(self):
-        #TODO add iterator over all chunks?
+        # TODO add iterator over all chunks?
         chunks = []
         table = self.table_director
         for d in table['data']:

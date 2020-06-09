@@ -50,6 +50,7 @@ import requests
 
 TMP_DIR = "/tmp"
 
+
 def download_file(base_url, filename):
     base_url = trailing_slash(base_url)
     file_url = urllib.parse.urljoin(base_url, filename)
@@ -64,6 +65,7 @@ def download_file(base_url, filename):
         raise Exception('Unable to download file', file_url, r.status_code)
     return abs_filename
 
+
 def json_response(base_url, filename):
     """Load json file at a given URL
     """
@@ -71,15 +73,18 @@ def json_response(base_url, filename):
     r = requests.get(file_url)
     return r.json()
 
+
 def trailing_slash(url):
     if not url.endswith('/'):
         url += '/'
     return url
 
+
 class BaseUrlAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string):
         x = trailing_slash(values)
         setattr(namespace, self.dest, x)
+
 
 class DataAction(argparse.Action):
     """argparse action to attempt casting the values to floats and put into a dict"""
@@ -95,6 +100,7 @@ class DataAction(argparse.Action):
             finally:
                 d[k] = v
         setattr(namespace, self.dest, d)
+
 
 class JsonAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string):

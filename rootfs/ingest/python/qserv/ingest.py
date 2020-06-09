@@ -47,13 +47,14 @@ import requests
 from .queue import QueueManager
 from .util import download_file
 
-TMP_DIR="/tmp"
+TMP_DIR = "/tmp"
 
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
 AUTH_PATH = "~/.lsst/qserv"
 _LOG = logging.getLogger(__name__)
+
 
 def authorize():
     try:
@@ -64,11 +65,12 @@ def authorize():
         authKey = getpass.getpass()
     return authKey
 
+
 def get_chunk_location(base_url, chunk, database, transaction_id):
-    url = urllib.parse.urljoin(base_url,"ingest/chunk")
-    payload={"chunk":chunk,
-             "database":database,
-             "transaction_id":transaction_id}
+    url = urllib.parse.urljoin(base_url, "ingest/chunk")
+    payload = {"chunk": chunk,
+               "database": database,
+               "transaction_id": transaction_id}
     responseJson = post(url, payload)
 
     # Get location host and port
@@ -80,16 +82,18 @@ def get_chunk_location(base_url, chunk, database, transaction_id):
 
 
 def ingest_chunk(host, port, transaction_id, chunk_file):
-    
-    cmd= ['qserv-replica-file-ingest', '--debug', '--verbose', 'FILE', host, str(port), str(transaction_id), "position", "P", chunk_file]
+
+    cmd = ['qserv-replica-file-ingest', '--debug', '--verbose', 'FILE',
+           host, str(port), str(transaction_id), "position", "P", chunk_file]
     logging.debug("Launch unix process %s", cmd)
 
     result = subprocess.run(cmd,
-                         capture_output=True,
-                         universal_newlines=True,
-                         check=True)
+                            capture_output=True,
+                            universal_newlines=True,
+                            check=True)
     logging.debug("stdout %s", result.stdout)
     logging.debug("stderr %s", result.stderr)
+
 
 def ingest_task(base_url, connection):
     """Get a chunk from a queue server, load it inside Qserv, during a super-transation
@@ -98,7 +102,7 @@ def ingest_task(base_url, connection):
         Integer number: 0 if no chunk to load, 1 if chunk was loaded successfully
     """
     queue_manager = QueueManager(connection)
-    
+
     _LOG.debug("Starting an ingest task: url: %s", base_url)
 
     chunk_info = queue_manager.lock_chunk()
@@ -108,10 +112,12 @@ def ingest_task(base_url, connection):
     transaction_id = None
     try:
         transaction_id = start_transaction(base_url, database)
-        (host, port) = get_chunk_location(base_url, chunk_id, database, transaction_id)
+        (host, port) = get_chunk_location(
+            base_url, chunk_id, database, transaction_id)
         chunk_file = download_chunk(chunk_base_url, chunk_id, "chunk_{}.txt")
         ingest_chunk(host, port, transaction_id, chunk_file)
-        chunk_file = download_chunk(chunk_base_url, chunk_id, "chunk_{}_overlap.txt")
+        chunk_file = download_chunk(
+            chunk_base_url, chunk_id, "chunk_{}_overlap.txt")
         ingest_chunk(host, port, transaction_id, chunk_file)
         stop_transaction(base_url, database, transaction_id)
     except:
@@ -123,22 +129,27 @@ def ingest_task(base_url, connection):
     queue_manager.delete_chunk()
     return 1
 
+
 def download_chunk(base_url, chunk_id, file_format):
     chunk_filename = file_format.format(chunk_id)
     abs_filename = download_file(base_url, chunk_filename)
     return abs_filename
 
+
 def put(url):
     authKey = authorize()
     r = requests.put(url, json={"auth_key": authKey})
     if (r.status_code != 200):
-        raise Exception('Error in replication controller HTTP response (PUT)', url, r.status_code)
+        raise Exception(
+            'Error in replication controller HTTP response (PUT)', url, r.status_code)
     responseJson = r.json()
     if not responseJson['success']:
         logging.critical("%s %s", url, responseJson['error'])
-        raise Exception('Error in replication controller JSON response (PUT)', url, responseJson["error"])
+        raise Exception(
+            'Error in replication controller JSON response (PUT)', url, responseJson["error"])
     logging.debug(responseJson)
     logging.info("success")
+
 
 def post(url, payload):
     authKey = authorize()
@@ -146,19 +157,22 @@ def post(url, payload):
     logging.debug(payload)
     r = requests.post(url, json=payload)
     if (r.status_code != 200):
-        raise Exception('Error in replication controller HTTP response (POST)', url, r.status_code)
+        raise Exception(
+            'Error in replication controller HTTP response (POST)', url, r.status_code)
     responseJson = r.json()
     if not responseJson["success"]:
         logging.critical(responseJson["error"])
-        raise Exception('Error in replication controller response (POST)', url, responseJson["error"])
+        raise Exception(
+            'Error in replication controller response (POST)', url, responseJson["error"])
     logging.debug(responseJson)
     logging.debug("success")
 
     return responseJson
 
+
 def start_transaction(base_url, database):
-    url = urllib.parse.urljoin(base_url,"ingest/trans")
-    payload={"database":database}
+    url = urllib.parse.urljoin(base_url, "ingest/trans")
+    payload = {"database": database}
     responseJson = post(url, payload)
 
     # For catching the super transaction ID
@@ -168,17 +182,16 @@ def start_transaction(base_url, database):
 
     return transaction_id
 
+
 def stop_transaction(base_url, database, transaction_id):
-    tmp_url = posixpath.join("ingest/trans/",str(transaction_id))
+    tmp_url = posixpath.join("ingest/trans/", str(transaction_id))
     tmp_url += "?abort=0&build-secondary-index=1"
     url = urllib.parse.urljoin(base_url, tmp_url)
     responseJson = put(url)
 
+
 def abort_transaction(base_url, database, transaction_id):
-    tmp_url = posixpath.join("ingest/v1/trans/",str(transaction_id))
+    tmp_url = posixpath.join("ingest/v1/trans/", str(transaction_id))
     tmp_url += "?abort=1"
     url = urllib.parse.urljoin(base_url, tmp_url)
     responseJson = put(url)
-
-
-

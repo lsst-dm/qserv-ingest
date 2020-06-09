@@ -30,11 +30,7 @@ Publish database and tables from replication service to Qserv
 #  Imports of standard modules --
 # -------------------------------
 import argparse
-import getpass
-import json
 import logging
-import os
-import sys
 
 # ----------------------------
 # Imports for other modules --
@@ -42,15 +38,19 @@ import sys
 import qserv.ingest as ingest
 import qserv.util as util
 from qserv.metadata import ChunkMetadata
-import requests
 import urllib
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Initialize database and table inside Qserv replication service")
+    parser = argparse.ArgumentParser(description="Initialize database and"
+                                     "table inside Qserv replication service")
 
-    parser.add_argument("url", type=str, help="Replication web service base URL", action = util.BaseUrlAction)
-    parser.add_argument("data_url", type=str, help="Input data URL", action = util.BaseUrlAction)
-    parser.add_argument("--verbose", "-v", action="store_true", help="Use debug logging")
+    parser.add_argument("url", type=str,
+                        help="Replication web service base URL",
+                        action=util.BaseUrlAction)
+    parser.add_argument("data_url", type=str, help="Input data URL",
+                        action=util.BaseUrlAction)
+    parser.add_argument("--verbose", "-v", action="store_true",
+                        help="Use debug logging")
     args = parser.parse_args()
 
     logger = logging.getLogger()

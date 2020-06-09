@@ -54,10 +54,11 @@ from .metadata import ChunkMetadata
 # Local non-exported definitions --
 # ---------------------------------
 
-_STATUS_IN_PROGRESS=1
-STATUS_COMPLETED=2
+_STATUS_IN_PROGRESS = 1
+STATUS_COMPLETED = 2
 
 _LOG = logging.getLogger(__name__)
+
 
 class QueueManager():
     """Class implementing chunk queue manager for Qserv ingest process
@@ -71,7 +72,6 @@ class QueueManager():
 
         metadata = MetaData(bind=self.engine)
         self.task = Table('task', metadata, autoload=True)
-
 
     def load(self, data_url):
         """Load chunks in task queue
@@ -90,21 +90,21 @@ class QueueManager():
             for c in chunks:
                 _LOG.debug("Insert chunk %s in queue", c)
                 result = self.engine.execute(self.task.insert(),
-                                            {"database_name":metadata.database,
-                                            "chunk_id":c,
-                                            "chunk_file_url":url})
-
+                                             {"database_name": metadata.database,
+                                              "chunk_id": c,
+                                              "chunk_file_url": url})
 
     def _get_current_chunk(self):
         # "SELECT chunk_id, chunk_file_url FROM task WHERE pod_name = ?"
-        query = select([self.task.c.database_name, self.task.c.chunk_id, self.task.c.chunk_file_url])
+        query = select([self.task.c.database_name,
+                        self.task.c.chunk_id, self.task.c.chunk_file_url])
         query = query.where(self.task.c.pod_name == self.pod_name)
         result = self.engine.execute(query)
         row = result.first()
         if row:
-            chunk=(row[0], int(row[1]),row[2])
+            chunk = (row[0], int(row[1]), row[2])
         else:
-            chunk=None
+            chunk = None
         return chunk
 
     def lock_chunk(self):
@@ -120,8 +120,9 @@ class QueueManager():
 
         if not current_chunk:
             sql = "UPDATE task SET pod_name = '{}', status = {} WHERE pod_name IS NULL AND status IS NULL ORDER BY chunk_id ASC LIMIT 1;"
-            result = self.engine.execute(sql.format(self.pod_name, _STATUS_IN_PROGRESS))
-            
+            result = self.engine.execute(sql.format(
+                self.pod_name, _STATUS_IN_PROGRESS))
+
             current_chunk = self._get_current_chunk()
 
         if not current_chunk:
