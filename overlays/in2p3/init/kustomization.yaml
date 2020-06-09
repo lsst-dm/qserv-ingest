@@ -1,0 +1,4 @@
+bases:
+- ../../../base/init
+patchesStrategicMerge:
+- init.yaml
