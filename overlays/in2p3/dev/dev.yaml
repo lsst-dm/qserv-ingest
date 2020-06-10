@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qserv-ingest
+  labels:
+    app: qserv
+    instance: qserv
+    run: qserv-ingest
+    tier: ingest
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+     app: qserv
+     instance: qserv
+     run: qserv-ingest
+     tier: ingest
+  template:
+    metadata:
+      labels:
+        app: qserv
+        instance: qserv
+        run: qserv-ingest
+        tier: ingest
+    spec:
+      containers:
+      - name: qserv-ingest
+        env:
+        - name: "DATA_URL"
+          valueFrom:
+            configMapKeyRef:
+              name: config-data-url
+              key: DATA_URL
+        - name: "REQUESTS_CA_BUNDLE"
+          valueFrom:
+            configMapKeyRef:
+              name: config-data-url
+              key: REQUESTS_CA_BUNDLE
+        volumeMounts:
+        - name: config-data-url
+          mountPath: /config-data-url
+      volumes:
+        - name: config-data-url
+          configMap:
+            name: config-data-url
