@@ -9,7 +9,7 @@ set -euxo pipefail
 DIR=$(cd "$(dirname "$0")"; pwd -P)
 . ./env.sh
 
-for f in "init" "ingest" "publish"
+for f in "dev" "ingest" "init" "publish"
 do
 sed "s|<INGEST_IMAGE>|$INGEST_IMAGE|g" "$DIR/base/$f/$f.yaml.tpl" \
     > "$DIR/base/$f/$f.yaml"

@@ -30,11 +30,7 @@ Register database and table inside replication service
 #  Imports of standard modules --
 # -------------------------------
 import argparse
-import getpass
-import json
 import logging
-import os
-import sys
 
 # ----------------------------
 # Imports for other modules --

@@ -1,0 +1,7 @@
+commonLabels:
+  org: lsst
+  app: qserv
+
+resources:
+- dev.yaml
+
