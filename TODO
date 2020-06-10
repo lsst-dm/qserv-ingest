@@ -1,8 +1,0 @@
-- Add support for telepresence
-- Check what happen on repl-task error?
-
-- Replace "True/False" in csv files with "1/0"
-- Use FILE-LIST option to load multiple chunks on a worker, sequentially
-- Use MEMQ+JOB (number of job is workers/ingest-thread), where ingest-thread=ncore
-- "LOAD DATA INFILE" use 20MB/sec per thread
-- Is czar db `root` access required for repl ctl or could the replication controller use lower privileges for czar db access?
