@@ -127,6 +127,7 @@ def ingest_task(base_url, connection):
         if transaction_id:
             close_transaction(base_url, database, transaction_id, success)
 
+    # TODO release chunk ni queue if process crash so that it can be locked by an other pod?
     # ingest successful
     queue_manager.delete_chunk()
     if chunk_file and os.path.isfile(chunk_file):
