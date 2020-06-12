@@ -4,6 +4,7 @@ metadata:
   name: ingest-ingest
 spec:
   parallelism: 10
+  backoffLimit: 0
   template:
     spec:
       containers:
