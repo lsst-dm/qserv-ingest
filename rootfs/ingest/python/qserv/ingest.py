@@ -107,6 +107,8 @@ def ingest_task(base_url, connection):
     if not chunk_info:
         return 0
     (database, chunk_id, chunk_base_url) = chunk_info
+    
+    chunk_file = None
     transaction_id = None
     success = False
     try:
