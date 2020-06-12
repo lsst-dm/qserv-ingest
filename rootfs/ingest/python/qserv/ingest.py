@@ -189,7 +189,7 @@ def start_transaction(base_url, database):
 
 
 def close_transaction(base_url, database, transaction_id, success):
-    tmp_url = posixpath.join("ingest/v1/trans/", str(transaction_id))
+    tmp_url = posixpath.join("ingest/trans/", str(transaction_id))
     if success is True:
         tmp_url += "?abort=0&build-secondary-index=1"
     else:
