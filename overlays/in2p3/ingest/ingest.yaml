@@ -3,7 +3,7 @@ kind: Job
 metadata:
   name: ingest-ingest
 spec:
-  parallelism: 80
+  parallelism: 10
   template:
     spec:
       containers:

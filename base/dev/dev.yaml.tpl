@@ -12,24 +12,18 @@ metadata:
   name: ingest-dev
   labels:
     app: qserv
-    instance: qserv
-    run: qserv-ingest
-    tier: ingest
+    tier: ingest-dev
 spec:
   replicas: 1
   selector:
     matchLabels:
      app: qserv
-     instance: qserv
-     run: qserv-ingest
-     tier: ingest
+     tier: ingest-dev
   template:
     metadata:
       labels:
         app: qserv
-        instance: qserv
-        run: qserv-ingest
-        tier: ingest
+        tier: ingest-dev
     spec:
       containers:
       - command:
