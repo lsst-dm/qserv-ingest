@@ -1,0 +1,42 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ingest-init
+spec:
+  template:
+    spec:
+      containers:
+      - name: queue
+        env:
+        - name: "DATA_URL"
+          valueFrom:
+            configMapKeyRef:
+              name: config-data-url
+              key: DATA_URL
+        - name: "REQUESTS_CA_BUNDLE"
+          valueFrom:
+            configMapKeyRef:
+              name: config-data-url
+              key: REQUESTS_CA_BUNDLE
+        volumeMounts:
+        - name: config-data-url
+          mountPath: /config-data-url
+      - name: register
+        env:
+        - name: "DATA_URL"
+          valueFrom:
+            configMapKeyRef:
+              name: config-data-url
+              key: DATA_URL
+        - name: "REQUESTS_CA_BUNDLE"
+          valueFrom:
+            configMapKeyRef:
+              name: config-data-url
+              key: REQUESTS_CA_BUNDLE
+        volumeMounts:
+        - name: config-data-url
+          mountPath: /config-data-url      
+      volumes:
+        - name: config-data-url
+          configMap:
+            name: config-data-url

@@ -1,0 +1,27 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ingest-publish
+spec:
+  template:
+    spec:
+      containers:
+      - name: publish 
+        env:
+        - name: "DATA_URL"
+          valueFrom:
+            configMapKeyRef:
+              name: config-data-url
+              key: DATA_URL
+        - name: "REQUESTS_CA_BUNDLE"
+          valueFrom:
+            configMapKeyRef:
+              name: config-data-url
+              key: REQUESTS_CA_BUNDLE
+        volumeMounts:
+        - name: config-data-url
+          mountPath: /config-data-url
+      volumes:
+        - name: config-data-url
+          configMap:
+            name: config-data-url
