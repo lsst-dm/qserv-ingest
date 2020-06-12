@@ -11,6 +11,6 @@ secretGenerator:
   - qserv 
 generatorOptions:
   labels:
-    kustomize.generated.resources: qserv
+    kustomize.generated.resources: qserv.ingest
   disableNameSuffixHash: true
 

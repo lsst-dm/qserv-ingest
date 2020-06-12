@@ -10,3 +10,7 @@ configMapGenerator:
   literals:
   - DATA_URL=https://ccnetlsst01.in2p3.fr:10443/dc2_run2.1i_dr1b/
   - REQUESTS_CA_BUNDLE=/config-data-url/chain_TERENA_SSL_CA_3.pem
+generatorOptions:
+  labels:
+    kustomize.generated.resources: qserv.ingest
+  disableNameSuffixHash: true
