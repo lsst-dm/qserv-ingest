@@ -125,6 +125,9 @@ def ingest_task(base_url, connection):
             abort_transaction(base_url, database, transaction_id)
         _LOG.critical('Error in ingest task for chunk %s', chunk_info)
         raise
+    finally:
+        if chunk_file and os.path.isfile(chunk_file):
+            os.remove(chunk_file)
 
     queue_manager.delete_chunk()
     return 1
