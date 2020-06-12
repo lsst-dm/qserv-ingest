@@ -123,7 +123,7 @@ def ingest_task(base_url, connection):
         raise(e)
     finally:
         if transaction_id:
-            close_transaction(base_url, database, success)
+            close_transaction(base_url, database, transaction_id, success)
         if chunk_file and os.path.isfile(chunk_file):
             os.remove(chunk_file)
 
@@ -142,12 +142,14 @@ def put(url):
     r = requests.put(url, json={"auth_key": authKey})
     if (r.status_code != 200):
         raise Exception(
-            'Error in replication controller HTTP response (PUT)', url, r.status_code)
+            'Error in replication controller HTTP response (PUT)', url,
+            r.status_code)
     responseJson = r.json()
     if not responseJson['success']:
         logging.critical("%s %s", url, responseJson['error'])
         raise Exception(
-            'Error in replication controller JSON response (PUT)', url, responseJson["error"])
+            'Error in replication controller JSON response (PUT)', url,
+            responseJson["error"])
     logging.debug(responseJson)
     logging.info("success")
 
@@ -159,12 +161,14 @@ def post(url, payload):
     r = requests.post(url, json=payload)
     if (r.status_code != 200):
         raise Exception(
-            'Error in replication controller HTTP response (POST)', url, r.status_code)
+            'Error in replication controller HTTP response (POST)', url,
+            r.status_code)
     responseJson = r.json()
     if not responseJson["success"]:
         logging.critical(responseJson["error"])
         raise Exception(
-            'Error in replication controller response (POST)', url, responseJson["error"])
+            'Error in replication controller response (POST)', url,
+            responseJson["error"])
     logging.debug(responseJson)
     logging.debug("success")
 
