@@ -35,7 +35,7 @@ spec:
       - command:
         - sleep
         - "3600"
-        image: qserv/qserv-ingest:71f0528
+        image: qserv/qserv-ingest:10cdec4-dirty
         imagePullPolicy: Always
         name: qserv-ingest
         volumeMounts:

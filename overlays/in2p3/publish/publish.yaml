@@ -8,11 +8,6 @@ spec:
       containers:
       - name: publish 
         env:
-        - name: "DATA_URL"
-          valueFrom:
-            configMapKeyRef:
-              name: config-data-url
-              key: DATA_URL
         - name: "REQUESTS_CA_BUNDLE"
           valueFrom:
             configMapKeyRef:

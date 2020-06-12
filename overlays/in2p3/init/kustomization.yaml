@@ -5,6 +5,7 @@ patchesStrategicMerge:
 
 configMapGenerator:
 - name: config-data-url
+  behavior: replace
   files:
   - chain_TERENA_SSL_CA_3.pem
   literals:
