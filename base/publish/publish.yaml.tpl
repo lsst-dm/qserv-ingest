@@ -11,7 +11,10 @@ spec:
         - publish.sh
         env:
         - name: DATA_URL
-          value: "https://raw.githubusercontent.com/lsst-dm/qserv-DC2/tickets/DM-24587/data/example_db/"
+          valueFrom:
+            configMapKeyRef:
+              name: config-data-url
+              key: DATA_URL
         image: <INGEST_IMAGE> 
         imagePullPolicy: Always
         volumeMounts:
