@@ -9,7 +9,7 @@ data:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: qserv-ingest
+  name: ingest-dev
   labels:
     app: qserv
     instance: qserv
@@ -35,9 +35,9 @@ spec:
       - command:
         - sleep
         - "3600"
-        image: qserv/qserv-ingest:df1fdca-dirty
+        image: qserv/qserv-ingest:6483d48
         imagePullPolicy: Always
-        name: qserv-ingest
+        name: ingest
         volumeMounts:
           - name: repl-creds
             mountPath: /qserv/.lsst
