@@ -30,14 +30,11 @@ User-friendly client library for Qserv replication service.
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
-import argparse
 import getpass
-import json
 import logging
 import os
 import posixpath
 import subprocess
-import sys
 import urllib.parse
 
 # ----------------------------
@@ -60,7 +57,7 @@ def authorize():
     try:
         with open(os.path.expanduser(AUTH_PATH), 'r') as f:
             authKey = f.read().strip()
-    except:
+    except IOError:
         logging.debug("Cannot find %s", AUTH_PATH)
         authKey = getpass.getpass()
     return authKey
@@ -81,7 +78,7 @@ def get_chunk_location(base_url, chunk, database, transaction_id):
     return (host, port)
 
 
-def ingest_chunk(host, port, transaction_id, chunk_file):
+def _ingest_chunk(host, port, transaction_id, chunk_file):
 
     cmd = ['qserv-replica-file-ingest', '--debug', '--verbose', 'FILE',
            host, str(port), str(transaction_id), "position", "P", chunk_file]
@@ -93,6 +90,7 @@ def ingest_chunk(host, port, transaction_id, chunk_file):
                             check=True)
     logging.debug("stdout %s", result.stdout)
     logging.debug("stderr %s", result.stderr)
+    return True
 
 
 def ingest_task(base_url, connection):
@@ -110,22 +108,22 @@ def ingest_task(base_url, connection):
         return 0
     (database, chunk_id, chunk_base_url) = chunk_info
     transaction_id = None
+    success = False
     try:
         transaction_id = start_transaction(base_url, database)
         (host, port) = get_chunk_location(
             base_url, chunk_id, database, transaction_id)
         chunk_file = download_chunk(chunk_base_url, chunk_id, "chunk_{}.txt")
-        ingest_chunk(host, port, transaction_id, chunk_file)
+        _ingest_chunk(host, port, transaction_id, chunk_file)
         chunk_file = download_chunk(
             chunk_base_url, chunk_id, "chunk_{}_overlap.txt")
-        ingest_chunk(host, port, transaction_id, chunk_file)
-        stop_transaction(base_url, database, transaction_id)
-    except:
-        if transaction_id:
-            abort_transaction(base_url, database, transaction_id)
-        _LOG.critical('Error in ingest task for chunk %s', chunk_info)
-        raise
+        success = _ingest_chunk(host, port, transaction_id, chunk_file)
+    except Exception as e:
+        _LOG.critical('Error in ingest task for chunk %s: %s', chunk_info, e)
+        raise(e)
     finally:
+        if transaction_id:
+            close_transaction(base_url, database, success)
         if chunk_file and os.path.isfile(chunk_file):
             os.remove(chunk_file)
 
@@ -186,15 +184,13 @@ def start_transaction(base_url, database):
     return transaction_id
 
 
-def stop_transaction(base_url, database, transaction_id):
-    tmp_url = posixpath.join("ingest/trans/", str(transaction_id))
-    tmp_url += "?abort=0&build-secondary-index=1"
-    url = urllib.parse.urljoin(base_url, tmp_url)
-    responseJson = put(url)
-
-
-def abort_transaction(base_url, database, transaction_id):
+def close_transaction(base_url, database, transaction_id, success):
     tmp_url = posixpath.join("ingest/v1/trans/", str(transaction_id))
-    tmp_url += "?abort=1"
+    if success is True:
+        tmp_url += "?abort=0&build-secondary-index=1"
+    else:
+        tmp_url += "?abort=1"
     url = urllib.parse.urljoin(base_url, tmp_url)
     responseJson = put(url)
+    _LOG.debug("Close transaction: %s", responseJson)
+    # TODO check if transaction is well closed!
