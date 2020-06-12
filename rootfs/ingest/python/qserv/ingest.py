@@ -107,7 +107,7 @@ def ingest_task(base_url, connection):
     if not chunk_info:
         return 0
     (database, chunk_id, chunk_base_url) = chunk_info
-    
+
     chunk_file = None
     transaction_id = None
     success = False
@@ -126,10 +126,11 @@ def ingest_task(base_url, connection):
     finally:
         if transaction_id:
             close_transaction(base_url, database, transaction_id, success)
-        if chunk_file and os.path.isfile(chunk_file):
-            os.remove(chunk_file)
 
     queue_manager.delete_chunk()
+    if chunk_file and os.path.isfile(chunk_file):
+        os.remove(chunk_file)
+
     return 1
 
 
