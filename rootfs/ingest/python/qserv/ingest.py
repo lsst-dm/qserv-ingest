@@ -127,6 +127,7 @@ def ingest_task(base_url, connection):
         if transaction_id:
             close_transaction(base_url, database, transaction_id, success)
 
+    # ingest successful
     queue_manager.delete_chunk()
     if chunk_file and os.path.isfile(chunk_file):
         os.remove(chunk_file)
