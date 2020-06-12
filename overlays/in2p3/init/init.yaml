@@ -8,12 +8,12 @@ spec:
       containers:
       - name: queue
         env:
-        - name: "DATA_URL"
+        - name: DATA_URL
           valueFrom:
             configMapKeyRef:
               name: config-data-url
               key: DATA_URL
-        - name: "REQUESTS_CA_BUNDLE"
+        - name: REQUESTS_CA_BUNDLE
           valueFrom:
             configMapKeyRef:
               name: config-data-url
@@ -23,12 +23,12 @@ spec:
           mountPath: /config-data-url
       - name: register
         env:
-        - name: "DATA_URL"
+        - name: DATA_URL
           valueFrom:
             configMapKeyRef:
               name: config-data-url
               key: DATA_URL
-        - name: "REQUESTS_CA_BUNDLE"
+        - name: REQUESTS_CA_BUNDLE
           valueFrom:
             configMapKeyRef:
               name: config-data-url
