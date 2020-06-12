@@ -58,7 +58,7 @@ def authorize():
         with open(os.path.expanduser(AUTH_PATH), 'r') as f:
             authKey = f.read().strip()
     except IOError:
-        logging.debug("Cannot find %s", AUTH_PATH)
+        _LOG.debug("Cannot find %s", AUTH_PATH)
         authKey = getpass.getpass()
     return authKey
 
@@ -73,7 +73,7 @@ def get_chunk_location(base_url, chunk, database, transaction_id):
     # Get location host and port
     host = responseJson["location"]["host"]
     port = responseJson["location"]["port"]
-    logging.info("Location for chunk %d: %s %d" % (chunk, host, port))
+    _LOG.info("Location for chunk %d: %s %d" % (chunk, host, port))
 
     return (host, port)
 
@@ -82,14 +82,14 @@ def _ingest_chunk(host, port, transaction_id, chunk_file):
 
     cmd = ['qserv-replica-file-ingest', '--debug', '--verbose', 'FILE',
            host, str(port), str(transaction_id), "position", "P", chunk_file]
-    logging.debug("Launch unix process %s", cmd)
+    _LOG.debug("Launch unix process %s", cmd)
 
     result = subprocess.run(cmd,
                             capture_output=True,
                             universal_newlines=True,
                             check=True)
-    logging.debug("stdout %s", result.stdout)
-    logging.debug("stderr %s", result.stderr)
+    _LOG.debug("stdout %s", result.stdout)
+    _LOG.debug("stderr %s", result.stderr)
     return True
 
 
@@ -150,18 +150,18 @@ def put(url):
             r.status_code)
     responseJson = r.json()
     if not responseJson['success']:
-        logging.critical("%s %s", url, responseJson['error'])
+        _LOG.critical("%s %s", url, responseJson['error'])
         raise Exception(
             'Error in replication controller JSON response (PUT)', url,
             responseJson["error"])
-    logging.debug(responseJson)
-    logging.info("success")
+    _LOG.debug(responseJson)
+    _LOG.info("success")
 
 
 def post(url, payload):
     authKey = authorize()
     payload["auth_key"] = authKey
-    logging.debug(payload)
+    _LOG.debug(payload)
     r = requests.post(url, json=payload)
     if (r.status_code != 200):
         raise Exception(
@@ -169,12 +169,12 @@ def post(url, payload):
             r.status_code)
     responseJson = r.json()
     if not responseJson["success"]:
-        logging.critical(responseJson["error"])
+        _LOG.critical(responseJson["error"])
         raise Exception(
             'Error in replication controller response (POST)', url,
             responseJson["error"])
-    logging.debug(responseJson)
-    logging.debug("success")
+    _LOG.debug(responseJson)
+    _LOG.debug("success")
 
     return responseJson
 
@@ -187,7 +187,7 @@ def start_transaction(base_url, database):
     # For catching the super transaction ID
     # Want to print responseJson["databases"]["hsc_test_w_2020_14_00"]["transactions"]
     transaction_id = responseJson["databases"][database]["transactions"][0]["id"]
-    logging.debug(f"transaction ID: {transaction_id}")
+    _LOG.debug(f"transaction ID: {transaction_id}")
 
     return transaction_id
 
@@ -200,5 +200,4 @@ def close_transaction(base_url, database, transaction_id, success):
         tmp_url += "?abort=1"
     url = urllib.parse.urljoin(base_url, tmp_url)
     responseJson = put(url)
-    _LOG.debug("Close transaction: %s", responseJson)
-    # TODO check if transaction is well closed!
+    _LOG.debug("Close transaction (responseJson: %s)", responseJson)
