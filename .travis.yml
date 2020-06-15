@@ -15,6 +15,7 @@ before_script:
   - ./qserv-operator/wait-qserv-ready.sh
 
 script:
+  - cp env.example.sh env.sh
   - . ./env.sh
   - ./build-image.sh
   - ./job.sh init
