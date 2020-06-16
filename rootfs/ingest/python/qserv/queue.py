@@ -68,7 +68,7 @@ class QueueManager():
 
         db_url = make_url(connection)
         self.engine = sqlalchemy.create_engine(db_url)
-        self.pod_name = socket.gethostname()
+        self.pod = socket.gethostname()
 
         metadata = MetaData(bind=self.engine)
         self.task = Table('task', metadata, autoload=True)
@@ -95,10 +95,10 @@ class QueueManager():
                                               "chunk_file_url": url})
 
     def _get_current_chunk(self):
-        # "SELECT chunk_id, chunk_file_url FROM task WHERE pod_name = ?"
+        # "SELECT chunk_id, chunk_file_url FROM task WHERE pod = ?"
         query = select([self.task.c.database_name,
                         self.task.c.chunk_id, self.task.c.chunk_file_url])
-        query = query.where(self.task.c.pod_name == self.pod_name)
+        query = query.where(self.task.c.pod == self.pod)
         result = self.engine.execute(query)
         row = result.first()
         if row:
@@ -119,16 +119,16 @@ class QueueManager():
         current_chunk = self._get_current_chunk()
 
         if not current_chunk:
-            sql = "UPDATE task SET pod_name = '{}', status = {} WHERE pod_name IS NULL AND status IS NULL ORDER BY chunk_id ASC LIMIT 1;"
+            sql = "UPDATE task SET pod = '{}', status = {} WHERE pod IS NULL AND status IS NULL ORDER BY chunk_id ASC LIMIT 1;"
             result = self.engine.execute(sql.format(
-                self.pod_name, _STATUS_IN_PROGRESS))
+                self.pod, _STATUS_IN_PROGRESS))
 
             current_chunk = self._get_current_chunk()
 
         if not current_chunk:
             logging.info("Chunk queue is empty")
         else:
-            logging.debug("Chunk for pod %s: %s", self.pod_name, current_chunk)
+            logging.debug("Chunk for pod %s: %s", self.pod, current_chunk)
         return current_chunk
 
     def delete_chunk(self):
@@ -139,5 +139,5 @@ class QueueManager():
         """
         logging.debug("Unlock chunk in queue")
         query = delete(self.task)
-        query = query.where(self.task.c.pod_name == self.pod_name)
+        query = query.where(self.task.c.pod == self.pod)
         result = self.engine.execute(query)
