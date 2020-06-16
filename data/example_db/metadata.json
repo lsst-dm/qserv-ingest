@@ -8,7 +8,6 @@
          "chunks": [57892, 61973, 62654, 65383, 76932, 78976]
         }
       ],
-      "type": "director"
     },
     {
       "schema": "dpdd_forced.json",
@@ -17,7 +16,6 @@
          "chunks": [57892, 61973, 62654, 65383, 76932, 78976]
         }
       ],
-      "type": "partition"
     },
     {
       "schema": "dpdd_ref.json",
@@ -26,7 +24,6 @@
          "chunks": [57892, 61973, 62654, 65383, 76932, 78976]
         }
       ],
-      "type": "partition"
     }
   ]
 }

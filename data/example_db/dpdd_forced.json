@@ -1,0 +1,2112 @@
+{
+    "database": "dc2_run2_1i_dr1b",
+    "table": "dpdd_forced",
+    "auth_key": "",
+    "is_partitioned": 1,
+    "chunkid_key": "chunkId",
+    "sub_chunk_id_key": "subChunkId",
+    "is_director": 0,
+    "director_key": "objectId",
+    "schema": [
+        {
+            "name": "objectId",
+            "type": "bigint(20) NOT NULL"
+        },
+        {
+            "name": "g_base_PixelFlags_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_PixelFlags_flag_offimage",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_PixelFlags_flag_edge",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_PixelFlags_flag_interpolated",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_PixelFlags_flag_saturated",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_PixelFlags_flag_cr",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_PixelFlags_flag_bad",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_PixelFlags_flag_suspect",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_PixelFlags_flag_interpolatedCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_PixelFlags_flag_saturatedCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_PixelFlags_flag_crCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_PixelFlags_flag_suspectCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_PixelFlags_flag_clippedCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_PixelFlags_flag_sensor_edgeCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_PixelFlags_flag_rejectedCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_PixelFlags_flag_inexact_psfCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_PixelFlags_flag_bright_objectCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_PixelFlags_flag_clipped",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_PixelFlags_flag_sensor_edge",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_PixelFlags_flag_rejected",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_PixelFlags_flag_inexact_psf",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_PixelFlags_flag_bright_object",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_good",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_ClassificationExtendedness_value",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_base_ClassificationExtendedness_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_modelfit_CModel_instFlux",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_modelfit_CModel_instFluxErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_modelfit_CModel_instFlux_inner",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_modelfit_CModel_fracDev",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_modelfit_CModel_objective",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_modelfit_CModel_apCorr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_modelfit_CModel_apCorrErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_modelfit_CModel_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_modelfit_CModel_flag_region_maxArea",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_modelfit_CModel_flag_region_maxBadPixelFraction",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_modelfit_CModel_flag_badReference",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_modelfit_CModel_flag_noShapeletPsf",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_modelfit_CModel_flag_badCentroid",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_modelfit_CModel_flag_apCorr",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_mag_cmodel",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_magerr_cmodel",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_base_SdssCentroid_x",
+            "type": "DOUBLE NOT NULL"
+        },
+        {
+            "name": "g_base_SdssCentroid_y",
+            "type": "DOUBLE NOT NULL"
+        },
+        {
+            "name": "g_base_SdssCentroid_xErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_base_SdssCentroid_yErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_base_SdssCentroid_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_SdssCentroid_flag_edge",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_SdssCentroid_flag_noSecondDerivative",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_SdssCentroid_flag_almostNoSecondDerivative",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_SdssCentroid_flag_notAtMaximum",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_SdssCentroid_flag_resetToPeak",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_SdssCentroid_flag_badInitialCentroid",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_SdssShape_xx",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_base_SdssShape_yy",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_base_SdssShape_xy",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_base_SdssShape_xxErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_base_SdssShape_yyErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_base_SdssShape_xyErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_base_SdssShape_x",
+            "type": "DOUBLE NOT NULL"
+        },
+        {
+            "name": "g_base_SdssShape_y",
+            "type": "DOUBLE NOT NULL"
+        },
+        {
+            "name": "g_base_SdssShape_instFlux",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_base_SdssShape_instFluxErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_base_SdssShape_psf_xx",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_base_SdssShape_psf_yy",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_base_SdssShape_psf_xy",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_base_SdssShape_instFlux_xx_Cov",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_base_SdssShape_instFlux_yy_Cov",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_base_SdssShape_instFlux_xy_Cov",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_base_SdssShape_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_SdssShape_flag_unweightedBad",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_SdssShape_flag_unweighted",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_SdssShape_flag_shift",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_SdssShape_flag_maxIter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_SdssShape_flag_psf",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_SdssShape_flag_badCentroid",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_PsfFlux_instFlux",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_base_PsfFlux_instFluxErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_base_PsfFlux_area",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_base_PsfFlux_apCorr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_base_PsfFlux_apCorrErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_base_PsfFlux_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_PsfFlux_flag_noGoodPixels",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_PsfFlux_flag_edge",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_PsfFlux_flag_apCorr",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_base_PsfFlux_flag_badCentroid",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "g_mag",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "g_magerr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_base_PixelFlags_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_PixelFlags_flag_offimage",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_PixelFlags_flag_edge",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_PixelFlags_flag_interpolated",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_PixelFlags_flag_saturated",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_PixelFlags_flag_cr",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_PixelFlags_flag_bad",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_PixelFlags_flag_suspect",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_PixelFlags_flag_interpolatedCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_PixelFlags_flag_saturatedCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_PixelFlags_flag_crCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_PixelFlags_flag_suspectCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_PixelFlags_flag_clippedCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_PixelFlags_flag_sensor_edgeCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_PixelFlags_flag_rejectedCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_PixelFlags_flag_inexact_psfCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_PixelFlags_flag_bright_objectCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_PixelFlags_flag_clipped",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_PixelFlags_flag_sensor_edge",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_PixelFlags_flag_rejected",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_PixelFlags_flag_inexact_psf",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_PixelFlags_flag_bright_object",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_good",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_ClassificationExtendedness_value",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_base_ClassificationExtendedness_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_modelfit_CModel_instFlux",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_modelfit_CModel_instFluxErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_modelfit_CModel_instFlux_inner",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_modelfit_CModel_fracDev",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_modelfit_CModel_objective",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_modelfit_CModel_apCorr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_modelfit_CModel_apCorrErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_modelfit_CModel_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_modelfit_CModel_flag_region_maxArea",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_modelfit_CModel_flag_region_maxBadPixelFraction",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_modelfit_CModel_flag_badReference",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_modelfit_CModel_flag_noShapeletPsf",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_modelfit_CModel_flag_badCentroid",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_modelfit_CModel_flag_apCorr",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_mag_cmodel",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_magerr_cmodel",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_base_SdssCentroid_x",
+            "type": "DOUBLE NOT NULL"
+        },
+        {
+            "name": "i_base_SdssCentroid_y",
+            "type": "DOUBLE NOT NULL"
+        },
+        {
+            "name": "i_base_SdssCentroid_xErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_base_SdssCentroid_yErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_base_SdssCentroid_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_SdssCentroid_flag_edge",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_SdssCentroid_flag_noSecondDerivative",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_SdssCentroid_flag_almostNoSecondDerivative",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_SdssCentroid_flag_notAtMaximum",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_SdssCentroid_flag_resetToPeak",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_SdssCentroid_flag_badInitialCentroid",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_SdssShape_xx",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_base_SdssShape_yy",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_base_SdssShape_xy",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_base_SdssShape_xxErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_base_SdssShape_yyErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_base_SdssShape_xyErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_base_SdssShape_x",
+            "type": "DOUBLE NOT NULL"
+        },
+        {
+            "name": "i_base_SdssShape_y",
+            "type": "DOUBLE NOT NULL"
+        },
+        {
+            "name": "i_base_SdssShape_instFlux",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_base_SdssShape_instFluxErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_base_SdssShape_psf_xx",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_base_SdssShape_psf_yy",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_base_SdssShape_psf_xy",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_base_SdssShape_instFlux_xx_Cov",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_base_SdssShape_instFlux_yy_Cov",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_base_SdssShape_instFlux_xy_Cov",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_base_SdssShape_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_SdssShape_flag_unweightedBad",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_SdssShape_flag_unweighted",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_SdssShape_flag_shift",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_SdssShape_flag_maxIter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_SdssShape_flag_psf",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_SdssShape_flag_badCentroid",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_PsfFlux_instFlux",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_base_PsfFlux_instFluxErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_base_PsfFlux_area",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_base_PsfFlux_apCorr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_base_PsfFlux_apCorrErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_base_PsfFlux_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_PsfFlux_flag_noGoodPixels",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_PsfFlux_flag_edge",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_PsfFlux_flag_apCorr",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_base_PsfFlux_flag_badCentroid",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "i_mag",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "i_magerr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_base_PixelFlags_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_PixelFlags_flag_offimage",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_PixelFlags_flag_edge",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_PixelFlags_flag_interpolated",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_PixelFlags_flag_saturated",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_PixelFlags_flag_cr",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_PixelFlags_flag_bad",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_PixelFlags_flag_suspect",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_PixelFlags_flag_interpolatedCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_PixelFlags_flag_saturatedCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_PixelFlags_flag_crCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_PixelFlags_flag_suspectCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_PixelFlags_flag_clippedCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_PixelFlags_flag_sensor_edgeCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_PixelFlags_flag_rejectedCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_PixelFlags_flag_inexact_psfCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_PixelFlags_flag_bright_objectCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_PixelFlags_flag_clipped",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_PixelFlags_flag_sensor_edge",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_PixelFlags_flag_rejected",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_PixelFlags_flag_inexact_psf",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_PixelFlags_flag_bright_object",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_good",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_ClassificationExtendedness_value",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_base_ClassificationExtendedness_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_modelfit_CModel_instFlux",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_modelfit_CModel_instFluxErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_modelfit_CModel_instFlux_inner",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_modelfit_CModel_fracDev",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_modelfit_CModel_objective",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_modelfit_CModel_apCorr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_modelfit_CModel_apCorrErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_modelfit_CModel_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_modelfit_CModel_flag_region_maxArea",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_modelfit_CModel_flag_region_maxBadPixelFraction",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_modelfit_CModel_flag_badReference",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_modelfit_CModel_flag_noShapeletPsf",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_modelfit_CModel_flag_badCentroid",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_modelfit_CModel_flag_apCorr",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_mag_cmodel",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_magerr_cmodel",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_base_SdssCentroid_x",
+            "type": "DOUBLE NOT NULL"
+        },
+        {
+            "name": "r_base_SdssCentroid_y",
+            "type": "DOUBLE NOT NULL"
+        },
+        {
+            "name": "r_base_SdssCentroid_xErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_base_SdssCentroid_yErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_base_SdssCentroid_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_SdssCentroid_flag_edge",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_SdssCentroid_flag_noSecondDerivative",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_SdssCentroid_flag_almostNoSecondDerivative",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_SdssCentroid_flag_notAtMaximum",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_SdssCentroid_flag_resetToPeak",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_SdssCentroid_flag_badInitialCentroid",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_SdssShape_xx",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_base_SdssShape_yy",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_base_SdssShape_xy",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_base_SdssShape_xxErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_base_SdssShape_yyErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_base_SdssShape_xyErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_base_SdssShape_x",
+            "type": "DOUBLE NOT NULL"
+        },
+        {
+            "name": "r_base_SdssShape_y",
+            "type": "DOUBLE NOT NULL"
+        },
+        {
+            "name": "r_base_SdssShape_instFlux",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_base_SdssShape_instFluxErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_base_SdssShape_psf_xx",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_base_SdssShape_psf_yy",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_base_SdssShape_psf_xy",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_base_SdssShape_instFlux_xx_Cov",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_base_SdssShape_instFlux_yy_Cov",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_base_SdssShape_instFlux_xy_Cov",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_base_SdssShape_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_SdssShape_flag_unweightedBad",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_SdssShape_flag_unweighted",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_SdssShape_flag_shift",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_SdssShape_flag_maxIter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_SdssShape_flag_psf",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_SdssShape_flag_badCentroid",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_PsfFlux_instFlux",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_base_PsfFlux_instFluxErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_base_PsfFlux_area",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_base_PsfFlux_apCorr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_base_PsfFlux_apCorrErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_base_PsfFlux_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_PsfFlux_flag_noGoodPixels",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_PsfFlux_flag_edge",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_PsfFlux_flag_apCorr",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_base_PsfFlux_flag_badCentroid",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "r_mag",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "r_magerr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_base_PixelFlags_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_PixelFlags_flag_offimage",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_PixelFlags_flag_edge",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_PixelFlags_flag_interpolated",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_PixelFlags_flag_saturated",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_PixelFlags_flag_cr",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_PixelFlags_flag_bad",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_PixelFlags_flag_suspect",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_PixelFlags_flag_interpolatedCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_PixelFlags_flag_saturatedCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_PixelFlags_flag_crCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_PixelFlags_flag_suspectCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_PixelFlags_flag_clippedCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_PixelFlags_flag_sensor_edgeCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_PixelFlags_flag_rejectedCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_PixelFlags_flag_inexact_psfCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_PixelFlags_flag_bright_objectCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_PixelFlags_flag_clipped",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_PixelFlags_flag_sensor_edge",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_PixelFlags_flag_rejected",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_PixelFlags_flag_inexact_psf",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_PixelFlags_flag_bright_object",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_good",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_ClassificationExtendedness_value",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_base_ClassificationExtendedness_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_modelfit_CModel_instFlux",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_modelfit_CModel_instFluxErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_modelfit_CModel_instFlux_inner",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_modelfit_CModel_fracDev",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_modelfit_CModel_objective",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_modelfit_CModel_apCorr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_modelfit_CModel_apCorrErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_modelfit_CModel_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_modelfit_CModel_flag_region_maxArea",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_modelfit_CModel_flag_region_maxBadPixelFraction",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_modelfit_CModel_flag_badReference",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_modelfit_CModel_flag_noShapeletPsf",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_modelfit_CModel_flag_badCentroid",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_modelfit_CModel_flag_apCorr",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_mag_cmodel",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_magerr_cmodel",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_base_SdssCentroid_x",
+            "type": "DOUBLE NOT NULL"
+        },
+        {
+            "name": "u_base_SdssCentroid_y",
+            "type": "DOUBLE NOT NULL"
+        },
+        {
+            "name": "u_base_SdssCentroid_xErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_base_SdssCentroid_yErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_base_SdssCentroid_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_SdssCentroid_flag_edge",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_SdssCentroid_flag_noSecondDerivative",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_SdssCentroid_flag_almostNoSecondDerivative",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_SdssCentroid_flag_notAtMaximum",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_SdssCentroid_flag_resetToPeak",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_SdssCentroid_flag_badInitialCentroid",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_SdssShape_xx",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_base_SdssShape_yy",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_base_SdssShape_xy",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_base_SdssShape_xxErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_base_SdssShape_yyErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_base_SdssShape_xyErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_base_SdssShape_x",
+            "type": "DOUBLE NOT NULL"
+        },
+        {
+            "name": "u_base_SdssShape_y",
+            "type": "DOUBLE NOT NULL"
+        },
+        {
+            "name": "u_base_SdssShape_instFlux",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_base_SdssShape_instFluxErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_base_SdssShape_psf_xx",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_base_SdssShape_psf_yy",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_base_SdssShape_psf_xy",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_base_SdssShape_instFlux_xx_Cov",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_base_SdssShape_instFlux_yy_Cov",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_base_SdssShape_instFlux_xy_Cov",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_base_SdssShape_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_SdssShape_flag_unweightedBad",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_SdssShape_flag_unweighted",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_SdssShape_flag_shift",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_SdssShape_flag_maxIter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_SdssShape_flag_psf",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_SdssShape_flag_badCentroid",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_PsfFlux_instFlux",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_base_PsfFlux_instFluxErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_base_PsfFlux_area",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_base_PsfFlux_apCorr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_base_PsfFlux_apCorrErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_base_PsfFlux_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_PsfFlux_flag_noGoodPixels",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_PsfFlux_flag_edge",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_PsfFlux_flag_apCorr",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_base_PsfFlux_flag_badCentroid",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "u_mag",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "u_magerr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_base_PixelFlags_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_PixelFlags_flag_offimage",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_PixelFlags_flag_edge",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_PixelFlags_flag_interpolated",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_PixelFlags_flag_saturated",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_PixelFlags_flag_cr",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_PixelFlags_flag_bad",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_PixelFlags_flag_suspect",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_PixelFlags_flag_interpolatedCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_PixelFlags_flag_saturatedCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_PixelFlags_flag_crCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_PixelFlags_flag_suspectCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_PixelFlags_flag_clippedCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_PixelFlags_flag_sensor_edgeCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_PixelFlags_flag_rejectedCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_PixelFlags_flag_inexact_psfCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_PixelFlags_flag_bright_objectCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_PixelFlags_flag_clipped",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_PixelFlags_flag_sensor_edge",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_PixelFlags_flag_rejected",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_PixelFlags_flag_inexact_psf",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_PixelFlags_flag_bright_object",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_good",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_ClassificationExtendedness_value",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_base_ClassificationExtendedness_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_modelfit_CModel_instFlux",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_modelfit_CModel_instFluxErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_modelfit_CModel_instFlux_inner",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_modelfit_CModel_fracDev",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_modelfit_CModel_objective",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_modelfit_CModel_apCorr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_modelfit_CModel_apCorrErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_modelfit_CModel_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_modelfit_CModel_flag_region_maxArea",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_modelfit_CModel_flag_region_maxBadPixelFraction",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_modelfit_CModel_flag_badReference",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_modelfit_CModel_flag_noShapeletPsf",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_modelfit_CModel_flag_badCentroid",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_modelfit_CModel_flag_apCorr",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_mag_cmodel",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_magerr_cmodel",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_base_SdssCentroid_x",
+            "type": "DOUBLE NOT NULL"
+        },
+        {
+            "name": "y_base_SdssCentroid_y",
+            "type": "DOUBLE NOT NULL"
+        },
+        {
+            "name": "y_base_SdssCentroid_xErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_base_SdssCentroid_yErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_base_SdssCentroid_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_SdssCentroid_flag_edge",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_SdssCentroid_flag_noSecondDerivative",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_SdssCentroid_flag_almostNoSecondDerivative",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_SdssCentroid_flag_notAtMaximum",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_SdssCentroid_flag_resetToPeak",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_SdssCentroid_flag_badInitialCentroid",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_SdssShape_xx",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_base_SdssShape_yy",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_base_SdssShape_xy",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_base_SdssShape_xxErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_base_SdssShape_yyErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_base_SdssShape_xyErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_base_SdssShape_x",
+            "type": "DOUBLE NOT NULL"
+        },
+        {
+            "name": "y_base_SdssShape_y",
+            "type": "DOUBLE NOT NULL"
+        },
+        {
+            "name": "y_base_SdssShape_instFlux",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_base_SdssShape_instFluxErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_base_SdssShape_psf_xx",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_base_SdssShape_psf_yy",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_base_SdssShape_psf_xy",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_base_SdssShape_instFlux_xx_Cov",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_base_SdssShape_instFlux_yy_Cov",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_base_SdssShape_instFlux_xy_Cov",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_base_SdssShape_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_SdssShape_flag_unweightedBad",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_SdssShape_flag_unweighted",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_SdssShape_flag_shift",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_SdssShape_flag_maxIter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_SdssShape_flag_psf",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_SdssShape_flag_badCentroid",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_PsfFlux_instFlux",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_base_PsfFlux_instFluxErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_base_PsfFlux_area",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_base_PsfFlux_apCorr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_base_PsfFlux_apCorrErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_base_PsfFlux_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_PsfFlux_flag_noGoodPixels",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_PsfFlux_flag_edge",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_PsfFlux_flag_apCorr",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_base_PsfFlux_flag_badCentroid",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "y_mag",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "y_magerr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_base_PixelFlags_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_PixelFlags_flag_offimage",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_PixelFlags_flag_edge",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_PixelFlags_flag_interpolated",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_PixelFlags_flag_saturated",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_PixelFlags_flag_cr",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_PixelFlags_flag_bad",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_PixelFlags_flag_suspect",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_PixelFlags_flag_interpolatedCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_PixelFlags_flag_saturatedCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_PixelFlags_flag_crCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_PixelFlags_flag_suspectCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_PixelFlags_flag_clippedCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_PixelFlags_flag_sensor_edgeCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_PixelFlags_flag_rejectedCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_PixelFlags_flag_inexact_psfCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_PixelFlags_flag_bright_objectCenter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_PixelFlags_flag_clipped",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_PixelFlags_flag_sensor_edge",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_PixelFlags_flag_rejected",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_PixelFlags_flag_inexact_psf",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_PixelFlags_flag_bright_object",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_good",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_ClassificationExtendedness_value",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_base_ClassificationExtendedness_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_modelfit_CModel_instFlux",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_modelfit_CModel_instFluxErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_modelfit_CModel_instFlux_inner",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_modelfit_CModel_fracDev",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_modelfit_CModel_objective",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_modelfit_CModel_apCorr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_modelfit_CModel_apCorrErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_modelfit_CModel_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_modelfit_CModel_flag_region_maxArea",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_modelfit_CModel_flag_region_maxBadPixelFraction",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_modelfit_CModel_flag_badReference",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_modelfit_CModel_flag_noShapeletPsf",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_modelfit_CModel_flag_badCentroid",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_modelfit_CModel_flag_apCorr",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_mag_cmodel",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_magerr_cmodel",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_base_SdssCentroid_x",
+            "type": "DOUBLE NOT NULL"
+        },
+        {
+            "name": "z_base_SdssCentroid_y",
+            "type": "DOUBLE NOT NULL"
+        },
+        {
+            "name": "z_base_SdssCentroid_xErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_base_SdssCentroid_yErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_base_SdssCentroid_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_SdssCentroid_flag_edge",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_SdssCentroid_flag_noSecondDerivative",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_SdssCentroid_flag_almostNoSecondDerivative",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_SdssCentroid_flag_notAtMaximum",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_SdssCentroid_flag_resetToPeak",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_SdssCentroid_flag_badInitialCentroid",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_SdssShape_xx",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_base_SdssShape_yy",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_base_SdssShape_xy",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_base_SdssShape_xxErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_base_SdssShape_yyErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_base_SdssShape_xyErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_base_SdssShape_x",
+            "type": "DOUBLE NOT NULL"
+        },
+        {
+            "name": "z_base_SdssShape_y",
+            "type": "DOUBLE NOT NULL"
+        },
+        {
+            "name": "z_base_SdssShape_instFlux",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_base_SdssShape_instFluxErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_base_SdssShape_psf_xx",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_base_SdssShape_psf_yy",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_base_SdssShape_psf_xy",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_base_SdssShape_instFlux_xx_Cov",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_base_SdssShape_instFlux_yy_Cov",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_base_SdssShape_instFlux_xy_Cov",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_base_SdssShape_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_SdssShape_flag_unweightedBad",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_SdssShape_flag_unweighted",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_SdssShape_flag_shift",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_SdssShape_flag_maxIter",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_SdssShape_flag_psf",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_SdssShape_flag_badCentroid",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_PsfFlux_instFlux",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_base_PsfFlux_instFluxErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_base_PsfFlux_area",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_base_PsfFlux_apCorr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_base_PsfFlux_apCorrErr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_base_PsfFlux_flag",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_PsfFlux_flag_noGoodPixels",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_PsfFlux_flag_edge",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_PsfFlux_flag_apCorr",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_base_PsfFlux_flag_badCentroid",
+            "type": "BOOLEAN NOT NULL"
+        },
+        {
+            "name": "z_mag",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "z_magerr",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "chunkId",
+            "type": "int(11) NOT NULL"
+        },
+        {
+            "name": "subChunkId",
+            "type": "int(11) NOT NULL"
+        }
+    ]
+}
