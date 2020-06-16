@@ -64,13 +64,16 @@ if __name__ == "__main__":
     metadata = ChunkMetadata(args.data_url)
 
     path = "/ingest/database/"
-    json = metadata.json_db
     url = urllib.parse.urljoin(args.url, path)
-    logger.debug("Starting a request: %s with %s", url, json)
+    json = metadata.json_db
+    logger.debug("Starting a database registration request: %s with %s",
+                 url, json)
     ingest.post(url, json)
 
     path = "/ingest/table/"
-    json = metadata.json_director
     url = urllib.parse.urljoin(args.url, path)
-    logger.debug("Starting a request: %s with %s", url, json)
-    ingest.post(url, json)
+
+    for json_data in metadata.get_tables_json():
+        logger.debug("Starting a table registration request: %s with %s",
+                     url, json_data)
+        ingest.post(url, json_data)

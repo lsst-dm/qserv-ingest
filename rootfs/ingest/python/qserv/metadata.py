@@ -29,9 +29,7 @@ Manage metadata related to input data
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
-import json
 import logging
-import requests
 import urllib.parse
 
 # ----------------------------
@@ -65,13 +63,25 @@ class ChunkMetadata():
         self.json_db = json_response(self.url, filename)
         self.database = self.json_db['database']
 
-        for table in self.metadata['tables']:
-            _LOG.debug("Table: %s", table)
-            if table['type'] == _DIRECTOR:
-                _LOG.debug("Director table: %s", table)
-                filename = table['schema']
-                self.json_director = json_response(self.url, filename)
-                self.table_director = table
+    def init_tables(self):
+        self.tables = []
+
+        for t in self.metadata['tables']:
+            table = dict()
+            table['type'] = t['type']
+            _LOG.debug("Table metadata: %s", t)
+            filename = t['schema']
+            table['json'] = json_response(self.url, filename)
+            self.tables.append(table)
+
+    def get_tables_json(self):
+        jsons = []
+        for t in self.metadata['tables']:
+            filename = t['schema']
+            json_data = json_response(self.url, filename)
+            jsons.append(json_data)
+        return jsons
+
 
     def get_chunks(self):
         # TODO add iterator over all chunks?
