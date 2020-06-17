@@ -30,13 +30,9 @@ Tools used by ingest algorithm
 #  Imports of standard modules --
 # -------------------------------
 import argparse
-import getpass
 import json
 import logging
 import os
-import posixpath
-import subprocess
-import sys
 import urllib.parse
 
 # ----------------------------
@@ -49,19 +45,19 @@ import requests
 # ---------------------------------
 
 TMP_DIR = "/tmp"
-
+_LOG = logging.getLogger(__name__)
 
 def download_file(base_url, filename):
     base_url = trailing_slash(base_url)
     file_url = urllib.parse.urljoin(base_url, filename)
-    logging.debug("Download %s", file_url)
+    _LOG.debug("Download %s", file_url)
     r = requests.get(file_url)
     abs_filename = os.path.join(TMP_DIR, filename)
     with open(abs_filename, 'wb') as f:
         f.write(r.content)
 
     if (r.status_code != 200):
-        logging.fatal("Unable to download file, error %s", r.status_code)
+        _LOG.fatal("Unable to download file, error %s", r.status_code)
         raise Exception('Unable to download file', file_url, r.status_code)
     return abs_filename
 

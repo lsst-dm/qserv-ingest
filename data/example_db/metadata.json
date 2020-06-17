@@ -1,13 +1,13 @@
 {
   "database": "dc2_run2_1i_dr1b.json",
   "tables": [
-    { 
+    {
       "schema": "position.json",
       "data": [
         {"directory": "step1_1",
          "chunks": [57892, 61973, 62654, 65383, 76932, 78976]
         }
-      ],
+      ]
     },
     {
       "schema": "dpdd_forced.json",
@@ -15,7 +15,7 @@
         {"directory": "step2_1",
          "chunks": [57892, 61973, 62654, 65383, 76932, 78976]
         }
-      ],
+      ]
     },
     {
       "schema": "dpdd_ref.json",
@@ -23,7 +23,7 @@
         {"directory": "step2_1",
          "chunks": [57892, 61973, 62654, 65383, 76932, 78976]
         }
-      ],
+      ]
     }
   ]
 }
