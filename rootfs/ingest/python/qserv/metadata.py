@@ -46,6 +46,14 @@ _DIRECTOR = "director"
 _LOG = logging.getLogger(__name__)
 
 
+def _is_director(table):
+    return table['json']['is_director']
+
+
+def _get_name(table):
+    return table['json']['table']
+
+
 class ChunkMetadata():
     """Manage metadata related to data to ingest (database, tables and chunk files)
     """
@@ -62,34 +70,34 @@ class ChunkMetadata():
         filename = self.metadata['database']
         self.json_db = json_response(self.url, filename)
         self.database = self.json_db['database']
-
-    def init_tables(self):
         self.tables = []
 
-        for t in self.metadata['tables']:
-            table = dict()
-            table['type'] = t['type']
-            _LOG.debug("Table metadata: %s", t)
-            filename = t['schema']
-            table['json'] = json_response(self.url, filename)
-            self.tables.append(table)
+    def init_tables(self):
+        if self.tables == []:
+            for t in self.metadata['tables']:
+                table = dict()
+                table['data'] = t['data']
+                _LOG.debug("Table metadata: %s", t)
+                filename = t['schema']
+                table['json'] = json_response(self.url, filename)
+                self.tables.append(table)
 
     def get_tables_json(self):
+        self.init_tables()
         jsons = []
-        for t in self.metadata['tables']:
-            filename = t['schema']
-            json_data = json_response(self.url, filename)
+        for t in self.tables:
+            json_data = t['json']
             jsons.append(json_data)
         return jsons
 
-
     def get_chunks(self):
         # TODO add iterator over all chunks?
+        self.init_tables()
         chunks = []
-        table = self.table_director
-        for d in table['data']:
-            directory = d['directory']
-            url = urllib.parse.urljoin(self.url, directory)
-            url = trailing_slash(url)
-            chunks.append((url, d['chunks'], None))
+        for table in self.tables:
+            for d in table['data']:
+                directory = d['directory']
+                url = urllib.parse.urljoin(self.url, directory)
+                url = trailing_slash(url)
+                chunks.append((url, d['chunks'], _get_name(table)))
         return chunks

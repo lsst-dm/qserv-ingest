@@ -86,13 +86,15 @@ class QueueManager():
         sql = "DELETE FROM task"
         result = self.engine.execute(sql)
 
-        for (url, chunks, table_type) in metadata.get_chunks():
+        for (url, chunks, tbl) in metadata.get_chunks():
             for c in chunks:
                 _LOG.debug("Insert chunk %s in queue", c)
-                result = self.engine.execute(self.task.insert(),
-                                             {"database_name": metadata.database,
-                                              "chunk_id": c,
-                                              "chunk_file_url": url})
+                result = self.engine.execute(
+                    self.task.insert(),
+                    {"database": metadata.database,
+                     "chunk_id": c,
+                     "chunk_file_url": url,
+                     "table": tbl})
 
     def _get_current_chunk(self):
         # "SELECT chunk_id, chunk_file_url FROM task WHERE pod = ?"

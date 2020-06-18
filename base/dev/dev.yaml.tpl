@@ -29,6 +29,12 @@ spec:
       - command:
         - sleep
         - "3600"
+        env:
+        - name: DATA_URL
+          valueFrom:
+            configMapKeyRef:
+              name: config-data-url
+              key: DATA_URL
         image: <INGEST_IMAGE>
         imagePullPolicy: Always
         name: ingest

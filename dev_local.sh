@@ -42,7 +42,7 @@ docker pull "$INGEST_IMAGE"
 echo "oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO"
 echo "   Welcome in DC2 ingest container"
 echo "oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO"
-telepresence --swap-deployment qserv-ingest \
+telepresence --swap-deployment ingest-dev \
     --docker-run -it \
     $MOUNTS --rm \
     -w $HOME \

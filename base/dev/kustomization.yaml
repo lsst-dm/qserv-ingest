@@ -5,3 +5,12 @@ commonLabels:
 resources:
 - dev.yaml
 
+configMapGenerator:
+- name: config-data-url
+  literals:
+  - DATA_URL="https://raw.githubusercontent.com/lsst-dm/qserv-DC2/tickets/DM-24587/data/example_db/"
+generatorOptions:
+  labels:
+    kustomize.generated.resources: qserv.ingest
+  disableNameSuffixHash: true
+
