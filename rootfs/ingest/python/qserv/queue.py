@@ -29,24 +29,17 @@ User-friendly client library for Qserv replication service.
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
-import argparse
-import getpass
-import json
 import logging
-import os
-import posixpath
 import socket
-import subprocess
-import sys
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
 import qserv.util as util
 import sqlalchemy
-from sqlalchemy import MetaData, Table, Column, Integer
+from sqlalchemy import MetaData, Table
 from sqlalchemy.engine.url import make_url
-from sqlalchemy.sql import table, column, select, update, insert, delete
+from sqlalchemy.sql import select, delete
 from .metadata import ChunkMetadata
 
 
@@ -66,6 +59,7 @@ class QueueManager():
 
     def __init__(self, connection, data_url):
 
+        data_url = util.trailing_slash(data_url)
         db_url = make_url(connection)
         self.engine = sqlalchemy.create_engine(db_url)
         self.pod = socket.gethostname()
@@ -74,23 +68,25 @@ class QueueManager():
         self.task = Table('task', db_meta, autoload=True)
         self.chunk_meta = ChunkMetadata(data_url)
         self.ordered_tables_to_load = self.chunk_meta.get_tables_names()
-        self.current_table = self.next_current_table()
+        _LOG.debug("Ordered tables to load: %s", self.ordered_tables_to_load)
+        self.next_current_table()
+        _LOG.debug("First table to load: %s", self.current_table)
 
     def next_current_table(self):
+        _LOG.debug("Number of remaining tables to load: %s", len(self.ordered_tables_to_load))
         if len(self.ordered_tables_to_load) != 0:
-            self.current_table = self.ordered_tables_to_load.pop()
+            self.current_table = self.ordered_tables_to_load.pop(0)
         else:
             _LOG.warn("No table to load")
             self.current_table = None
 
-    def load(self, data_url):
+    def load(self):
         """Load chunks in task queue
            Chunks description should be available at chunks_url
         Returns
         -------
         Integer number
         """
-        data_url = util.trailing_slash(data_url)
 
         sql = "DELETE FROM task"
         result = self.engine.execute(sql)
@@ -107,7 +103,7 @@ class QueueManager():
 
     def _get_current_chunk(self):
         # "SELECT chunk_id, chunk_file_url FROM task WHERE pod = ?"
-        query = select([self.task.c.database_name,
+        query = select([self.task.c.database,
                         self.task.c.chunk_id,
                         self.task.c.chunk_file_url,
                         self.task.c.table])
@@ -115,7 +111,7 @@ class QueueManager():
         result = self.engine.execute(query)
         row = result.first()
         if row:
-            chunk = (row[0], int(row[1]), row[2], row[4])
+            chunk = (row[0], int(row[1]), row[2], row[3])
         else:
             chunk = None
         return chunk
@@ -128,21 +124,27 @@ class QueueManager():
         Integer number, String,  String
         """
 
+        _LOG.debug("Current table: %s", self.current_table)
+
         # Check if a chunk was previously locked for this pod
         current_chunk = self._get_current_chunk()
+        _LOG.debug("Current chunk locked for pod: %s", current_chunk)
 
-        if not current_chunk:
+        if current_chunk is None:
             sql = "UPDATE task SET pod = '{}', status = {} "
-            "WHERE pod IS NULL AND status IS NULL and `table` = {} "
-            "ORDER BY chunk_id ASC LIMIT 1;"
-            result = self.engine.execute(sql.format(
-                self.pod, _STATUS_IN_PROGRESS, self.current_table))
+            sql += "WHERE pod IS NULL AND status IS NULL and `table` = '{}' "
+            sql += "ORDER BY chunk_id ASC LIMIT 1;"
+            query = sql.format(
+                self.pod, _STATUS_IN_PROGRESS, self.current_table)
+            _LOG.debug("Query: %s", query)
+
+            result = self.engine.execute(query)
 
             current_chunk = self._get_current_chunk()
 
         if not current_chunk:
             logging.info("No chunk remaining for table %s", self.current_table)
-            self.current_table = self.next_current_table()
+            self.next_current_table()
         else:
             logging.debug("Chunk for pod %s: %s", self.pod, current_chunk)
         return current_chunk

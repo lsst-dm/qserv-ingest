@@ -71,6 +71,7 @@ class ChunkMetadata():
         self.json_db = json_response(self.url, filename)
         self.database = self.json_db['database']
         self.tables = []
+        self.init_tables()
 
     def init_tables(self):
         if self.tables == []:
@@ -93,7 +94,6 @@ class ChunkMetadata():
         return table_names
 
     def get_tables_json(self):
-        self.init_tables()
         jsons = []
         for t in self.tables:
             json_data = t['json']
@@ -102,7 +102,6 @@ class ChunkMetadata():
 
     def get_chunks(self):
         # TODO add iterator over all chunks?
-        self.init_tables()
         chunks = []
         for table in self.tables:
             for d in table['data']:

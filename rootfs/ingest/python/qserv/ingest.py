@@ -121,7 +121,7 @@ def ingest_task(base_url, connection, data_url):
         _ingest_chunk(host, port, transaction_id, chunk_file, table)
         chunk_file = _download_chunk(
             chunk_base_url, chunk_id, "chunk_{}_overlap.txt")
-        success = _ingest_chunk(host, port, transaction_id, chunk_file)
+        success = _ingest_chunk(host, port, transaction_id, chunk_file, table)
     except Exception as e:
         _LOG.critical('Error in ingest task for chunk %s: %s', chunk_info, e)
         raise(e)
