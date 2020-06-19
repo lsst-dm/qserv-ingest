@@ -84,10 +84,16 @@ def _ingest_chunk(host, port, transaction_id, chunk_file, table):
            host, str(port), str(transaction_id), table, "P", chunk_file]
     _LOG.debug("Launch unix process %s", cmd)
 
-    result = subprocess.run(cmd,
-                            capture_output=True,
-                            universal_newlines=True,
-                            check=True)
+    try:
+        result = subprocess.run(cmd,
+                                capture_output=True,
+                                universal_newlines=True,
+                                check=True)
+    except subprocess.CalledProcessError as e:
+        _LOG.error("stdout %s", e.stdout)
+        _LOG.error("stderr %s", e.stderr)
+        raise(e)
+
     _LOG.debug("stdout %s", result.stdout)
     _LOG.debug("stderr %s", result.stderr)
     return True
@@ -173,9 +179,10 @@ def post(url, payload):
     responseJson = r.json()
     if not responseJson["success"]:
         _LOG.critical(responseJson["error"])
+        _LOG.critical(responseJson["error_ext"])
         raise Exception(
             'Error in replication controller response (POST)', url,
-            responseJson["error"])
+            responseJson["error"], responseJson["error_ext"])
     _LOG.debug(responseJson)
     _LOG.debug("success")
 

@@ -34,18 +34,13 @@ Loop on ingest task while ingest queue is not empty:
 #  Imports of standard modules --
 # -------------------------------
 import argparse
-import getpass
-import json
 import logging
-import os
-import sys
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
 import qserv.ingest as ingest
 import qserv.util as util
-import requests
 from qserv.queue import QueueManager
 
 if __name__ == "__main__":
