@@ -70,15 +70,28 @@ class QueueManager():
         self.ordered_tables_to_load = self.chunk_meta.get_tables_names()
         _LOG.debug("Ordered tables to load: %s", self.ordered_tables_to_load)
         self.next_current_table()
-        _LOG.debug("First table to load: %s", self.current_table)
 
     def next_current_table(self):
-        _LOG.debug("Number of remaining tables to load: %s", len(self.ordered_tables_to_load))
         if len(self.ordered_tables_to_load) != 0:
             self.current_table = self.ordered_tables_to_load.pop(0)
         else:
             _LOG.warn("No table to load")
             self.current_table = None
+
+    def _get_current_chunk(self):
+        # "SELECT chunk_id, chunk_file_url FROM task WHERE pod = ?"
+        query = select([self.task.c.database,
+                        self.task.c.chunk_id,
+                        self.task.c.chunk_file_url,
+                        self.task.c.table])
+        query = query.where(self.task.c.pod == self.pod)
+        result = self.engine.execute(query)
+        row = result.first()
+        if row:
+            chunk = (row[0], int(row[1]), row[2], row[3])
+        else:
+            chunk = None
+        return chunk
 
     def load(self):
         """Load chunks in task queue
@@ -101,21 +114,6 @@ class QueueManager():
                      "chunk_file_url": url,
                      "table": tbl})
 
-    def _get_current_chunk(self):
-        # "SELECT chunk_id, chunk_file_url FROM task WHERE pod = ?"
-        query = select([self.task.c.database,
-                        self.task.c.chunk_id,
-                        self.task.c.chunk_file_url,
-                        self.task.c.table])
-        query = query.where(self.task.c.pod == self.pod)
-        result = self.engine.execute(query)
-        row = result.first()
-        if row:
-            chunk = (row[0], int(row[1]), row[2], row[3])
-        else:
-            chunk = None
-        return chunk
-
     def lock_chunk(self):
         """If a chunk is already locked in queue for current pod, get it
            if not, lock it then return its id and file base url, or None if queue is empty
@@ -124,29 +122,34 @@ class QueueManager():
         Integer number, String,  String
         """
 
-        _LOG.debug("Current table: %s", self.current_table)
-
         # Check if a chunk was previously locked for this pod
         current_chunk = self._get_current_chunk()
-        _LOG.debug("Current chunk locked for pod: %s", current_chunk)
-
-        if current_chunk is None:
-            sql = "UPDATE task SET pod = '{}', status = {} "
-            sql += "WHERE pod IS NULL AND status IS NULL and `table` = '{}' "
-            sql += "ORDER BY chunk_id ASC LIMIT 1;"
-            query = sql.format(
-                self.pod, _STATUS_IN_PROGRESS, self.current_table)
-            _LOG.debug("Query: %s", query)
-
-            result = self.engine.execute(query)
-
-            current_chunk = self._get_current_chunk()
-
-        if not current_chunk:
-            logging.info("No chunk remaining for table %s", self.current_table)
-            self.next_current_table()
+        if current_chunk is not None:
+            _LOG.debug("Current chunk locked for pod: %s", current_chunk)
         else:
-            logging.debug("Chunk for pod %s: %s", self.pod, current_chunk)
+            _LOG.debug("Current table: %s", self.current_table)
+
+            while self.current_table is not None and current_chunk is None:
+                sql = "UPDATE task SET pod = '{}', status = {} "
+                sql += "WHERE pod IS NULL AND status IS NULL and `table` = '{}' "
+                sql += "ORDER BY chunk_id ASC LIMIT 1;"
+                query = sql.format(
+                    self.pod, _STATUS_IN_PROGRESS, self.current_table)
+                _LOG.debug("Query: %s", query)
+
+                result = self.engine.execute(query)
+
+                current_chunk = self._get_current_chunk()
+
+                if not current_chunk:
+                    logging.info("No chunk remaining for table %s",
+                                 self.current_table)
+                    self.next_current_table()
+                else:
+                    logging.debug("Chunk for pod %s: %s",
+                                  self.pod,
+                                  current_chunk)
+
         return current_chunk
 
     def delete_chunk(self):
