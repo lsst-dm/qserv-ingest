@@ -80,7 +80,17 @@ class ChunkMetadata():
                 _LOG.debug("Table metadata: %s", t)
                 filename = t['schema']
                 table['json'] = json_response(self.url, filename)
-                self.tables.append(table)
+                if _is_director(table):
+                    self.tables.insert(0, table)
+                else:
+                    self.tables.append(table)
+
+    def get_tables_names(self):
+        table_names = []
+        for t in self.tables:
+            table_name = t['json']['table']
+            table_names.append(table_name)
+        return table_names
 
     def get_tables_json(self):
         self.init_tables()

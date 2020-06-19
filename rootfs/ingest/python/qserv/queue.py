@@ -64,14 +64,24 @@ class QueueManager():
     """Class implementing chunk queue manager for Qserv ingest process
     """
 
-    def __init__(self, connection):
+    def __init__(self, connection, data_url):
 
         db_url = make_url(connection)
         self.engine = sqlalchemy.create_engine(db_url)
         self.pod = socket.gethostname()
 
-        metadata = MetaData(bind=self.engine)
-        self.task = Table('task', metadata, autoload=True)
+        db_meta = MetaData(bind=self.engine)
+        self.task = Table('task', db_meta, autoload=True)
+        self.chunk_meta = ChunkMetadata(data_url)
+        self.ordered_tables_to_load = self.chunk_meta.get_tables_names()
+        self.current_table = self.next_current_table()
+
+    def next_current_table(self):
+        if len(self.ordered_tables_to_load) != 0:
+            self.current_table = self.ordered_tables_to_load.pop()
+        else:
+            _LOG.warn("No table to load")
+            self.current_table = None
 
     def load(self, data_url):
         """Load chunks in task queue
@@ -81,17 +91,16 @@ class QueueManager():
         Integer number
         """
         data_url = util.trailing_slash(data_url)
-        metadata = ChunkMetadata(data_url)
 
         sql = "DELETE FROM task"
         result = self.engine.execute(sql)
 
-        for (url, chunks, tbl) in metadata.get_chunks():
+        for (url, chunks, tbl) in self.chunk_meta.get_chunks():
             for c in chunks:
                 _LOG.debug("Insert chunk %s in queue", c)
                 result = self.engine.execute(
                     self.task.insert(),
-                    {"database": metadata.database,
+                    {"database": self.chunk_meta.database,
                      "chunk_id": c,
                      "chunk_file_url": url,
                      "table": tbl})
@@ -99,12 +108,14 @@ class QueueManager():
     def _get_current_chunk(self):
         # "SELECT chunk_id, chunk_file_url FROM task WHERE pod = ?"
         query = select([self.task.c.database_name,
-                        self.task.c.chunk_id, self.task.c.chunk_file_url])
+                        self.task.c.chunk_id,
+                        self.task.c.chunk_file_url,
+                        self.task.c.table])
         query = query.where(self.task.c.pod == self.pod)
         result = self.engine.execute(query)
         row = result.first()
         if row:
-            chunk = (row[0], int(row[1]), row[2])
+            chunk = (row[0], int(row[1]), row[2], row[4])
         else:
             chunk = None
         return chunk
@@ -121,14 +132,17 @@ class QueueManager():
         current_chunk = self._get_current_chunk()
 
         if not current_chunk:
-            sql = "UPDATE task SET pod = '{}', status = {} WHERE pod IS NULL AND status IS NULL ORDER BY chunk_id ASC LIMIT 1;"
+            sql = "UPDATE task SET pod = '{}', status = {} "
+            "WHERE pod IS NULL AND status IS NULL and `table` = {} "
+            "ORDER BY chunk_id ASC LIMIT 1;"
             result = self.engine.execute(sql.format(
-                self.pod, _STATUS_IN_PROGRESS))
+                self.pod, _STATUS_IN_PROGRESS, self.current_table))
 
             current_chunk = self._get_current_chunk()
 
         if not current_chunk:
-            logging.info("Chunk queue is empty")
+            logging.info("No chunk remaining for table %s", self.current_table)
+            self.current_table = self.next_current_table()
         else:
             logging.debug("Chunk for pod %s: %s", self.pod, current_chunk)
         return current_chunk

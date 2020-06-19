@@ -49,12 +49,19 @@ import requests
 from qserv.queue import QueueManager
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="A thin python wrapper around Qserv REST web service")
+    parser = argparse.ArgumentParser(description="A python wrapper around "
+                                     "Qserv REST web service")
 
-    parser.add_argument("url", type=str, help="Replication controller root URL", action = util.BaseUrlAction)
-    parser.add_argument("--verbose", "-v", action="store_true", help="Use debug logging")
+    parser.add_argument("url", type=str,
+                        help="Replication controller root URL",
+                        action=util.BaseUrlAction)
+    parser.add_argument("--verbose", "-v", action="store_true",
+                        help="Use debug logging")
     parser.add_argument("connection", type=str, metavar="CONNECTION",
-                       help="Connection string in format mysql://user:pass@host:port/database.")
+                        help="Connection string in format "
+                        "mysql://user:pass@host:port/database.")
+    parser.add_argument("data_url", type=str, help="Input data URL",
+                        action=util.BaseUrlAction)
 
     args = parser.parse_args()
 
@@ -67,4 +74,6 @@ if __name__ == "__main__":
 
     chunk_to_load = True
     while chunk_to_load:
-        chunk_to_load = ingest.ingest_task(args.url, args.connection)
+        chunk_to_load = ingest.ingest_task(args.url,
+                                           args.connection,
+                                           args.data_url)

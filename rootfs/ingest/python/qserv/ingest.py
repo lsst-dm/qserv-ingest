@@ -78,10 +78,10 @@ def get_chunk_location(base_url, chunk, database, transaction_id):
     return (host, port)
 
 
-def _ingest_chunk(host, port, transaction_id, chunk_file):
+def _ingest_chunk(host, port, transaction_id, chunk_file, table):
 
     cmd = ['qserv-replica-file-ingest', '--debug', '--verbose', 'FILE',
-           host, str(port), str(transaction_id), "position", "P", chunk_file]
+           host, str(port), str(transaction_id), table, "P", chunk_file]
     _LOG.debug("Launch unix process %s", cmd)
 
     result = subprocess.run(cmd,
@@ -93,31 +93,33 @@ def _ingest_chunk(host, port, transaction_id, chunk_file):
     return True
 
 
-def ingest_task(base_url, connection):
+def ingest_task(base_url, connection, data_url):
     """Get a chunk from a queue server, load it inside Qserv, during a super-transation
         Returns
         -------
         Integer number: 0 if no chunk to load, 1 if chunk was loaded successfully
     """
-    queue_manager = QueueManager(connection)
+    queue_manager = QueueManager(connection, data_url)
 
     _LOG.debug("Starting an ingest task: url: %s", base_url)
 
     chunk_info = queue_manager.lock_chunk()
     if not chunk_info:
         return 0
-    (database, chunk_id, chunk_base_url) = chunk_info
 
+    (database, chunk_id, chunk_base_url, table) = chunk_info
     chunk_file = None
     transaction_id = None
     success = False
     try:
         transaction_id = start_transaction(base_url, database)
-        (host, port) = get_chunk_location(
-            base_url, chunk_id, database, transaction_id)
-        chunk_file = download_chunk(chunk_base_url, chunk_id, "chunk_{}.txt")
-        _ingest_chunk(host, port, transaction_id, chunk_file)
-        chunk_file = download_chunk(
+        (host, port) = get_chunk_location(base_url,
+                                          chunk_id,
+                                          database,
+                                          transaction_id)
+        chunk_file = _download_chunk(chunk_base_url, chunk_id, "chunk_{}.txt")
+        _ingest_chunk(host, port, transaction_id, chunk_file, table)
+        chunk_file = _download_chunk(
             chunk_base_url, chunk_id, "chunk_{}_overlap.txt")
         success = _ingest_chunk(host, port, transaction_id, chunk_file)
     except Exception as e:
@@ -136,7 +138,7 @@ def ingest_task(base_url, connection):
     return 1
 
 
-def download_chunk(base_url, chunk_id, file_format):
+def _download_chunk(base_url, chunk_id, file_format):
     chunk_filename = file_format.format(chunk_id)
     abs_filename = download_file(base_url, chunk_filename)
     return abs_filename
