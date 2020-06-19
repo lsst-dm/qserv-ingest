@@ -12,16 +12,16 @@
     {
       "schema": "dpdd_forced.json",
       "data": [
-        {"directory": "step2_1",
-         "chunks": [57892, 61973, 62654, 65383, 76932, 78976]
+        {"directory": "step2_2/dpdd_forced",
+         "chunks": [57892]
         }
       ]
     },
     {
       "schema": "dpdd_ref.json",
       "data": [
-        {"directory": "step2_1",
-         "chunks": [57892, 61973, 62654, 65383, 76932, 78976]
+        {"directory": "step2_2/dpdd_ref",
+         "chunks": [57892]
         }
       ]
     }
