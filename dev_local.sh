@@ -38,7 +38,7 @@ fi
 echo "Running in development mode"
 MOUNTS="-v $DIR/rootfs/ingest:/ingest"
 
-docker pull "$INGEST_IMAGE"
+docker pull "$INGEST_DEPS_IMAGE"
 echo "oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO"
 echo "   Welcome in DC2 ingest container"
 echo "oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO"
