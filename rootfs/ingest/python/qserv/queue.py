@@ -35,12 +35,10 @@ import socket
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-import qserv.util as util
 import sqlalchemy
 from sqlalchemy import MetaData, Table
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.sql import select, delete
-from .metadata import ChunkMetadata
 
 
 # ---------------------------------
@@ -57,16 +55,15 @@ class QueueManager():
     """Class implementing chunk queue manager for Qserv ingest process
     """
 
-    def __init__(self, connection, data_url):
+    def __init__(self, connection, chunk_meta):
 
-        data_url = util.trailing_slash(data_url)
         db_url = make_url(connection)
         self.engine = sqlalchemy.create_engine(db_url)
         self.pod = socket.gethostname()
 
         db_meta = MetaData(bind=self.engine)
         self.task = Table('task', db_meta, autoload=True)
-        self.chunk_meta = ChunkMetadata(data_url)
+        self.chunk_meta = chunk_meta
         self.ordered_tables_to_load = self.chunk_meta.get_tables_names()
         _LOG.debug("Ordered tables to load: %s", self.ordered_tables_to_load)
         self.next_current_table()

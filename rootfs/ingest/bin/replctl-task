@@ -40,8 +40,11 @@ import logging
 # Imports for other modules --
 # ----------------------------
 import qserv.ingest as ingest
-import qserv.util as util
+from qserv.metadata import ChunkMetadata
 from qserv.queue import QueueManager
+import qserv.util as util
+
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="A python wrapper around "
@@ -68,7 +71,11 @@ if __name__ == "__main__":
     logger.addHandler(logging.StreamHandler())
 
     chunk_to_load = True
+
+    data_url = util.trailing_slash(args.data_url)
+    chunk_meta = ChunkMetadata(data_url)
+
     while chunk_to_load:
         chunk_to_load = ingest.ingest_task(args.url,
                                            args.connection,
-                                           args.data_url)
+                                           chunk_meta)

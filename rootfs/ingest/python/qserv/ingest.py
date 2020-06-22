@@ -99,13 +99,18 @@ def _ingest_chunk(host, port, transaction_id, chunk_file, table):
     return True
 
 
-def ingest_task(base_url, connection, data_url):
-    """Get a chunk from a queue server, load it inside Qserv, during a super-transation
-        Returns
-        -------
-        Integer number: 0 if no chunk to load, 1 if chunk was loaded successfully
+def ingest_task(base_url, connection, chunk_meta):
+    """Get a chunk from a queue server,
+       load it inside Qserv,
+       during a super-transation
+
+       Returns:
+       --------
+       Integer number: 0 if no chunk to load,
+                       1 if chunk was loaded successfully
     """
-    queue_manager = QueueManager(connection, data_url)
+
+    queue_manager = QueueManager(connection, chunk_meta)
 
     _LOG.debug("Starting an ingest task: url: %s", base_url)
 
@@ -125,9 +130,10 @@ def ingest_task(base_url, connection, data_url):
                                           transaction_id)
         chunk_file = _download_chunk(chunk_base_url, chunk_id, "chunk_{}.txt")
         _ingest_chunk(host, port, transaction_id, chunk_file, table)
-        chunk_file = _download_chunk(
-            chunk_base_url, chunk_id, "chunk_{}_overlap.txt")
-        success = _ingest_chunk(host, port, transaction_id, chunk_file, table)
+        if :
+            chunk_file = _download_chunk(
+                chunk_base_url, chunk_id, "chunk_{}_overlap.txt")
+            _ingest_chunk(host, port, transaction_id, chunk_file, table)
     except Exception as e:
         _LOG.critical('Error in ingest task for chunk %s: %s', chunk_info, e)
         raise(e)

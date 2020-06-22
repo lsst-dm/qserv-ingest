@@ -31,18 +31,13 @@ User-friendly client for Qserv replication service.
 #  Imports of standard modules --
 # -------------------------------
 import argparse
-import getpass
-import json
 import logging
-import os
-import sys
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
 import qserv.ingest as ingest
 import qserv.util as util
-import requests
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="A thin python wrapper around Qserv REST web service")
