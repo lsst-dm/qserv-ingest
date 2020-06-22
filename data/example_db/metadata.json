@@ -1,5 +1,5 @@
 {
-    "database": "dc2_run2_1i_dr1b_test/dc2_run2_1i_dr1b_test.json",
+    "database": "dc2_run2_1i_dr1b_test.json",
     "tables": [
         {
             "schema": "position.json",
