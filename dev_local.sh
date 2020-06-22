@@ -46,4 +46,4 @@ telepresence --swap-deployment ingest-dev \
     --docker-run -it \
     $MOUNTS --rm \
     -w $HOME \
-    "$INGEST_IMAGE"
+    "$INGEST_DEPS_IMAGE"
