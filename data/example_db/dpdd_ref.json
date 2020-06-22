@@ -1,5 +1,5 @@
 {
-    "database": "dc2_run2_1i_dr1b",
+    "database": "dc2_run2_1i_dr1b_test",
     "table": "dpdd_ref",
     "auth_key": "",
     "is_partitioned": 1,
@@ -13,420 +13,428 @@
             "type": "bigint(20) NOT NULL"
         },
         {
+            "name": "coord_ra",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "coord_dec",
+            "type": "FLOAT NOT NULL"
+        },
+        {
             "name": "base_SdssCentroid_x",
-            "type": "DOUBLE NOT NULL"
+            "type": "DOUBLE"
         },
         {
             "name": "base_SdssCentroid_y",
-            "type": "DOUBLE NOT NULL"
+            "type": "DOUBLE"
         },
         {
             "name": "base_SdssCentroid_xErr",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "base_SdssCentroid_yErr",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "base_SdssCentroid_flag",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_SdssCentroid_flag_edge",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_SdssCentroid_flag_noSecondDerivative",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_SdssCentroid_flag_almostNoSecondDerivative",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_SdssCentroid_flag_notAtMaximum",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_SdssCentroid_flag_resetToPeak",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_PsfFlux_instFlux",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "base_PsfFlux_instFluxErr",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "base_PsfFlux_area",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "base_PsfFlux_apCorr",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "base_PsfFlux_apCorrErr",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "base_PsfFlux_flag",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_PsfFlux_flag_noGoodPixels",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_PsfFlux_flag_edge",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_PsfFlux_flag_apCorr",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_PsfFlux_flag_badCentroid",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "mag_i",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "magerr_i",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "mag_g",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "magerr_g",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "mag_r",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "magerr_r",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "mag_u",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "magerr_u",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "mag_y",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "magerr_y",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "mag_z",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "magerr_z",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "base_ClassificationExtendedness_value",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "base_ClassificationExtendedness_flag",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_Blendedness_old",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "base_Blendedness_abs",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "base_Blendedness_flag",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_Blendedness_flag_noCentroid",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_Blendedness_flag_noShape",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_PixelFlags_flag",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_PixelFlags_flag_offimage",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_PixelFlags_flag_edge",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_PixelFlags_flag_interpolated",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_PixelFlags_flag_saturated",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_PixelFlags_flag_cr",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_PixelFlags_flag_bad",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_PixelFlags_flag_suspect",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_PixelFlags_flag_interpolatedCenter",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_PixelFlags_flag_saturatedCenter",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_PixelFlags_flag_crCenter",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_PixelFlags_flag_suspectCenter",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_PixelFlags_flag_clippedCenter",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_PixelFlags_flag_sensor_edgeCenter",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_PixelFlags_flag_inexact_psfCenter",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_PixelFlags_flag_bright_objectCenter",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_PixelFlags_flag_clipped",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_PixelFlags_flag_sensor_edge",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_PixelFlags_flag_inexact_psf",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_PixelFlags_flag_bright_object",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "good",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "ext_shapeHSM_HsmSourceMoments_x",
-            "type": "DOUBLE NOT NULL"
+            "type": "DOUBLE"
         },
         {
             "name": "ext_shapeHSM_HsmSourceMoments_y",
-            "type": "DOUBLE NOT NULL"
+            "type": "DOUBLE"
         },
         {
             "name": "ext_shapeHSM_HsmSourceMoments_xx",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "ext_shapeHSM_HsmSourceMoments_yy",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "ext_shapeHSM_HsmSourceMoments_xy",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "ext_shapeHSM_HsmSourceMoments_flag",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "ext_shapeHSM_HsmSourceMoments_flag_no_pixels",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "ext_shapeHSM_HsmSourceMoments_flag_not_contained",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "ext_shapeHSM_HsmSourceMoments_flag_parent_source",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "ext_shapeHSM_HsmSourceMoments_flag_badCentroid",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_SdssShape_xx",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "base_SdssShape_yy",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "base_SdssShape_xy",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "base_SdssShape_xxErr",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "base_SdssShape_yyErr",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "base_SdssShape_xyErr",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "base_SdssShape_x",
-            "type": "DOUBLE NOT NULL"
+            "type": "DOUBLE"
         },
         {
             "name": "base_SdssShape_y",
-            "type": "DOUBLE NOT NULL"
+            "type": "DOUBLE"
         },
         {
             "name": "base_SdssShape_instFlux",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "base_SdssShape_instFluxErr",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "base_SdssShape_psf_xx",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "base_SdssShape_psf_yy",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "base_SdssShape_psf_xy",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "base_SdssShape_instFlux_xx_Cov",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "base_SdssShape_instFlux_yy_Cov",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "base_SdssShape_instFlux_xy_Cov",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "base_SdssShape_flag",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_SdssShape_flag_unweightedBad",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_SdssShape_flag_unweighted",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_SdssShape_flag_shift",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_SdssShape_flag_maxIter",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_SdssShape_flag_psf",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "base_SdssShape_flag_badCentroid",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "deblend_psfCenter_x",
-            "type": "DOUBLE NOT NULL"
+            "type": "DOUBLE"
         },
         {
             "name": "deblend_psfCenter_y",
-            "type": "DOUBLE NOT NULL"
+            "type": "DOUBLE"
         },
         {
             "name": "deblend_psf_instFlux",
-            "type": "FLOAT NOT NULL"
+            "type": "FLOAT"
         },
         {
             "name": "deblend_deblendedAsPsf",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "deblend_tooManyPeaks",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "deblend_parentTooBig",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "deblend_masked",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "deblend_skipped",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "deblend_rampedTemplate",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "deblend_patchedTemplate",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "deblend_hasStrayFlux",
-            "type": "BOOLEAN NOT NULL"
+            "type": "BOOLEAN"
         },
         {
             "name": "chunkId",
