@@ -46,10 +46,6 @@ _DIRECTOR = "director"
 _LOG = logging.getLogger(__name__)
 
 
-def _is_director(table):
-    return table['json']['is_director']
-
-
 def _get_name(table):
     return table['json']['table']
 
@@ -81,10 +77,19 @@ class ChunkMetadata():
                 _LOG.debug("Table metadata: %s", t)
                 filename = t['schema']
                 table['json'] = json_response(self.url, filename)
-                if _is_director(table):
+                is_director = bool(table['json']['is_director'])
+                if is_director:
                     self.tables.insert(0, table)
                 else:
                     self.tables.append(table)
+
+    def is_director(self, table_name):
+        for t in self.tables:
+            if t['json']['table'] == table_name:
+                return bool(t['json']['is_director'])
+            else:
+                return False
+        raise Exception("Table '%s' not found", table_name)
 
     def get_tables_names(self):
         table_names = []

@@ -35,6 +35,7 @@ import logging
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
+from qserv.metadata import ChunkMetadata
 from qserv.queue import QueueManager
 import qserv.util as util
 
@@ -56,5 +57,6 @@ if __name__ == "__main__":
         logger.setLevel(logging.INFO)
     logger.addHandler(logging.StreamHandler())
 
-    queue_manager = QueueManager(args.connection, args.data_url)
+    chunk_meta = ChunkMetadata(args.data_url)
+    queue_manager = QueueManager(args.connection, chunk_meta)
     queue_manager.load()

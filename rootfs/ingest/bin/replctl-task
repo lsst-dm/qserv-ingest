@@ -56,7 +56,7 @@ if __name__ == "__main__":
     parser.add_argument("--verbose", "-v", action="store_true",
                         help="Use debug logging")
     parser.add_argument("connection", type=str, metavar="CONNECTION",
-                        help="Connection string in format "
+                        help="Connection string to queue manager in format "
                         "mysql://user:pass@host:port/database.")
     parser.add_argument("data_url", type=str, help="Input data URL",
                         action=util.BaseUrlAction)
@@ -72,10 +72,8 @@ if __name__ == "__main__":
 
     chunk_to_load = True
 
-    data_url = util.trailing_slash(args.data_url)
-    chunk_meta = ChunkMetadata(data_url)
+    chunk_meta = ChunkMetadata(args.data_url)
+    queue_manager = QueueManager(args.connection, chunk_meta)
 
     while chunk_to_load:
-        chunk_to_load = ingest.ingest_task(args.url,
-                                           args.connection,
-                                           chunk_meta)
+        chunk_to_load = ingest.ingest_task(args.url, queue_manager)

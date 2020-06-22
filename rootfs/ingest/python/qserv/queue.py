@@ -122,13 +122,15 @@ class QueueManager():
         # Check if a chunk was previously locked for this pod
         current_chunk = self._get_current_chunk()
         if current_chunk is not None:
-            _LOG.debug("Current chunk locked for pod: %s", current_chunk)
+            _LOG.debug("Current chunk already locked for pod: %s",
+                       current_chunk)
         else:
             _LOG.debug("Current table: %s", self.current_table)
 
             while self.current_table is not None and current_chunk is None:
                 sql = "UPDATE task SET pod = '{}', status = {} "
-                sql += "WHERE pod IS NULL AND status IS NULL and `table` = '{}' "
+                sql += "WHERE pod IS NULL AND status IS NULL"
+                sql += " and `table` = '{}' "
                 sql += "ORDER BY chunk_id ASC LIMIT 1;"
                 query = sql.format(
                     self.pod, _STATUS_IN_PROGRESS, self.current_table)
