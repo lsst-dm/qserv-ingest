@@ -103,7 +103,7 @@ class QueueManager():
 
         for (url, chunks, tbl) in self.chunk_meta.get_chunks():
             for c in chunks:
-                _LOG.debug("Insert chunk %s in queue", c)
+                _LOG.debug("Add chunk (%s, %s) to queue", c, tbl)
                 result = self.engine.execute(
                     self.task.insert(),
                     {"database": self.chunk_meta.database,
@@ -113,7 +113,8 @@ class QueueManager():
 
     def lock_chunk(self):
         """If a chunk is already locked in queue for current pod, get it
-           if not, lock it then return its id and file base url, or None if queue is empty
+           if not, lock it then return its id and file base url,
+           or None if queue is empty
         Returns
         -------
         Integer number, String,  String

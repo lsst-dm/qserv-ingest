@@ -8,4 +8,4 @@ DIR=$(cd "$(dirname "$0")"; pwd -P)
 
 set -euxo pipefail
 
-replctl-task -v "$REPL_URL" mysql://qsingest:@qserv-ingest-db-0.qserv-ingest-db:3306/qservIngest "$DATA_URL"
+replctl-ingest -v "$REPL_URL" mysql://qsingest:@qserv-ingest-db-0.qserv-ingest-db:3306/qservIngest "$DATA_URL"

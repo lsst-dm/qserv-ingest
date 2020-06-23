@@ -44,8 +44,6 @@ from qserv.metadata import ChunkMetadata
 from qserv.queue import QueueManager
 import qserv.util as util
 
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="A python wrapper around "
                                      "Qserv REST web service")

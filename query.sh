@@ -12,4 +12,6 @@ kubectl exec -it $INSTANCE-ingest-db-0 -- \
     bash -lc "mysql --host $CZAR_HOST --port 4040 --user qsmaster -e 'SELECT * FROM $DATABASE.position LIMIT 10'"
 kubectl exec -it $INSTANCE-ingest-db-0 -- \
     bash -lc "mysql --host $CZAR_HOST --port 4040 --user qsmaster -e 'SELECT COUNT(*) FROM $DATABASE.position'"
-
+kubectl exec -it $INSTANCE-ingest-db-0 -- \
+    bash -lc "mysql --host $CZAR_HOST --port 4040 --user qsmaster -e \
+    'SELECT objectId, coord_ra, coord_dec FROM $DATABASE.position as p, $DATABASE.dpdd_ref as r WHERE p.objectId=r.objectId LIMIT 10'"

@@ -40,13 +40,18 @@ from qserv.queue import QueueManager
 import qserv.util as util
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="A thin python wrapper around Qserv REST web service")
+    parser = argparse.ArgumentParser(description="Python wrapper"
+                                     " around Qserv replication "
+                                     "REST web service")
 
-    parser.add_argument("data_url", type=str, help="Input data repository root url",
+    parser.add_argument("data_url", type=str,
+                        help="Input data repository root url",
                         action=util.BaseUrlAction)
-    parser.add_argument("--verbose", "-v", action="store_true", help="Use debug logging")
+    parser.add_argument("--verbose", "-v", action="store_true",
+                        help="Use debug logging")
     parser.add_argument("connection", type=str, metavar="CONNECTION",
-                        help="Connection string in format mysql://user:pass@host:port/database.")
+                        help="Connection string in format "
+                        "mysql://user:pass@host:port/database.")
 
     args = parser.parse_args()
 

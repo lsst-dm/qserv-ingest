@@ -41,7 +41,6 @@ import urllib.parse
 # Imports for other modules --
 # ----------------------------
 import requests
-from .queue import QueueManager
 from .util import download_file
 
 TMP_DIR = "/tmp"
@@ -82,7 +81,7 @@ def _ingest_chunk(host, port, transaction_id, chunk_file, table):
 
     cmd = ['qserv-replica-file-ingest', '--debug', '--verbose', 'FILE',
            host, str(port), str(transaction_id), table, "P", chunk_file]
-    _LOG.debug("Launch unix process %s", cmd)
+    _LOG.debug("Launch unix process: %s", cmd)
 
     try:
         result = subprocess.run(cmd,
@@ -94,9 +93,8 @@ def _ingest_chunk(host, port, transaction_id, chunk_file, table):
         _LOG.error("stderr %s", e.stderr)
         raise(e)
 
-    _LOG.debug("stdout %s", result.stdout)
-    _LOG.debug("stderr %s", result.stderr)
-    return True
+    _LOG.debug("stdout: '%s'", result.stdout)
+    _LOG.debug("stderr: '%s'", result.stderr)
 
 
 def ingest_task(base_url, queue_manager):
@@ -110,7 +108,7 @@ def ingest_task(base_url, queue_manager):
                        1 if chunk was loaded successfully
     """
 
-    _LOG.debug("Starting an ingest task: url: %s", base_url)
+    _LOG.debug("Start chunk ingest, url: %s", base_url)
 
     chunk_info = queue_manager.lock_chunk()
     if not chunk_info:
@@ -119,7 +117,6 @@ def ingest_task(base_url, queue_manager):
     (database, chunk_id, chunk_base_url, table) = chunk_info
     chunk_file = None
     transaction_id = None
-    success = False
     try:
         transaction_id = start_transaction(base_url, database)
         (host, port) = get_chunk_location(base_url,
@@ -132,12 +129,15 @@ def ingest_task(base_url, queue_manager):
             chunk_file = _download_chunk(
                 chunk_base_url, chunk_id, "chunk_{}_overlap.txt")
             _ingest_chunk(host, port, transaction_id, chunk_file, table)
+        ingest_success = True
     except Exception as e:
         _LOG.critical('Error in ingest task for chunk %s: %s', chunk_info, e)
+        ingest_success = False
         raise(e)
     finally:
         if transaction_id:
-            close_transaction(base_url, database, transaction_id, success)
+            close_transaction(base_url, database,
+                              transaction_id, ingest_success)
 
     # TODO release chunk ni queue if process crash so that it can be locked by an other pod?
     # ingest successful
