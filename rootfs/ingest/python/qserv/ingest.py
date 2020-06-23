@@ -97,7 +97,7 @@ def _ingest_chunk(host, port, transaction_id, chunk_file, table):
     _LOG.debug("stderr: '%s'", result.stderr)
 
 
-def ingest_task(base_url, queue_manager):
+def ingest_task(repl_base_url, queue_manager):
     """Get a chunk from a queue server,
        load it inside Qserv,
        during a super-transation
@@ -108,7 +108,7 @@ def ingest_task(base_url, queue_manager):
                        1 if chunk was loaded successfully
     """
 
-    _LOG.debug("Start chunk ingest, url: %s", base_url)
+    _LOG.debug("-- START INGEST TASK --")
 
     chunk_info = queue_manager.lock_chunk()
     if not chunk_info:
@@ -118,8 +118,8 @@ def ingest_task(base_url, queue_manager):
     chunk_file = None
     transaction_id = None
     try:
-        transaction_id = start_transaction(base_url, database)
-        (host, port) = get_chunk_location(base_url,
+        transaction_id = start_transaction(repl_base_url, database)
+        (host, port) = get_chunk_location(repl_base_url,
                                           chunk_id,
                                           database,
                                           transaction_id)
@@ -136,7 +136,7 @@ def ingest_task(base_url, queue_manager):
         raise(e)
     finally:
         if transaction_id:
-            close_transaction(base_url, database,
+            close_transaction(repl_base_url, database,
                               transaction_id, ingest_success)
 
     # TODO release chunk ni queue if process crash so that it can be locked by an other pod?
