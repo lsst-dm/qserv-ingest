@@ -1,9 +1,10 @@
 #!/bin/bash
+# Lauch queries against a Qserv instance
 
 set -euxo pipefail
 
 DIR=$(cd "$(dirname "$0")"; pwd -P)
-. "$DIR"/env.sh
+. "$DIR"/../env.sh
 
 CZAR_HOST="${INSTANCE}-czar-0.${INSTANCE}-czar"
 DATABASE="dc2_run2_1i_dr1b"

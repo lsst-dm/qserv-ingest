@@ -25,7 +25,7 @@ script:
   # FIXME restart qserv to refresh xrootd cache
   - kubectl delete pod -l app=$INSTANCE
   - ./qserv-operator/wait-qserv-ready.sh
-  - ./query.sh
+  - ./example/query.sh
 
 after_success:
   - echo "Generate and upload documentation"

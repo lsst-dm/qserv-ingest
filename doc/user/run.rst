@@ -1,72 +1,88 @@
-###########
-Quick start
-###########
+
+########################################
+Run Qserv ingest on a Kubernetes cluster
+########################################
 
 Prerequisites
 =============
 
-* An Ubuntu LTS workstation
-* Internet access without proxy
-* `sudo` access
+- An up and running Qserv instance, managed by `qserv-operator <https://qserv-operator.lsst.io>`__ inside a k8s cluster:
 
-Install dependencies and add user to `docker` group
----------------------------------------------------
+.. code:: sh
 
-.. code:: bash
+    $ kubectl get qserv
+    NAME    AGE
+    qserv   10d
 
-    sudo apt-get update
-    sudo apt-get install curl docker.io git vim
-    sudo usermod -a -G docker $(id -nu)
+    $ kubectl get pods
+    NAME                              READY   STATUS    RESTARTS   AGE
+    qserv-czar-0                      3/3     Running   6          10d
+    qserv-ingest-db-0                 1/1     Running   2          10d
+    qserv-operator-57c75fd7c5-tc4ps   1/1     Running   0          10d
+    qserv-repl-ctl-0                  1/1     Running   6          10d
+    qserv-repl-db-0                   1/1     Running   2          10d
+    qserv-worker-0                    5/5     Running   0          10d
+    qserv-worker-1                    5/5     Running   0          10d
+    ...
+    qserv-worker-7                    5/5     Running   0          10d
+    qserv-worker-8                    5/5     Running   0          10d
+    qserv-worker-9                    5/5     Running   0          10d
+    qserv-xrootd-redirector-0         2/2     Running   0          10d
+    qserv-xrootd-redirector-1         2/2     Running   0          10d
 
-.. warning::
+- An HTTP server which provide access to all input data and metadata
 
-    Restart session in order to take in account add to `docker` group.
 
-Create a single node k8s cluster
---------------------------------
+Prepare Qserv ingest
+====================
 
-Option #1: kind
-^^^^^^^^^^^^^^^
+Get the project
+---------------
 
-`kind <https://kind.sigs.k8s.io/>`__ is a tool for running local Kubernetes clusters using Docker container “nodes”.
-kind was primarily designed for testing Kubernetes itself, but may be used for local development or CI.
-Script below uses a `simple install script for kind <https://github.com/k8s-school/kind-travis-ci>`__ provided by `K8s-school <https://k8s-school.fr>`__.
+.. code:: sh
 
-.. code:: bash
+    git clone https://github.com/lsst-dm/qserv-ingest
+    cd qserv-ingest
 
-    WORKDIR="$HOME/src"
-    mkdir -p "$WORKDIR"
+Prepare configuration
+---------------------
 
-    cd "$WORKDIR"
-    git clone --depth 1 -b "v0.6.0" --single-branch https://github.com/k8s-school/kind-travis-ci
-    cd kind-travis-ci
-    ./kind/k8s-create.sh -s
+.. code:: sh
 
-Option #2: k3s
-^^^^^^^^^^^^^^
+    cp -r overlays/in2p3 overlays/<CUSTOM_INGEST>
+    cp env.example.sh env.sh
 
-`k3s <https://k3s.io/>`__ is the certified Kubernetes distribution built for IoT & Edge computing. It may be used for local development or CI.
+- In `overlays/<MY_INGEST>/init/kustomization.yaml`, set:
+  - `DATA_URL` to the **root URL of the HTTP server serving input data**
+  - `REQUESTS_CA_BUNDLE` to the local path of the CA chain of this server, if needed.
+- In `env.sh`, set `OVERLAY` to `<CUSTOM_INGEST>`, and eventually `INSTANCE` to the name of current Qserv instance.
 
-.. code:: bash
+Launch Qserv ingest
+===================
 
-    curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC=“--docker --write-kubeconfig-mode 644” sh -
-    export KUBECONFIG=/etc/rancher/k3s/k3s.yaml
+Register the database to ingest and load the chunk-to-ingest queue:
 
-Install Qserv in two lines
-==========================
+.. code:: sh
 
-.. code:: bash
+    ./job.sh init
 
-    curl -fsSL https://raw.githubusercontent.com/lsst/qserv-operator/master/deploy/qserv.sh | bash -s
-    kubectl apply -k https://github.com/lsst/qserv-operator/base
+Launch parallel ingest jobs:
 
-Run Qserv integration tests
-===========================
+.. code:: sh
 
-.. code:: bash
+    ./job.sh ingest
 
-    cd "$WORKDIR"
-    git clone  https://github.com/lsst/qserv-operator
-    cd qserv-operator
-    ./wait-qserv-ready.sh
-    ./run-integration-tests.sh
+
+Publish the database:
+
+.. code:: sh
+
+    ./job.sh publish
+
+Create all indexes:
+
+.. code:: sh
+
+    ./job.sh index
+
+Then adapt `example/query.sh` to launch a few queries against freshly ingested data.

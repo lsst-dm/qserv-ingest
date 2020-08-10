@@ -8,5 +8,5 @@ from documenteer.sphinxconfig.stackconf import \
 
 
 globals().update(build_pipelines_lsst_io_configs(
-    project_name='Qserv-operator',
+    project_name='Qserv-ingest',
 ))
