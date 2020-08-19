@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# POC for loading DC2 data inside Qserv
-# Based on https://confluence.lsstcorp.org/display/DM/Live+demo%3A+test+ingest+of+a+subset+of+one+track+of+the+HSC+Object+catalog
+# Ask Qserv replication system to register a Qserv database, prior to data ingestion
 
 # Load python-3
 DIR=$(cd "$(dirname "$0")"; pwd -P)

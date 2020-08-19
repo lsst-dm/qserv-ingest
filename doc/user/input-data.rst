@@ -5,7 +5,7 @@ Set up ingest input data
 Example
 =======
 
-This `example for input data <https://github.com/lsst-dm/qserv-ingest/tree/tickets/DM-24587/data/example_db>`__ 
+This `example for input data <https://github.com/lsst-dm/qserv-ingest/tree/master/data/example_db>`__ 
 is used by `Qserv ingest continuous integration process <https://travis-ci.com/github/lsst-dm/qserv-ingest>`__.
 
 
@@ -14,7 +14,7 @@ input data
 
 Input data is produced by `Qserv partitioner <https://github.com/lsst/partition>`__ (i.e. `sph-partition`) and is made of multiples `*.csv` files.
 Each of these files contains a part of a chunk for a given database and table,
-as shown in `this example <https://github.com/lsst-dm/qserv-ingest/blob/tickets/DM-24587/data/example_db/step1_1/position/chunk_57866.txt>`__.
+as shown in `this example <https://github.com/lsst-dm/qserv-ingest/blob/master/data/example_db/step1_1/position/chunk_57866.txt>`__.
 Relation between an input data file and its related table and database is available inside `metadata.json`, detailed below. 
 
 Metadata
@@ -22,9 +22,11 @@ Metadata
 
 Metadata files below describe input data and are required by `qserv-ingest`:
 
-- `metadata.json`: contain the name of the files describing the database, the tables, the indexes, and also the relative path to the chunk files.
-  Chunk files can be located in multiples directories.
-
+- `metadata.json`: contain the name of the files describing the database, the tables, and the indexes.
+  It also contains the relative path to the input chunk data produced by Qserv partitioner.
+  Folder organization for input chunk files is configurable, using the `directory` and the `chunks` sections of `metadata.json`.
+  Each input chunk file name must follow the pattern `chunk_<chunk_id>.txt`.
+  
   .. code:: json
 
     {
