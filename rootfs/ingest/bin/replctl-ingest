@@ -1,0 +1,72 @@
+#!/usr/bin/env python
+
+# LSST Data Management System
+# Copyright 2014-2015 AURA/LSST.
+#
+# This product includes software developed by the
+# LSST Project (http://www.lsst.org/).
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the LSST License Statement and
+# the GNU General Public License along with this program.  If not,
+# see <http://www.lsstcorp.org/LegalNotices/>.
+
+"""
+Loop on ingest task while ingest queue is not empty:
+- start a super-transaction
+- get location for a chunk
+- launch chunk ingest
+- stop super-transaction
+
+@author  Fabrice Jammes, IN2P3
+"""
+
+# -------------------------------
+#  Imports of standard modules --
+# -------------------------------
+import argparse
+import logging
+
+# ----------------------------
+# Imports for other modules --
+# ----------------------------
+from qserv.ingest import Ingester
+import qserv.util as util
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="A python wrapper around "
+                                     "Qserv REST web service")
+
+    parser.add_argument("repl_url", type=str,
+                        help="Replication controller root URL",
+                        action=util.BaseUrlAction)
+    parser.add_argument("--verbose", "-v", action="store_true",
+                        help="Use debug logging")
+    parser.add_argument("queue_url", type=str, metavar="CONNECTION",
+                        help="Connection string to queue manager in format "
+                        "mysql://user:pass@host:port/database.")
+    parser.add_argument("data_url", type=str, help="Input data URL",
+                        action=util.BaseUrlAction)
+
+    args = parser.parse_args()
+
+    logger = logging.getLogger()
+    if args.verbose:
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
+    logger.addHandler(logging.StreamHandler())
+
+    chunk_to_load = True
+
+    ingester = Ingester(args.data_url, args.repl_url, args.queue_url)
+    ingester.ingest()

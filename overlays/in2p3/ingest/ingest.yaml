@@ -1,0 +1,23 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ingest-ingest
+spec:
+  parallelism: 10
+  template:
+    spec:
+      containers:
+      - name: ingest
+        env:
+        - name: "REQUESTS_CA_BUNDLE"
+          valueFrom:
+            configMapKeyRef:
+              name: config-data-url
+              key: REQUESTS_CA_BUNDLE
+        volumeMounts:
+        - name: config-data-url
+          mountPath: /config-data-url
+      volumes:
+        - name: config-data-url
+          configMap:
+            name: config-data-url
