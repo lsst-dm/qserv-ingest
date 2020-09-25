@@ -51,10 +51,15 @@ if __name__ == "__main__":
                         action=util.BaseUrlAction)
     parser.add_argument("data_url", type=str, help="Input data URL",
                         action=util.BaseUrlAction)
-    parser.add_argument("--cleanup", "-c", action="store_true",
-                        help="Abort all unfinished/unaborted transactions")
     parser.add_argument("--verbose", "-v", action="store_true",
                         help="Use debug logging")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--cleanup", "-c", action="store_true",
+                        help="Abort all unfinished/unaborted transactions")
+    group.add_argument("--start", action="store_true",
+                        help="Start a new transaction")
+    group.add_argument("--commit", type=int, dest="trans_id",
+                        help="Commit a transaction of the given ID")
 
     args = parser.parse_args()
 
@@ -69,5 +74,11 @@ if __name__ == "__main__":
 
     if args.cleanup:
         ingester.abort_transactions()
+    elif args.start:
+        transaction_id = ingester._start_transaction()#args.start_database_transaction)
+        logger.info("Started transaction %s", transaction_id)
+    elif args.trans_id:
+        ingester._close_transaction(args.trans_id, True)
+        logger.info("Commit transaction %s", args.trans_id)
     else:
         ingester.get_transactions()

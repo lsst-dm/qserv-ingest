@@ -118,7 +118,7 @@ class Ingester():
         chunk_file = None
         transaction_id = None
         try:
-            transaction_id = self._start_transaction(database)
+            transaction_id = self._start_transaction()
             (host, port) = self._get_chunk_location(chunk_id,
                                                     database,
                                                     transaction_id)
@@ -176,11 +176,11 @@ class Ingester():
     def abort_transactions(self):
         for transaction_id in self.get_transactions():
             success = False
-            self._close_transaction(self.chunk_meta.database,
-                                    transaction_id, success)
+            self._close_transaction(transaction_id, success)
             _LOG.info("Abort transaction: %s", transaction_id)
 
-    def _start_transaction(self, database):
+    def _start_transaction(self):
+        database = self.chunk_meta.database
         url = urllib.parse.urljoin(self.repl_url, "ingest/trans")
         payload = {"database": database}
         responseJson = self.http.post(url, payload)
@@ -192,8 +192,8 @@ class Ingester():
         _LOG.debug(f"transaction ID: {transaction_id}")
         return transaction_id
 
-    def _close_transaction(self, database, transaction_id,
-                           success):
+    def _close_transaction(self, transaction_id, success):
+        database = self.chunk_meta.database
         tmp_url = posixpath.join("ingest/trans/", str(transaction_id))
         if success is True:
             tmp_url += "?abort=0&build-secondary-index=1"
