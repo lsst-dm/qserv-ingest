@@ -66,9 +66,17 @@ def download_file(base_url, filename):
 def json_get(base_url, filename):
     """Load json file at a given URL
     """
-    file_url = urllib.parse.urljoin(base_url, filename)
-    r = requests.get(file_url)
-    return r.json()
+    url = urllib.parse.urlsplit(base_url, scheme="file")
+    if url.scheme == "http":
+        file_url = urllib.parse.urljoin(base_url, filename)
+        r = requests.get(file_url)
+        return r.json()
+    elif url.scheme == "file":
+        file_url = urllib.parse.urljoin(url.path, filename)
+        with open(file_url, "r") as f:
+            return json.load(f)
+    else:
+        raise Exception("Unsupported URI scheme for ", base_url)
 
 
 def trailing_slash(url):
