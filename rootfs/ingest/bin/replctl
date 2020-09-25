@@ -37,6 +37,7 @@ import logging
 # Imports for other modules --
 # ----------------------------
 import qserv.ingest as ingest
+from qserv.http import Http
 import qserv.util as util
 
 if __name__ == "__main__":
@@ -45,7 +46,7 @@ if __name__ == "__main__":
     parser.add_argument("url", type=str, help="Web Service URL",
                         action=util.BaseUrlAction)
     parser.add_argument("method", type=str, help="Request type",
-                        choices=["post", "put"])
+                        choices=["post", "put", "delete"])
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--data",
                        help="Key-value pairs to pass configs with the request",
@@ -66,7 +67,10 @@ if __name__ == "__main__":
 
     payload = args.data or args.json or dict()
     logging.debug("Starting a request: %s with %s", args.url, payload)
+    http = Http()
     if args.method == "post":
-        ingest.post(args.url, payload)
+        http.post(args.url, payload)
     elif args.method == "put":
-        ingest.put(args.url)
+        http.put(args.url)
+    elif args.method == "delete":
+        http.delete(args.url)

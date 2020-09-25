@@ -129,3 +129,19 @@ class Http():
                 responseJson["error"])
         _LOG.info("success")
         return responseJson
+
+    def delete(self, url):
+        authKey = authorize()
+        r = requests.delete(url, json={"auth_key": authKey})
+        if (r.status_code != 200):
+            raise Exception(
+                'Error in HTTP response (DELETE)', url,
+                r.status_code)
+        responseJson = r.json()
+        if not responseJson['success']:
+            _LOG.critical("%s %s", url, responseJson['error'])
+            raise Exception(
+                'Error in JSON response (DELETE)', url,
+                responseJson["error"])
+        _LOG.info("success")
+        return responseJson
