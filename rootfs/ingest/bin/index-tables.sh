@@ -1,6 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 
-# Ask replication system to create indexes for Qserv data
+# Ask replication system to create tables indexes for Qserv data
 
 DIR=$(cd "$(dirname "$0")"; pwd -P)
 . "$DIR"/env.sh

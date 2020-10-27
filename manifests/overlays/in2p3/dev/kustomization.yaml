@@ -1,7 +1,7 @@
 bases:
-- ../../../base/init
+- ../../../base/dev
 patchesStrategicMerge:
-- init.yaml
+- dev.yaml
 
 configMapGenerator:
 - name: config-data-url
@@ -9,7 +9,7 @@ configMapGenerator:
   files:
   - chain_TERENA_SSL_CA_3.pem
   literals:
-  - DATA_URL=https://ccnetlsst01.in2p3.fr:10443/dc2_run2_1i_dr1b/
+  - DATA_URL=https://ccnetlsst01.in2p3.fr:65101/cosmoDC2_v1.1.4_image/ 
   - REQUESTS_CA_BUNDLE=/config-data-url/chain_TERENA_SSL_CA_3.pem
 generatorOptions:
   labels:

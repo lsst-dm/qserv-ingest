@@ -83,9 +83,19 @@ if __name__ == "__main__":
     url = urllib.parse.urljoin(args.url, path)
 
     for json_data in metadata.get_tables_json():
-        if json_data["table"] in args.felis:
+        if args.felis is not None and json_data["table"] in args.felis:
             schema = args.felis[json_data["table"]]
             json_data["schema"] = schema + json_data["schema"]
         logger.debug("Starting a table registration request: %s with %s",
                      url, json_data)
         http_session.post(url, json_data)
+
+    path = "/ingest/config/"
+    url = urllib.parse.urljoin(args.url, path)
+    json = {"database": metadata.database,
+            "CAINFO": "/etc/pki/tls/certs/ca-bundle.crt",
+            "SSL_VERIFYPEER": 0
+           }
+
+    logger.debug("Configuring ingest parameters: %s with %s", url, json)
+    http_session.put(url, json)

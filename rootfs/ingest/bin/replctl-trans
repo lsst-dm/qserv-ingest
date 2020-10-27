@@ -21,11 +21,7 @@
 # see <http://www.lsstcorp.org/LegalNotices/>.
 
 """
-Loop on ingest task while ingest queue is not empty:
-- start a super-transaction
-- get location for a chunk
-- launch chunk ingest
-- stop super-transaction
+List or abort current super-transactions
 
 @author  Fabrice Jammes, IN2P3
 """

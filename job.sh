@@ -9,9 +9,9 @@ JOB="$1"
 
 if [ -z "$OVERLAY" ]
 then
-    KUSTOMIZE_DIR="$DIR/base"
+    KUSTOMIZE_DIR="$DIR/manifests/base"
 else
-    KUSTOMIZE_DIR="$DIR/overlays/$OVERLAY"
+    KUSTOMIZE_DIR="$DIR/manifests/overlays/$OVERLAY"
 fi
 
 kubectl apply -k "$KUSTOMIZE_DIR/$JOB"

@@ -96,13 +96,14 @@ class Http():
         _LOG.info("success")
         return responseJson
 
-    def post(self, url, payload):
-        authKey = authorize()
-        payload["auth_key"] = authKey
+    def post(self, url, payload, auth=True):
+        if auth == True:
+            authKey = authorize()
+            payload["auth_key"] = authKey
         r = requests.post(url, json=payload)
         if (r.status_code != 200):
             raise Exception(
-                'Error in replication controller HTTP response (POST)', url,
+                'Error in HTTP response (POST)', url,
                 r.status_code)
         responseJson = r.json()
         if not responseJson["success"]:
@@ -114,9 +115,12 @@ class Http():
         _LOG.debug("success")
         return responseJson
 
-    def put(self, url):
+    def put(self, url, payload=None):
         authKey = authorize()
-        r = requests.put(url, json={"auth_key": authKey})
+        if not payload:
+            payload = {}
+        payload["auth_key"] = authKey
+        r = requests.put(url, json=payload)
         if (r.status_code != 200):
             raise Exception(
                 'Error in HTTP response (PUT)', url,

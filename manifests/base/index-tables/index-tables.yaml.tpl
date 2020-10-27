@@ -1,14 +1,14 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: ingest-index
+  name: ingest-index-tables
 spec:
   template:
     spec:
       containers:
       - name: index 
         command:
-        - index.sh
+        - index-tables.sh
         env:
         - name: DATA_URL
           valueFrom:

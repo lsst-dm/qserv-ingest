@@ -3,4 +3,4 @@ commonLabels:
   app: qserv
 
 resources:
-- index.yaml
+- index-tables.yaml
