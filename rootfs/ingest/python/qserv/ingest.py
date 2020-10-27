@@ -31,9 +31,10 @@ User-friendly client library for Qserv replication service.
 #  Imports of standard modules --
 # -------------------------------
 import logging
+from multiprocessing.pool import ThreadPool
 import os
 import posixpath
-import subprocess
+import time
 import urllib.parse
 
 # ----------------------------
@@ -42,7 +43,7 @@ import urllib.parse
 from .http import Http
 from .metadata import ChunkMetadata
 from .queue import QueueManager
-from .util import download_file, trailing_slash
+from .util import trailing_slash
 
 TMP_DIR = "/tmp"
 
@@ -72,73 +73,52 @@ class Ingester():
         if queue_url is not None:
             self.queue_manager = QueueManager(queue_url, self.chunk_meta)
 
-    def _get_chunk_location(self, chunk, database, transaction_id):
-        url = urllib.parse.urljoin(self.repl_url, "ingest/chunk")
-        payload = {"chunk": chunk,
-                   "database": database,
-                   "transaction_id": transaction_id}
-        responseJson = self.http.post(url, payload)
-
-        # Get location host and port
-        host = responseJson["location"]["host"]
-        port = responseJson["location"]["port"]
-        _LOG.info("Location for chunk %d: %s %d", chunk, host, port)
-
-        return (host, port)
-
-    def index_all(self):
+    def index_all_tables(self):
         url = urllib.parse.urljoin(self.repl_url, "replication/sql/index")
         for json_idx in self.chunk_meta.get_json_indexes():
             _LOG.info(f"Create index: {json_idx}")
             self.http.post(url, json_idx)
 
+    def build_secondary_index(self):
+        url = urllib.parse.urljoin(self.repl_url, "ingest/index/secondary")
+        _LOG.info(f"Create secondary index")
+        payload = {"database": self.chunk_meta.database, "allow_for_published":1, "local":1, "rebuild":1}
+        self.http.post(url, payload)
+
     def ingest(self):
         chunk_to_load = True
         while chunk_to_load:
-            chunk_to_load = self.ingest_task()
+            chunk_to_load = self._ingest_transaction()
 
-    def ingest_task(self):
+    def _ingest_transaction(self):
         """Get a chunk from a queue server,
-        load it inside Qserv,
+        then load it inside Qserv,
         during a super-transation
 
         Returns:
         --------
-        Integer number: 0 if no chunk to load,
-                        1 if chunk was loaded successfully
+        Integer number: 0 if no more chunk to load,
+                        1 if a chunk was loaded successfully
         """
 
-        _LOG.info("START INGEST TASK")
+        _LOG.info("START INGEST TRANSACTION")
 
-        chunk_info = self.queue_manager.lock_chunk()
-        if not chunk_info:
+        chunks_locked = self.queue_manager.lock_chunks()
+        if len(chunks_locked) == 0:
             return False
 
-        (database, chunk_id, chunk_base_url, table) = chunk_info
-        chunk_file = None
         transaction_id = None
+        chunk = None
         try:
             transaction_id = self._start_transaction()
-            (host, port) = self._get_chunk_location(chunk_id,
-                                                    database,
-                                                    transaction_id)
-            chunk_file = _download_chunk(chunk_base_url, chunk_id,
-                                         "chunk_{}.txt")
-            _ingest_chunk(host, port, transaction_id, chunk_file, table)
-            if self.queue_manager.chunk_meta.is_director(table):
-                chunk_file = _download_chunk(
-                    chunk_base_url, chunk_id, "chunk_{}_overlap.txt")
-                _ingest_chunk(host, port, transaction_id, chunk_file, table)
-            ingest_success = True
+            ingest_success = self._ingest_parallel_chunks(transaction_id, chunks_locked)
         except Exception as e:
-            _LOG.critical('Error in ingest task for chunk %s: %s',
-                          chunk_info,
-                          e)
+            _LOG.critical('Ingest failed during transaction: %s, %s', transaction_id, e)
             ingest_success = False
             raise(e)
         finally:
             if transaction_id:
-                self._close_transaction(database, transaction_id,
+                self._close_transaction(transaction_id,
                                         ingest_success)
 
         # TODO release chunk in queue if process crash
@@ -146,9 +126,16 @@ class Ingester():
         # => Doing it manually seems safer.
 
         # ingest successful
-        self.queue_manager.delete_chunk()
-        if chunk_file and os.path.isfile(chunk_file):
-            os.remove(chunk_file)
+        self.queue_manager.delete_chunks()
+        return True
+
+    def _ingest_parallel_chunks(self, transaction_id, chunks_locked):
+        with ThreadPool() as pool:
+            args = []
+            for c in chunks_locked:
+                args.append([self.repl_url, self.queue_manager.chunk_meta, transaction_id, c])
+            for chunk, startedAt, endedAt in pool.imap_unordered(_ingest_chunk, args):
+                logging.debug('Chunk %s ingest started at %s ended at %s' % (chunk, startedAt, endedAt))
         return True
 
     def get_transactions(self):
@@ -196,7 +183,7 @@ class Ingester():
         database = self.chunk_meta.database
         tmp_url = posixpath.join("ingest/trans/", str(transaction_id))
         if success is True:
-            tmp_url += "?abort=0&build-secondary-index=1"
+            tmp_url += "?abort=0"
         else:
             tmp_url += "?abort=1"
         url = urllib.parse.urljoin(self.repl_url, tmp_url)
@@ -206,31 +193,70 @@ class Ingester():
             _LOG.debug("Close transaction (id: %s state: %s)",
                        trans['id'], trans['state'])
 
-
-def _ingest_chunk(host, port, transaction_id, chunk_file, table):
-
-    cmd = ['qserv-replica-file-ingest', '--debug', '--verbose', 'FILE',
-           host, str(port), str(transaction_id), table, "P", chunk_file]
-    _LOG.debug("Launch unix process: %s", cmd)
-
-    try:
-        result = subprocess.run(cmd,
-                                capture_output=True,
-                                universal_newlines=True,
-                                check=True)
-    except subprocess.CalledProcessError as e:
-        _LOG.error("stdout %s", e.stdout)
-        _LOG.error("stderr %s", e.stderr)
-        raise(e)
-
-    _LOG.debug("stdout: '%s'", result.stdout)
-    _LOG.debug("stderr: '%s'", result.stderr)
-
-
-def _download_chunk(base_url, chunk_id, file_format):
+def _get_chunk_url(base_url, chunk_id, file_format):
     chunk_filename = file_format.format(chunk_id)
-    abs_filename = download_file(base_url, chunk_filename)
-    return abs_filename
+    base_url = trailing_slash(base_url)
+    file_url = urllib.parse.urljoin(base_url, chunk_filename)
+    _LOG.debug("Chunk file url %s", file_url)
+    return file_url
 
 
+def _get_chunk_location(repl_url, chunk, database, transaction_id):
+    url = urllib.parse.urljoin(repl_url, "ingest/chunk")
+    payload = {"chunk": chunk,
+               "database": database,
+               "transaction_id": transaction_id}
+    responseJson = Http().post(url, payload)
+
+    # Get location host and port
+    host = responseJson["location"]["host"]
+    port = responseJson["location"]["port"]
+    _LOG.info("Location for chunk %d: %s %d", chunk, host, port)
+
+    return (host, port)
+
+def _ingest_chunk(args):
+    repl_url, chunk_meta, transaction_id, chunk = args
+    try:
+        logging.debug("Start INGEST")
+        startedAt = time.strftime("%H:%M:%S", time.localtime())
+        (database, chunk_id, chunk_base_url, table) = chunk
+        (host, port) = _get_chunk_location(repl_url,
+                                           chunk_id,
+                                           database,
+                                           transaction_id)
+        _ingest_file(host, port, transaction_id, chunk_base_url, chunk_id, table, False)
+        if chunk_meta.is_director(table):
+            _ingest_file(host, port, transaction_id, chunk_base_url, chunk_id, table, True)
+        endedAt = time.strftime("%H:%M:%S", time.localtime())
+    except Exception as e:
+        _LOG.critical('Error in ingest task for chunk %s: %s',
+                        chunk,
+                        e)
+        raise(ValueError(e))
+    return chunk, startedAt, endedAt
+
+
+def _ingest_file(host, port, transaction_id, chunk_base_url, chunk_id, table, overlap):
+    # See https://confluence.lsstcorp.org/display/DM/Ingest%3A+11.1.+The+REST+services, section 1.1.7
+
+    if overlap:
+        chunk_file_format = "chunk_{}_overlap.txt"
+    else:
+        chunk_file_format = "chunk_{}.txt"
+    chunk_file_url = _get_chunk_url(chunk_base_url, chunk_id, chunk_file_format)
+    worker_url = "http://{}:{}".format(host,25004)
+    url = urllib.parse.urljoin(worker_url, "ingest/file")
+    _LOG.debug("_ingest_chunk: url: %s", url)
+    payload = {"transaction_id":transaction_id,
+                "table":table,
+                "column_separator":",",
+                "chunk":chunk_id,
+                "overlap":int(overlap),
+                "url":chunk_file_url}
+    _LOG.debug("_ingest_chunk: payload: %s", payload)
+    responseJson = Http().post(url, payload)
+    _LOG.debug("Ingest: responseJson: %s", responseJson)
+
+    # TODO manage responseJson error everywhere!!!
 

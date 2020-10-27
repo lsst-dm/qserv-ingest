@@ -49,26 +49,11 @@ TMP_DIR = "/tmp"
 _LOG = logging.getLogger(__name__)
 
 
-def download_file(base_url, filename):
-    base_url = trailing_slash(base_url)
-    file_url = urllib.parse.urljoin(base_url, filename)
-    _LOG.debug("Download %s", file_url)
-    r = requests.get(file_url)
-    abs_filename = os.path.join(TMP_DIR, filename)
-    with open(abs_filename, 'wb') as f:
-        f.write(r.content)
-
-    if (r.status_code != 200):
-        _LOG.critical("Unable to download file, error %s", r.status_code)
-        raise Exception('Unable to download file', file_url, r.status_code)
-    return abs_filename
-
-
 def json_get(base_url, filename):
     """Load json file at a given URL
     """
     url = urllib.parse.urlsplit(base_url, scheme="file")
-    if url.scheme == "http":
+    if url.scheme in ["http", "https"]:
         file_url = urllib.parse.urljoin(base_url, filename)
         r = requests.get(file_url)
         return r.json()

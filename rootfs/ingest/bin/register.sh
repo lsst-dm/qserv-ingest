@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Ask Qserv replication system to register a Qserv database, prior to data ingestion
 

@@ -5,4 +5,4 @@ set -euxo pipefail
 
 
 PASSWORD=CHANGEME
-kubectl exec -it qserv-ingest-db-0 -- mysql -h localhost -u root -p"$PASSWORD" -e "select count(*) from qservIngest.task;"
+kubectl exec -it qserv-ingest-db-0 -- mysql -h localhost -u root -p"$PASSWORD" -e 'select count(*) from qservIngest.task WHERE pod is NULL;'

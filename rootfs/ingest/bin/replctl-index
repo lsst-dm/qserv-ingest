@@ -39,13 +39,15 @@ import qserv.ingest as ingest
 import qserv.util as util
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Create indexes for tables "
+    parser = argparse.ArgumentParser(description="Create Qserv indexes (tables or secondary) "
                                      "using Qserv replication service")
     parser.add_argument("data_url", type=str, help="Input data/metadata URL",
                         action=util.BaseUrlAction)
     parser.add_argument("repl_url", type=str,
                         help="Replication controller root URL",
                         action=util.BaseUrlAction)
+    parser.add_argument("--secondary", "-s", action="store_true",
+                        help="Create secondary index, and do not index tables")
     parser.add_argument("--verbose", "-v", action="store_true",
                         help="Use debug logging")
     args = parser.parse_args()
@@ -58,4 +60,7 @@ if __name__ == "__main__":
     logger.addHandler(logging.StreamHandler())
 
     ingester = ingest.Ingester(args.data_url, args.repl_url)
-    ingester.index_all()
+    if args.secondary:
+        ingester.build_secondary_index()
+    else:
+        ingester.index_all_tables()

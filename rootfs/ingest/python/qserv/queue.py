@@ -38,15 +38,11 @@ import socket
 import sqlalchemy
 from sqlalchemy import MetaData, Table
 from sqlalchemy.engine.url import make_url
-from sqlalchemy.sql import select, delete
-
+from sqlalchemy.sql import select, delete, func
 
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
-
-_STATUS_IN_PROGRESS = 1
-STATUS_COMPLETED = 2
 
 _LOG = logging.getLogger(__name__)
 
@@ -67,6 +63,18 @@ class QueueManager():
         self.ordered_tables_to_load = self.chunk_meta.get_tables_names()
         _LOG.debug("Ordered tables to load: %s", self.ordered_tables_to_load)
         self.next_current_table()
+        result = self.engine.execute(select([func.count('*')]).select_from(self.task))
+        self.chunk_files_count = next(result)[0]
+
+        _LOG.debug("Number of chunk file to load: %s", self.chunk_files_count)
+
+        # TODO add a parameter
+        nb_transaction = 10
+        tmp = int(self.chunk_files_count / nb_transaction)
+        if tmp != 0:
+            self._chunks_to_lock_number = tmp
+        else:
+            self._chunks_to_lock_number = 1
 
     def next_current_table(self):
         if len(self.ordered_tables_to_load) != 0:
@@ -75,7 +83,7 @@ class QueueManager():
             _LOG.warn("No table to load")
             self.current_table = None
 
-    def _get_current_chunk(self):
+    def _get_locked_chunks(self):
         # "SELECT chunk_id, chunk_file_url FROM task WHERE pod = ?"
         query = select([self.task.c.database,
                         self.task.c.chunk_id,
@@ -83,12 +91,8 @@ class QueueManager():
                         self.task.c.table])
         query = query.where(self.task.c.pod == self.pod)
         result = self.engine.execute(query)
-        row = result.first()
-        if row:
-            chunk = (row[0], int(row[1]), row[2], row[3])
-        else:
-            chunk = None
-        return chunk
+        chunks = result.fetchall()
+        return chunks
 
     def load(self):
         """Load chunks in task queue
@@ -111,8 +115,9 @@ class QueueManager():
                      "chunk_file_url": url,
                      "table": tbl})
 
-    def lock_chunk(self):
-        """If a chunk is already locked in queue for current pod, get it
+    def lock_chunks(self):
+        """TODO/FIXME Document
+           If a chunk is already locked in queue for current pod, get it
            if not, lock it then return its id and file base url,
            or None if queue is empty
         Returns
@@ -120,40 +125,43 @@ class QueueManager():
         Integer number, String,  String
         """
 
-        # Check if a chunk was previously locked for this pod
-        current_chunk = self._get_current_chunk()
-        if current_chunk is not None:
-            _LOG.debug("Current chunk already locked for pod: %s",
-                       current_chunk)
+        # Check chunks were previously locked for this pod
+        chunks_locked = self._get_locked_chunks()
+        chunks_locked_count = len(chunks_locked)
+        if chunks_locked_count != 0:
+            _LOG.debug("Chunks already locked by pod: %s",
+                       chunks_locked)
         else:
             _LOG.debug("Current table: %s", self.current_table)
+            while not self._is_queue_empty() and chunks_locked_count < self._chunks_to_lock_number:
 
-            while self.current_table is not None and current_chunk is None:
-                sql = "UPDATE task SET pod = '{}', status = {} "
-                sql += "WHERE pod IS NULL AND status IS NULL"
-                sql += " and `table` = '{}' "
-                sql += "ORDER BY chunk_id ASC LIMIT 1;"
-                query = sql.format(
-                    self.pod, _STATUS_IN_PROGRESS, self.current_table)
+                sql = "UPDATE task SET pod = '{}' "
+                sql += "WHERE pod IS NULL AND `table` = '{}' "
+                sql += "AND `database` = '{}' "
+                sql += "ORDER BY chunk_id ASC LIMIT {};"
+                query = sql.format(self.pod, self.current_table,
+                                   self.chunk_meta.database,
+                                   self._chunks_to_lock_number-chunks_locked_count)
                 _LOG.debug("Query: %s", query)
 
                 self.engine.execute(query)
 
-                current_chunk = self._get_current_chunk()
-
-                if not current_chunk:
-                    logging.info("No chunk remaining for table %s",
+                chunks_locked = self._get_locked_chunks()
+                chunks_locked_count = len(chunks_locked)
+                _LOG.debug("chunks_locked_count: %s", chunks_locked_count)
+                if chunks_locked_count < self._chunks_to_lock_number:
+                    logging.info("No more chunk to lock for table %s",
                                  self.current_table)
                     self.next_current_table()
-                else:
-                    logging.debug("Chunk for pod %s: %s",
-                                  self.pod,
-                                  current_chunk)
 
-        return current_chunk
+        logging.debug("Chunks locked by pod %s: %s",
+                      self.pod,
+                      chunks_locked)
+        return chunks_locked
 
-    def delete_chunk(self):
-        """Delete a chunk in queue when it has been ingested
+    def delete_chunks(self):
+        """Delete chunks in queue when they have been ingested
+           and the super-transaction has been successfully closed
         Returns
         -------
         Integer number, String
@@ -162,6 +170,8 @@ class QueueManager():
         logging.debug("Unlock chunk in queue")
         query = delete(self.task)
         query = query.where(self.task.c.pod == self.pod)
-        # TODO manage: MySQLdb._exceptions.OperationalError: (1213, 'Deadlock found when trying to get lock; try restarting transaction')
 
         self.engine.execute(query)
+
+    def _is_queue_empty(self):
+        return (self.current_table == None)

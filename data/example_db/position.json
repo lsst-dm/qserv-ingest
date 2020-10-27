@@ -2,6 +2,7 @@
     "database": "dc2_run2_1i_dr1b",
     "table": "position",
     "auth_key": "",
+    "auto_build_secondary_index":0,
     "is_partitioned": 1,
     "chunk_id_key": "chunkId",
     "sub_chunk_id_key": "subChunkId",
