@@ -34,6 +34,7 @@ import json
 import logging
 import os
 import urllib.parse
+import yaml
 
 # ----------------------------
 # Imports for other modules --
@@ -112,3 +113,23 @@ class JsonAction(argparse.Action):
         with open(values, 'r') as f:
             x = json.load(f)
         setattr(namespace, self.dest, x)
+
+
+class FelisAction(argparse.Action):
+    """argparse action to read a felis file into namespace"""
+
+    def __call__(self, parser, namespace, values, option_string):
+        with open(values, "r") as f:
+            tables = yaml.safe_load(f)["tables"]
+        schemas = dict()
+        for table in tables:
+            tableName = table["name"]
+            schemas[tableName] = list()
+            for column in table["columns"]:
+                datatype = column["mysql:datatype"]
+                nullable = column["nullable"] if "nullable" in column else True
+                nullstring = " DEFAULT NULL" if nullable else " NOT NULL"
+                schemas[tableName].append(
+                    {"name": column["name"],
+                     "type": column["mysql:datatype"] + nullstring})
+        setattr(namespace, self.dest, schemas)
