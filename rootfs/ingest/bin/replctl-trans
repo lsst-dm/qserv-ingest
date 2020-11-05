@@ -60,6 +60,8 @@ if __name__ == "__main__":
                         help="Start a new transaction")
     group.add_argument("--commit", type=int, dest="trans_id",
                         help="Commit a transaction of the given ID")
+    group.add_argument("--commit-all", "-a", action="store_true", dest="commit_all",
+                        help="Commit all started transactions")
 
     args = parser.parse_args()
 
@@ -80,5 +82,10 @@ if __name__ == "__main__":
     elif args.trans_id:
         ingester._close_transaction(args.trans_id, True)
         logger.info("Commit transaction %s", args.trans_id)
+    elif args.commit_all:
+        transaction_ids = ingester.get_transactions()
+        for i in transaction_ids:
+            ingester._close_transaction(i, True)
+            logger.info("Commit transaction %s", i)
     else:
         ingester.get_transactions()
