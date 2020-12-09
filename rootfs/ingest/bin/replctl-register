@@ -49,6 +49,9 @@ if __name__ == "__main__":
                         action=util.BaseUrlAction)
     parser.add_argument("data_url", type=str, help="Input data URL",
                         action=util.BaseUrlAction)
+    parser.add_argument("--felis", type=str,
+                        help=" A Felis schema file containing the table schema",
+                        action=util.FelisAction)
     parser.add_argument("--verbose", "-v", action="store_true",
                         help="Use debug logging")
     args = parser.parse_args()
@@ -73,10 +76,16 @@ if __name__ == "__main__":
 
     http_session.post(url, json)
 
+    if args.felis:
+        logger.info("Loaded Felis schema for tables %s", args.felis.keys())
+
     path = "/ingest/table/"
     url = urllib.parse.urljoin(args.url, path)
 
     for json_data in metadata.get_tables_json():
+        if json_data["table"] in args.felis:
+            schema = args.felis[json_data["table"]]
+            json_data["schema"] = schema + json_data["schema"]
         logger.debug("Starting a table registration request: %s with %s",
                      url, json_data)
         http_session.post(url, json_data)
