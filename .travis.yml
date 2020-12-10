@@ -10,8 +10,8 @@ before_script:
   - git clone --depth 1 -b "k8s-v1.18.2" --single-branch https://github.com/k8s-school/kind-travis-ci.git
   - ./kind-travis-ci/k8s-create.sh -s
   - git clone --depth 1 -b "master" --single-branch https://github.com/lsst/qserv-operator
-  - kubectl apply -k ./qserv-operator/manifests/base
   - kubectl apply -f ./qserv-operator/manifests/operator.yaml
+  - kubectl apply -k ./qserv-operator/manifests/base
   - ./qserv-operator/tests/tools/wait-qserv-ready.sh 
 
 script:
