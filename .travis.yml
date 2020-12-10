@@ -9,7 +9,7 @@ before_script:
   - if [ "$DOCKER_USERNAME" ]; then docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"; fi
   - git clone --depth 1 -b "k8s-v1.18.2" --single-branch https://github.com/k8s-school/kind-travis-ci.git
   - ./kind-travis-ci/k8s-create.sh -s
-  - git clone --depth 1 -b "tickets/DM-26295" --single-branch https://github.com/lsst/qserv-operator
+  - git clone --depth 1 -b "master" --single-branch https://github.com/lsst/qserv-operator
   - ./qserv-operator/deploy.sh
   - kubectl apply -k ./qserv-operator/manifests/base
   - ./qserv-operator/tests/tools/wait-qserv-ready.sh 
