@@ -7,8 +7,10 @@ resources:
 
 configMapGenerator:
 - name: config-data-url
+  files:
+  - servers.json
   literals:
-  - DATA_URL="https://raw.githubusercontent.com/lsst-dm/qserv-ingest/master/data/example_db/"
+  - DATA_URL="https://raw.githubusercontent.com/lsst-dm/qserv-ingest/tickets/DM-28108/data/cosmoDC2_v1_1_4_image_testintegration/"
 generatorOptions:
   labels:
     kustomize.generated.resources: qserv.ingest

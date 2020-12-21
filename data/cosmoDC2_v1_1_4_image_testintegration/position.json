@@ -1,0 +1,39 @@
+{
+    "database": "cosmoDC2_v1_1_4_image_overlap",
+    "table": "position",
+    "auth_key": "",
+    "is_partitioned": 1,
+    "chunk_id_key": "chunkId",
+    "sub_chunk_id_key": "subChunkId",
+    "is_director": 1,
+    "director_key": "galaxy_id",
+    "auto_build_secondary_index": 1,
+    "latitude_key": "coord_dec",
+    "longitude_key": "coord_ra",
+    "schema": [
+        {
+            "name": "galaxy_id",
+            "type": "bigint(20)"
+        },
+        {
+            "name": "halo_id",
+            "type": "bigint(20)"
+        },
+        {
+            "name": "coord_ra",
+            "type": "DOUBLE NOT NULL"
+        },
+        {
+            "name": "coord_dec",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "chunkId",
+            "type": "int(11) NOT NULL"
+        },
+        {
+            "name": "subChunkId",
+            "type": "int(11) NOT NULL"
+        }
+    ]
+}

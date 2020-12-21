@@ -1,0 +1,53 @@
+{
+    "database": "cosmoDC2_v1_1_4_image_overlap.json",
+    "tables": [
+        {
+            "schema": "position.json",
+            "indexes": [
+                "idx_position.json"
+            ],
+            "data": [
+                {
+                    "directory": "step1_1/position",
+                    "chunks": [
+                        73532
+                    ],
+                    "overlaps": [
+                        72853,
+                        73532,
+                        76257
+                    ]
+                },
+                {
+                    "directory": "step1_2/position",
+                    "chunks": [
+                        76277
+                    ],
+                    "overlaps": [
+                        74920
+                    ]
+                }
+            ]
+        },
+        {
+            "schema": "data.json",
+            "indexes": [
+                "idx_data.json"
+            ],
+            "data": [
+                {
+                    "directory": "step2_1/data",
+                    "chunks": [
+                        73532
+                    ]
+                },
+                {
+                    "directory": "step2_2/data",
+                    "chunks": [
+                        76277
+                    ]
+                }
+            ]
+        }
+    ]
+}

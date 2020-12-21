@@ -1,0 +1,7 @@
+{
+    "http_servers":[
+        "https://server1",
+        "https://server2",
+        "https://server3"
+    ]
+}

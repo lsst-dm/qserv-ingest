@@ -94,7 +94,7 @@ if __name__ == "__main__":
     url = urllib.parse.urljoin(args.url, path)
     json = {"database": metadata.database,
             "CAINFO": "/etc/pki/tls/certs/ca-bundle.crt",
-            "SSL_VERIFYPEER": 0
+            "SSL_VERIFYPEER": 1
            }
 
     logger.debug("Configuring ingest parameters: %s with %s", url, json)

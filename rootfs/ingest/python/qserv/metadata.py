@@ -29,19 +29,23 @@ Manage metadata related to input data
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
+import json
 import logging
 import urllib.parse
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-from .util import json_get, trailing_slash
+from .util import http_file_exists, json_get, trailing_slash
 
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
 _METADATA_FILENAME = "metadata.json"
 _DIRECTOR = "director"
+_CHUNK = "chunks"
+_OVERLAP = 'overlaps'
+_FILE_TYPES = [_CHUNK, _OVERLAP]
 
 _LOG = logging.getLogger(__name__)
 
@@ -54,7 +58,7 @@ class ChunkMetadata():
     """Manage metadata related to data to ingest (database, tables and chunk files)
     """
 
-    def __init__(self, data_url):
+    def __init__(self, data_url, servers_file = None):
         """Download metadata located at 'data_url' and describing database, tables
            and chunks files, and then load it in a dictionnary.
         """
@@ -63,37 +67,35 @@ class ChunkMetadata():
         self.metadata = json_get(self.data_url, _METADATA_FILENAME)
         _LOG.debug("Metadata: %s", self.metadata)
 
+        # Get HTTP configuration
+        url = urllib.parse.urlsplit(self.data_url, scheme="file")
+        self.http_servers = []
+        if servers_file and url.scheme in ["http", "https"]:
+            with open(servers_file, "r") as f:
+                data = json.load(f)
+                self.http_servers = data['http_servers']
+
         filename = self.metadata['database']
         self.json_db = json_get(self.data_url, filename)
         self.database = self.json_db['database']
-        self.tables = []
         self.init_tables()
 
-    def init_tables(self):
-        if self.tables == []:
-            for t in self.metadata['tables']:
-                table = dict()
-                table['data'] = t['data']
-                _LOG.debug("Table metadata: %s", t)
-                schema_file = t['schema']
-                table['json'] = json_get(self.data_url, schema_file)
-                idx_files = t['indexes']
-                table['indexes'] = []
-                for f in idx_files:
-                    table['indexes'].append(json_get(self.data_url, f))
-                is_director = bool(table['json']['is_director'])
-                if is_director:
-                    self.tables.insert(0, table)
+    def get_chunk_files_info(self):
+        # TODO add iterator over all chunks?
+        files_info = []
+        for table in self.tables:
+            for d in table['data']:
+                path = d['directory']
+                if self._has_extra_overlaps:
+                    for ftype in _FILE_TYPES:
+                        if d.get(ftype):
+                            is_overlap = (ftype == _OVERLAP)
+                            files_info.append((path, d[ftype], is_overlap, _get_name(table)))
                 else:
-                    self.tables.append(table)
-
-    def is_director(self, table_name):
-        for t in self.tables:
-            if t['json']['table'] == table_name:
-                return bool(t['json']['is_director'])
-            else:
-                return False
-        raise Exception("Table '%s' not found", table_name)
+                    files_info.append((path, d[_CHUNK], False, _get_name(table)))
+                    if _is_director(table):
+                        files_info.append((path, d[_CHUNK], True, _get_name(table)))
+        return files_info
 
     def get_tables_names(self):
         table_names = []
@@ -116,13 +118,30 @@ class ChunkMetadata():
             jsons.append(json_data)
         return jsons
 
-    def get_chunks(self):
-        # TODO add iterator over all chunks?
-        chunks = []
-        for table in self.tables:
-            for d in table['data']:
-                directory = d['directory']
-                url = urllib.parse.urljoin(self.data_url, directory)
-                url = trailing_slash(url)
-                chunks.append((url, d['chunks'], _get_name(table)))
-        return chunks
+    def init_tables(self):
+        self.tables = []
+        self._has_extra_overlaps = False
+        for t in self.metadata['tables']:
+            table = dict()
+            table['data'] = t['data']
+
+            # True if overlap files are different from chunk files,
+            # this might occurs if some chunk or overlap files are empty
+            if self._has_extra_overlaps == False:
+                for data in table['data']:
+                    if data.get(_OVERLAP):
+                        self._has_extra_overlaps = True
+            _LOG.debug("Table metadata: %s", t)
+            schema_file = t['schema']
+            table['json'] = json_get(self.data_url, schema_file)
+            idx_files = t['indexes']
+            table['indexes'] = []
+            for f in idx_files:
+                table['indexes'].append(json_get(self.data_url, f))
+            if _is_director(table):
+                self.tables.insert(0, table)
+            else:
+                self.tables.append(table)
+
+def _is_director(table):
+    return bool(table['json']['is_director'])

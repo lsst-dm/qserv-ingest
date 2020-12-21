@@ -1,0 +1,1276 @@
+{
+    "database": "cosmoDC2_v1_1_4_image_overlap",
+    "table": "data",
+    "auth_key": "",
+    "is_partitioned": 1,
+    "chunk_id_key": "chunkId",
+    "sub_chunk_id_key": "subChunkId",
+    "is_director": 0,
+    "director_key": "galaxy_id",
+    "schema": [
+        {
+            "name": "galaxy_id",
+            "type": "bigint(20)"
+        },
+        {
+            "name": "halo_id",
+            "type": "bigint(20)"
+        },
+        {
+            "name": "coord_ra",
+            "type": "DOUBLE NOT NULL"
+        },
+        {
+            "name": "coord_dec",
+            "type": "FLOAT NOT NULL"
+        },
+        {
+            "name": "A_v",
+            "type": "FLOAT"
+        },
+        {
+            "name": "A_v_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "A_v_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "Mag_true_Y_lsst_z0_obs",
+            "type": "FLOAT"
+        },
+        {
+            "name": "Mag_true_Y_lsst_z0_no_host_extinction_obs",
+            "type": "FLOAT"
+        },
+        {
+            "name": "Mag_true_g_lsst_z0",
+            "type": "FLOAT"
+        },
+        {
+            "name": "Mag_true_g_lsst_z0_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "Mag_true_g_sdss_z0",
+            "type": "FLOAT"
+        },
+        {
+            "name": "Mag_true_g_sdss_z0_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "Mag_true_i_lsst_z0",
+            "type": "FLOAT"
+        },
+        {
+            "name": "Mag_true_i_lsst_z0_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "Mag_true_i_sdss_z0",
+            "type": "FLOAT"
+        },
+        {
+            "name": "Mag_true_i_sdss_z0_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "Mag_true_r_lsst_z0",
+            "type": "FLOAT"
+        },
+        {
+            "name": "Mag_true_r_lsst_z0_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "Mag_true_r_sdss_z0",
+            "type": "FLOAT"
+        },
+        {
+            "name": "Mag_true_r_sdss_z0_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "Mag_true_u_lsst_z0",
+            "type": "FLOAT"
+        },
+        {
+            "name": "Mag_true_u_lsst_z0_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "Mag_true_u_sdss_z0",
+            "type": "FLOAT"
+        },
+        {
+            "name": "Mag_true_u_sdss_z0_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "Mag_true_y_lsst_z0",
+            "type": "FLOAT"
+        },
+        {
+            "name": "Mag_true_y_lsst_z0_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "Mag_true_z_lsst_z0",
+            "type": "FLOAT"
+        },
+        {
+            "name": "Mag_true_z_lsst_z0_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "Mag_true_z_sdss_z0",
+            "type": "FLOAT"
+        },
+        {
+            "name": "Mag_true_z_sdss_z0_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "R_v",
+            "type": "FLOAT"
+        },
+        {
+            "name": "R_v_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "R_v_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "bulge_to_total_ratio_i",
+            "type": "FLOAT"
+        },
+        {
+            "name": "convergence",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "dec_true",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "ellipticity_1_bulge_true",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "ellipticity_1_disk_true",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "ellipticity_1_true",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "ellipticity_2_bulge_true",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "ellipticity_2_disk_true",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "ellipticity_2_true",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "ellipticity_bulge_true",
+            "type": "FLOAT"
+        },
+        {
+            "name": "ellipticity_disk_true",
+            "type": "FLOAT"
+        },
+        {
+            "name": "ellipticity_true",
+            "type": "FLOAT"
+        },
+        {
+            "name": "halo_mass",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "is_central",
+            "type": "BOOLEAN"
+        },
+        {
+            "name": "mag_Yup_lsst",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "mag_Yup_lsst_no_host_extinction",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "mag_g",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "mag_g_lsst",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "mag_g_lsst_no_host_extinction",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "mag_g_sdss",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "mag_g_sdss_no_host_extinction",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "mag_i",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "mag_i_lsst",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "mag_i_lsst_no_host_extinction",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "mag_i_sdss",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "mag_i_sdss_no_host_extinction",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "mag_r",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "mag_r_lsst",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "mag_r_lsst_no_host_extinction",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "mag_r_sdss",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "mag_r_sdss_no_host_extinction",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "mag_true_Yup_lsst",
+            "type": "FLOAT"
+        },
+        {
+            "name": "mag_true_Yup_lsst_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "mag_true_g",
+            "type": "FLOAT"
+        },
+        {
+            "name": "mag_true_g_lsst",
+            "type": "FLOAT"
+        },
+        {
+            "name": "mag_true_g_lsst_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "mag_true_g_sdss",
+            "type": "FLOAT"
+        },
+        {
+            "name": "mag_true_g_sdss_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "mag_true_i",
+            "type": "FLOAT"
+        },
+        {
+            "name": "mag_true_i_lsst",
+            "type": "FLOAT"
+        },
+        {
+            "name": "mag_true_i_lsst_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "mag_true_i_sdss",
+            "type": "FLOAT"
+        },
+        {
+            "name": "mag_true_i_sdss_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "mag_true_r",
+            "type": "FLOAT"
+        },
+        {
+            "name": "mag_true_r_lsst",
+            "type": "FLOAT"
+        },
+        {
+            "name": "mag_true_r_lsst_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "mag_true_r_sdss",
+            "type": "FLOAT"
+        },
+        {
+            "name": "mag_true_r_sdss_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "mag_true_u",
+            "type": "FLOAT"
+        },
+        {
+            "name": "mag_true_u_lsst",
+            "type": "FLOAT"
+        },
+        {
+            "name": "mag_true_u_lsst_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "mag_true_u_sdss",
+            "type": "FLOAT"
+        },
+        {
+            "name": "mag_true_u_sdss_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "mag_true_y",
+            "type": "FLOAT"
+        },
+        {
+            "name": "mag_true_y_lsst",
+            "type": "FLOAT"
+        },
+        {
+            "name": "mag_true_y_lsst_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "mag_true_z",
+            "type": "FLOAT"
+        },
+        {
+            "name": "mag_true_z_lsst",
+            "type": "FLOAT"
+        },
+        {
+            "name": "mag_true_z_lsst_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "mag_true_z_sdss",
+            "type": "FLOAT"
+        },
+        {
+            "name": "mag_true_z_sdss_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "mag_u",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "mag_u_lsst",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "mag_u_lsst_no_host_extinction",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "mag_u_sdss",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "mag_u_sdss_no_host_extinction",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "mag_y",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "mag_y_lsst",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "mag_y_lsst_no_host_extinction",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "mag_z",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "mag_z_lsst",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "mag_z_lsst_no_host_extinction",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "mag_z_sdss",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "mag_z_sdss_no_host_extinction",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "magnification",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "position_angle_true",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "position_x",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "position_y",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "position_z",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "ra_true",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "redshift",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "redshift_true",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "sed_1000_246",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_1000_246_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_1000_246_bulge_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_1000_246_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_1000_246_disk_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_1000_246_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_11467_1710",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_11467_1710_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_11467_1710_bulge_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_11467_1710_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_11467_1710_disk_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_11467_1710_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_1246_306",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_1246_306_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_1246_306_bulge_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_1246_306_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_1246_306_disk_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_1246_306_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_13177_1966",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_13177_1966_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_13177_1966_bulge_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_13177_1966_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_13177_1966_disk_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_13177_1966_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_15143_2259",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_15143_2259_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_15143_2259_bulge_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_15143_2259_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_15143_2259_disk_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_15143_2259_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_1552_381",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_1552_381_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_1552_381_bulge_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_1552_381_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_1552_381_disk_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_1552_381_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_17402_2596",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_17402_2596_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_17402_2596_bulge_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_17402_2596_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_17402_2596_disk_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_17402_2596_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_1933_474",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_1933_474_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_1933_474_bulge_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_1933_474_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_1933_474_disk_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_1933_474_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_2407_591",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_2407_591_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_2407_591_bulge_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_2407_591_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_2407_591_disk_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_2407_591_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_2998_186",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_2998_186_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_2998_186_bulge_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_2998_186_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_2998_186_disk_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_2998_186_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_3184_197",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_3184_197_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_3184_197_bulge_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_3184_197_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_3184_197_disk_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_3184_197_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_3381_209",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_3381_209_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_3381_209_bulge_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_3381_209_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_3381_209_disk_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_3381_209_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_3590_222",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_3590_222_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_3590_222_bulge_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_3590_222_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_3590_222_disk_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_3590_222_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_3812_236",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_3812_236_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_3812_236_bulge_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_3812_236_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_3812_236_disk_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_3812_236_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_4048_251",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_4048_251_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_4048_251_bulge_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_4048_251_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_4048_251_disk_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_4048_251_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_4299_266",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_4299_266_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_4299_266_bulge_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_4299_266_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_4299_266_disk_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_4299_266_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_4565_283",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_4565_283_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_4565_283_bulge_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_4565_283_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_4565_283_disk_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_4565_283_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_4848_300",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_4848_300_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_4848_300_bulge_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_4848_300_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_4848_300_disk_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_4848_300_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_5148_319",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_5148_319_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_5148_319_bulge_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_5148_319_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_5148_319_disk_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_5148_319_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_5467_339",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_5467_339_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_5467_339_bulge_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_5467_339_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_5467_339_disk_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_5467_339_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_5806_360",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_5806_360_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_5806_360_bulge_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_5806_360_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_5806_360_disk_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_5806_360_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_6166_382",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_6166_382_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_6166_382_bulge_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_6166_382_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_6166_382_disk_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_6166_382_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_6548_406",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_6548_406_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_6548_406_bulge_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_6548_406_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_6548_406_disk_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_6548_406_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_6954_431",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_6954_431_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_6954_431_bulge_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_6954_431_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_6954_431_disk_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_6954_431_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_7385_458",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_7385_458_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_7385_458_bulge_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_7385_458_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_7385_458_disk_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_7385_458_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_7843_486",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_7843_486_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_7843_486_bulge_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_7843_486_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_7843_486_disk_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_7843_486_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_8329_517",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_8329_517_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_8329_517_bulge_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_8329_517_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_8329_517_disk_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_8329_517_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_8846_549",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_8846_549_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_8846_549_bulge_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_8846_549_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_8846_549_disk_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_8846_549_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_9395_583",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_9395_583_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_9395_583_bulge_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_9395_583_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_9395_583_disk_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_9395_583_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_9978_1489",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_9978_1489_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_9978_1489_bulge_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_9978_1489_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_9978_1489_disk_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sed_9978_1489_no_host_extinction",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sersic_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "sersic_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "shear_1",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "shear_2",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "shear_2_phosim",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "shear_2_treecorr",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "size_bulge_true",
+            "type": "FLOAT"
+        },
+        {
+            "name": "size_disk_true",
+            "type": "FLOAT"
+        },
+        {
+            "name": "size_minor_bulge_true",
+            "type": "FLOAT"
+        },
+        {
+            "name": "size_minor_disk_true",
+            "type": "FLOAT"
+        },
+        {
+            "name": "size_minor_true",
+            "type": "FLOAT"
+        },
+        {
+            "name": "size_true",
+            "type": "FLOAT"
+        },
+        {
+            "name": "stellar_mass",
+            "type": "FLOAT"
+        },
+        {
+            "name": "stellar_mass_bulge",
+            "type": "FLOAT"
+        },
+        {
+            "name": "stellar_mass_disk",
+            "type": "FLOAT"
+        },
+        {
+            "name": "velocity_x",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "velocity_y",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "velocity_z",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "chunkId",
+            "type": "int(11) NOT NULL"
+        },
+        {
+            "name": "subChunkId",
+            "type": "int(11) NOT NULL"
+        }
+    ]
+}

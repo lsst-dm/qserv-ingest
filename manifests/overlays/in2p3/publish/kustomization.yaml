@@ -1,4 +1,0 @@
-bases:
-- ../../../base/publish
-patchesStrategicMerge:
-- publish.yaml

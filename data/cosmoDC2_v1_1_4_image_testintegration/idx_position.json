@@ -1,0 +1,14 @@
+{
+    "database": "cosmoDC2_v1_1_4_image_overlap",
+    "table": "position",
+    "index": "galaxy_id_uniq",
+    "spec": "DEFAULT",
+    "comment": "None",
+    "columns": [
+        {
+            "column": "galaxy_id",
+            "length": 0,
+            "ascending": 1
+        }
+    ]
+}

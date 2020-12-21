@@ -1,4 +1,0 @@
-bases:
-- ../../../base/index-tables
-patchesStrategicMerge:
-- index-tables.yaml

@@ -1,4 +1,0 @@
-bases:
-- ../../../base/index-secondary
-patchesStrategicMerge:
-- index-secondary.yaml

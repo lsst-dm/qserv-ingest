@@ -110,7 +110,7 @@ class Http():
             _LOG.critical(responseJson["error"])
             _LOG.critical(responseJson["error_ext"])
             raise Exception(
-                'Error in replication controller response (POST)', url,
+                'Error in JSON response (POST)', url,
                 responseJson["error"], responseJson["error_ext"])
         _LOG.debug("success")
         return responseJson

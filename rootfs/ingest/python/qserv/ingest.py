@@ -30,6 +30,7 @@ User-friendly client library for Qserv replication service.
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
+from functools import lru_cache
 import logging
 from multiprocessing.pool import ThreadPool
 import os
@@ -56,12 +57,26 @@ FINISHED_STATE = "FINISHED"
 AUTH_PATH = "~/.lsst/qserv"
 _LOG = logging.getLogger(__name__)
 
+class IngestArgs():
+    def __init__(self, host, port, transaction_id, chunk_file_url, chunk_id, table, is_overlap):
+        """ Store input parameters for replication REST api located at http://<host:port>/ingest/file
+        """
+        self.host = host
+        self.port = port
+        self.transaction_id = transaction_id
+        self.chunk_file_url = chunk_file_url
+        self.chunk_id = chunk_id
+        self.table = table
+        self.is_overlap = is_overlap
+
+    def get_kwargs(self):
+        return self.__dict__
 
 class Ingester():
     """Manage chunk ingestion tasks
     """
 
-    def __init__(self, data_url, repl_url, queue_url=None):
+    def __init__(self, data_url, repl_url, queue_url=None, servers_file=None):
         """ Retrieve chunk metadata and connection to concurrent queue manager
         """
 
@@ -69,7 +84,7 @@ class Ingester():
 
         self.http = Http()
 
-        self.chunk_meta = ChunkMetadata(data_url)
+        self.chunk_meta = ChunkMetadata(data_url, servers_file)
         if queue_url is not None:
             self.queue_manager = QueueManager(queue_url, self.chunk_meta)
 
@@ -103,7 +118,7 @@ class Ingester():
 
         _LOG.info("START INGEST TRANSACTION")
 
-        chunks_locked = self.queue_manager.lock_chunks()
+        chunks_locked = self.queue_manager.lock_chunkfiles()
         if len(chunks_locked) == 0:
             return False
 
@@ -129,11 +144,37 @@ class Ingester():
         self.queue_manager.delete_chunks()
         return True
 
+    def _get_loadbalancer_url(self, i):
+        http_servers_count = len(self.queue_manager.chunk_meta.http_servers)
+        if http_servers_count == 0:
+            url = self.queue_manager.chunk_meta.data_url
+        else:
+            url = self.queue_manager.chunk_meta.http_servers[i%http_servers_count]
+        return url
+
+    def _compute_args(self, chunks_locked, transaction_id):
+        args = []
+        for i, chunk_file in enumerate(chunks_locked):
+            (database, chunk_id, chunk_file_path, is_overlap, table) = chunk_file
+            if is_overlap:
+                chunk_file_format = "chunk_{}_overlap.txt"
+            else:
+                chunk_file_format = "chunk_{}.txt"
+
+            base_url = self._get_loadbalancer_url(i)
+            chunk_file_url = self._get_chunk_file_url(base_url, chunk_file_path, chunk_id, chunk_file_format)
+            (host, port) = _get_chunk_location(self.repl_url,
+                                               chunk_id,
+                                               database,
+                                               transaction_id)
+
+            ingest_args = IngestArgs(host, port, transaction_id, chunk_file_url, chunk_id, table, is_overlap)
+            args.append(ingest_args)
+        return args
+
     def _ingest_parallel_chunks(self, transaction_id, chunks_locked):
+        args = self._compute_args(chunks_locked, transaction_id)
         with ThreadPool() as pool:
-            args = []
-            for c in chunks_locked:
-                args.append([self.repl_url, self.queue_manager.chunk_meta, transaction_id, c])
             for chunk, startedAt, endedAt in pool.imap_unordered(_ingest_chunk, args):
                 logging.debug('Chunk %s ingest started at %s ended at %s' % (chunk, startedAt, endedAt))
         return True
@@ -193,14 +234,14 @@ class Ingester():
             _LOG.debug("Close transaction (id: %s state: %s)",
                        trans['id'], trans['state'])
 
-def _get_chunk_url(base_url, chunk_id, file_format):
-    chunk_filename = file_format.format(chunk_id)
-    base_url = trailing_slash(base_url)
-    file_url = urllib.parse.urljoin(base_url, chunk_filename)
-    _LOG.debug("Chunk file url %s", file_url)
-    return file_url
+    def _get_chunk_file_url(self, base_url, chunk_file_path, chunk_id, file_format):
+        chunk_filename = file_format.format(chunk_id)
+        relative_url = os.path.join(chunk_file_path, chunk_filename)
+        file_url = urllib.parse.urljoin(base_url, relative_url)
+        _LOG.debug("Chunk file url %s", file_url)
+        return file_url
 
-
+@lru_cache(maxsize=None)
 def _get_chunk_location(repl_url, chunk, database, transaction_id):
     url = urllib.parse.urljoin(repl_url, "ingest/chunk")
     payload = {"chunk": chunk,
@@ -210,49 +251,42 @@ def _get_chunk_location(repl_url, chunk, database, transaction_id):
 
     # Get location host and port
     host = responseJson["location"]["host"]
-    port = responseJson["location"]["port"]
+    # FIXME Ask Igor Gaponenko for a method to get this parameter?
+    # Or set it from qserv-operator?
+    port = 25004
     _LOG.info("Location for chunk %d: %s %d", chunk, host, port)
 
     return (host, port)
 
-def _ingest_chunk(args):
-    repl_url, chunk_meta, transaction_id, chunk = args
+def _ingest_chunk(ingest_args):
+
+    kwargs = ingest_args.get_kwargs()
+    chunk_file_url = kwargs['chunk_file_url']
     try:
-        logging.debug("Start INGEST")
+        logging.debug("Start ingest of chunk file: %s", chunk_file_url)
         startedAt = time.strftime("%H:%M:%S", time.localtime())
-        (database, chunk_id, chunk_base_url, table) = chunk
-        (host, port) = _get_chunk_location(repl_url,
-                                           chunk_id,
-                                           database,
-                                           transaction_id)
-        _ingest_file(host, port, transaction_id, chunk_base_url, chunk_id, table, False)
-        if chunk_meta.is_director(table):
-            _ingest_file(host, port, transaction_id, chunk_base_url, chunk_id, table, True)
+
+        _ingest_file(**kwargs)
         endedAt = time.strftime("%H:%M:%S", time.localtime())
     except Exception as e:
-        _LOG.critical('Error in ingest task for chunk %s: %s',
-                        chunk,
-                        e)
+        _LOG.critical('Error while ingesting chunk file %s: %s',
+                      chunk_file_url,
+                      e)
         raise(ValueError(e))
-    return chunk, startedAt, endedAt
+    return chunk_file_url, startedAt, endedAt
 
 
-def _ingest_file(host, port, transaction_id, chunk_base_url, chunk_id, table, overlap):
+def _ingest_file(host, port, transaction_id, chunk_file_url, chunk_id, table, is_overlap):
     # See https://confluence.lsstcorp.org/display/DM/Ingest%3A+11.1.+The+REST+services, section 1.1.7
 
-    if overlap:
-        chunk_file_format = "chunk_{}_overlap.txt"
-    else:
-        chunk_file_format = "chunk_{}.txt"
-    chunk_file_url = _get_chunk_url(chunk_base_url, chunk_id, chunk_file_format)
-    worker_url = "http://{}:{}".format(host,25004)
+    worker_url = "http://{}:{}".format(host,port)
     url = urllib.parse.urljoin(worker_url, "ingest/file")
     _LOG.debug("_ingest_chunk: url: %s", url)
     payload = {"transaction_id":transaction_id,
                 "table":table,
                 "column_separator":",",
                 "chunk":chunk_id,
-                "overlap":int(overlap),
+                "overlap":int(is_overlap),
                 "url":chunk_file_url}
     _LOG.debug("_ingest_chunk: payload: %s", payload)
     responseJson = Http().post(url, payload)

@@ -1,0 +1,6 @@
+{
+    "http_servers":[
+        "https://raw.githubusercontent.com/lsst-dm/qserv-ingest/tickets/DM-28108/data/cosmoDC2_v1_1_4_image_testintegration/",
+        "https://raw.githubusercontent.com/lsst-dm/qserv-ingest/tickets/DM-28108/data/cosmoDC2_v1_1_4_image_testintegration/"
+    ]
+}
