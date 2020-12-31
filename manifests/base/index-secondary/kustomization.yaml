@@ -1,6 +1,0 @@
-commonLabels:
-  org: lsst
-  app: qserv
-
-resources:
-- index-secondary.yaml

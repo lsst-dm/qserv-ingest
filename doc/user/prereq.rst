@@ -32,3 +32,5 @@ The namespace containing this instance will be called `<QSERV_NAMESPACE>`.
 - Prvileges to create pods and persistent volumes inside `<QSERV_NAMESPACE>`.
 
 - An HTTP(s) server providing access to input data and metadata. All pods inside `<QSERV_NAMESPACE>` must be able to access this HTTP server.
+
+- An instance of Argo Workflow running in `<QSERV_NAMESPACE>`. It can be installed with the script `argo-install.sh` located at the top-level of the `qserv-ingest ` directory.

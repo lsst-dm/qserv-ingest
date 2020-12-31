@@ -49,10 +49,10 @@ Prepare configuration
 
 .. code:: sh
 
-    cp -r manifests/in2p3 manifests/<CUSTOM_INGEST>
+    cp -r manifests/in2p3-cosmo manifests/<CUSTOM_INGEST>
     cp env.example.sh env.sh
 
-- In `manifests/<MY_INGEST>/init/kustomization.yaml`, set:
+- In `manifests/<CUSTOM_INGEST>/configmap/kustomization.yaml`, set:
   - `DATA_URL` to the **root URL of the HTTP server serving input data**
   - `REQUESTS_CA_BUNDLE` to the local path of the CA chain of this server, if needed.
 - In `env.sh`, set `OVERLAY` to `<CUSTOM_INGEST>`, and eventually `INSTANCE` to the name of current Qserv instance.
@@ -60,29 +60,11 @@ Prepare configuration
 Launch Qserv ingest
 ===================
 
-Register the database to ingest and load the chunk-to-ingest queue:
-
+Launch the workflow using [Argo](https://argoproj.github.io/argo/)
 .. code:: sh
 
-    ./job.sh init
-
-Launch parallel ingest jobs:
-
-.. code:: sh
-
-    ./job.sh ingest
-
-
-Publish the database:
-
-.. code:: sh
-
-    ./job.sh publish
-
-Create all indexes:
-
-.. code:: sh
-
-    ./job.sh index
+    ./argo-submit.sh
+    # monitor the workflow execution
+    argo get @latest
 
 Then adapt `example/query.sh` to launch a few queries against freshly ingested data.

@@ -1,7 +1,0 @@
-commonLabels:
-  org: lsst
-  app: qserv
-  tier: ingest
-
-resources:
-- publish.yaml

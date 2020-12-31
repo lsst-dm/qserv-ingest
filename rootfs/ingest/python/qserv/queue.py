@@ -63,18 +63,29 @@ class QueueManager():
         self.ordered_tables_to_load = self.chunk_meta.get_tables_names()
         _LOG.debug("Ordered tables to load: %s", self.ordered_tables_to_load)
         self.next_current_table()
-        result = self.engine.execute(select([func.count('*')]).select_from(self.task))
-        self.chunk_files_count = next(result)[0]
+        chunk_files_count = self._count_chunk_files()
 
-        _LOG.debug("Number of chunk file to load: %s", self.chunk_files_count)
+        _LOG.debug("Chunk files queue size: %s", chunk_files_count)
 
         # TODO add a parameter
         nb_transaction = 10
-        tmp = int(self.chunk_files_count / nb_transaction)
+        tmp = int(chunk_files_count / nb_transaction)
         if tmp != 0:
             self._chunks_to_lock_number = tmp
         else:
             self._chunks_to_lock_number = 1
+
+    def _count_chunk_files(self, not_loaded = True):
+        """Count not chunk files
+           if loaded is True count chunk file which are not loaded
+           else count all chunks file
+        """
+        query = select([func.count('*')]).select_from(self.task)
+        if not_loaded is True:
+            query = query.where(self.task.c.succeed.is_(None))
+        result = self.engine.execute(query)
+        chunk_files_count = next(result)[0]
+        return chunk_files_count
 
     def next_current_table(self):
         if len(self.ordered_tables_to_load) != 0:
@@ -89,21 +100,24 @@ class QueueManager():
                         self.task.c.chunk_file_path,
                         self.task.c.is_overlap,
                         self.task.c.table])
-        query = query.where(self.task.c.pod == self.pod)
+        query = query.where(self.task.c.pod == self.pod).where(self.task.c.succeed.is_(None))
         result = self.engine.execute(query)
         chunks = result.fetchall()
         return chunks
 
     def load(self):
-        """Load chunks in task queue
+        """If queue is empty load chunks files in queue
+           else do nothing
            Chunks description should be available at chunks_url
         Returns
         -------
-        Integer number
+        Nothing
         """
 
-        sql = "DELETE FROM task"
-        self.engine.execute(sql)
+        chunk_files_count = self._count_chunk_files(not_loaded=False)
+        if chunk_files_count != 0:
+            _LOG.warn("Chunk queue not empty, skip chunk queue load")
+            return
 
         for (path, chunk_ids, is_overlap, table) in self.chunk_meta.get_chunk_files_info():
             for chunk_id in chunk_ids:
@@ -137,7 +151,7 @@ class QueueManager():
             _LOG.debug("Current table: %s", self.current_table)
             while not self._is_queue_empty() and chunks_locked_count < self._chunks_to_lock_number:
 
-                sql = "UPDATE task SET pod = '{}' "
+                sql = "UPDATE task SET pod = '{}', start = NOW() "
                 sql += "WHERE pod IS NULL AND `table` = '{}' "
                 sql += "AND `database` = '{}' "
                 sql += "ORDER BY chunk_id ASC LIMIT {};"
@@ -161,8 +175,8 @@ class QueueManager():
                       chunks_locked)
         return chunks_locked
 
-    def delete_chunks(self):
-        """Delete chunks in queue when they have been ingested
+    def unlock_chunks(self):
+        """Unlock chunks in queue when they have been ingested
            and the super-transaction has been successfully closed
         Returns
         -------
@@ -170,8 +184,10 @@ class QueueManager():
         """
         # pod column is UNIQUE index
         logging.debug("Unlock chunk in queue")
-        query = delete(self.task)
-        query = query.where(self.task.c.pod == self.pod)
+        sql = "UPDATE task SET succeed = NOW() "
+        sql += "WHERE pod = '{}'"
+        query = sql.format(self.pod)
+        _LOG.debug("Query: %s", query)
 
         self.engine.execute(query)
 

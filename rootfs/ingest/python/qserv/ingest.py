@@ -30,6 +30,7 @@ User-friendly client library for Qserv replication service.
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
+from enum import Enum
 from functools import lru_cache
 import logging
 from multiprocessing.pool import ThreadPool
@@ -42,6 +43,8 @@ import urllib.parse
 # Imports for other modules --
 # ----------------------------
 from .http import Http
+from jsonpath_ng import jsonpath
+from jsonpath_ng.ext import parse
 from .metadata import ChunkMetadata
 from .queue import QueueManager
 from .util import trailing_slash
@@ -50,6 +53,11 @@ TMP_DIR = "/tmp"
 
 ABORTED_STATE = "ABORTED"
 FINISHED_STATE = "FINISHED"
+
+class DatabaseStatus(Enum):
+    NOT_REGISTERED = -1
+    REGISTERED_NOT_PUBLISHED = 0
+    PUBLISHED = 1
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -88,17 +96,149 @@ class Ingester():
         if queue_url is not None:
             self.queue_manager = QueueManager(queue_url, self.chunk_meta)
 
-    def index_all_tables(self):
-        url = urllib.parse.urljoin(self.repl_url, "replication/sql/index")
-        for json_idx in self.chunk_meta.get_json_indexes():
-            _LOG.info(f"Create index: {json_idx}")
-            self.http.post(url, json_idx)
+
+    def abort_transactions(self):
+        for transaction_id in self.get_transactions():
+            success = False
+            self._close_transaction(transaction_id, success)
+            _LOG.info("Abort transaction: %s", transaction_id)
 
     def build_secondary_index(self):
         url = urllib.parse.urljoin(self.repl_url, "ingest/index/secondary")
         _LOG.info(f"Create secondary index")
         payload = {"database": self.chunk_meta.database, "allow_for_published":1, "local":1, "rebuild":1}
         self.http.post(url, payload)
+
+    def _compute_args(self, chunks_locked, transaction_id):
+        args = []
+        for i, chunk_file in enumerate(chunks_locked):
+            (database, chunk_id, chunk_file_path, is_overlap, table) = chunk_file
+            if is_overlap:
+                chunk_file_format = "chunk_{}_overlap.txt"
+            else:
+                chunk_file_format = "chunk_{}.txt"
+
+            base_url = self.queue_manager.chunk_meta.get_loadbalancer_url(i)
+            chunk_file_url = self._get_chunk_file_url(base_url, chunk_file_path, chunk_id, chunk_file_format)
+            (host, port) = _get_chunk_location(self.repl_url,
+                                               chunk_id,
+                                               database,
+                                               transaction_id)
+
+            ingest_args = IngestArgs(host, port, transaction_id, chunk_file_url, chunk_id, table, is_overlap)
+            args.append(ingest_args)
+        return args
+
+    def _close_transaction(self, transaction_id, success):
+        database = self.chunk_meta.database
+        tmp_url = posixpath.join("ingest/trans/", str(transaction_id))
+        if success is True:
+            tmp_url += "?abort=0"
+        else:
+            tmp_url += "?abort=1"
+        url = urllib.parse.urljoin(self.repl_url, tmp_url)
+        responseJson = self.http.put(url)
+
+        for trans in responseJson['databases'][database]['transactions']:
+            _LOG.debug("Close transaction (id: %s state: %s)",
+                       trans['id'], trans['state'])
+
+    def database_publish(self):
+        """Publish a database inside replication system
+        """
+        path = "/ingest/database/{}".format(self.chunk_meta.database)
+        url = urllib.parse.urljoin(self.repl_url, path)
+        _LOG.debug("Publish database: %s", url)
+        self.http.put(url)
+
+    def database_register(self):
+        """Register a database inside replication system
+           using data_url/<database_name>.json as input data
+        """
+        url = urllib.parse.urljoin(self.repl_url, "/ingest/database/")
+        payload = self.chunk_meta.json_db
+        _LOG.debug("Starting a database registration request: %s with %s", url, payload)
+        self.http.post(url, payload)
+
+    def database_register_tables(self, felis=None):
+        """Register a database inside replication system
+           using data_url/<database_name>.json as input data
+        """
+        if felis:
+            _LOG.info("Loaded Felis schema for tables %s", felis.keys())
+
+        url = urllib.parse.urljoin(self.repl_url, "/ingest/table/")
+
+        for json_data in self.chunk_meta.get_tables_json():
+            if felis is not None and json_data["table"] in felis:
+                schema = felis[json_data["table"]]
+                json_data["schema"] = schema + json_data["schema"]
+            _LOG.debug("Starting a table registration request: %s with %s",
+                        url, json_data)
+            self.http.post(url, json_data)
+
+    def database_config(self):
+        """Configure a database inside replication system
+        """
+        url = urllib.parse.urljoin(self.repl_url, "/ingest/config/")
+        json = {"database": self.chunk_meta.database,
+                "CAINFO": "/etc/pki/tls/certs/ca-bundle.crt",
+                "SSL_VERIFYPEER": 1
+            }
+        _LOG.debug("Configure database inside replication system, url: %s, json: %s", url, json)
+        self.http.put(url, json)
+
+    def _get_chunk_file_url(self, base_url, chunk_file_path, chunk_id, file_format):
+        chunk_filename = file_format.format(chunk_id)
+        relative_url = os.path.join(chunk_file_path, chunk_filename)
+        file_url = urllib.parse.urljoin(base_url, relative_url)
+        _LOG.debug("Chunk file url %s", file_url)
+        return file_url
+
+    def get_db_status(self):
+        url = urllib.parse.urljoin(self.repl_url, "replication/config")
+        responseJson = self.http.get(url)
+        jsonpath_expr = parse("$.config.families[?(name=\"{}\")].databases[?(name=\"{}\")].is_published".format(self.chunk_meta.family, self.chunk_meta.database))
+        result = jsonpath_expr.find(responseJson)
+        if len(result) == 0:
+            r = DatabaseStatus.NOT_REGISTERED
+        elif len(result) == 1:
+            if result[0].value == 0:
+                r = DatabaseStatus.REGISTERED_NOT_PUBLISHED
+            else:
+                r = DatabaseStatus.PUBLISHED
+        else:
+            raise ValueError("Unexpected answer from %s", url)
+        _LOG.debug("Status: %s",r)
+        return r
+
+    def get_transactions(self):
+        database = self.chunk_meta.database
+        url = urllib.parse.urljoin(self.repl_url,
+                                   "ingest/trans?database=" + database)
+        responseJson = self.http.get(url)
+
+        current_db = responseJson["databases"][database]
+        transaction_id = current_db["transactions"][0]["id"]
+        _LOG.debug(f"transaction ID: {transaction_id}")
+
+        transaction_ids = []
+        transactions = responseJson['databases'][database]['transactions']
+        if len(transactions) != 0:
+            _LOG.info("Transactions in flight:")
+            for trans in transactions:
+                _LOG.info("  id: %s state: %s",
+                          trans['id'], trans['state'])
+                if trans['state'] not in [ABORTED_STATE, FINISHED_STATE]:
+                    transaction_ids.append(trans['id'])
+
+        return transaction_ids
+
+    def index_all_tables(self):
+        url = urllib.parse.urljoin(self.repl_url, "replication/sql/index")
+        for json_idx in self.chunk_meta.get_json_indexes():
+            _LOG.info(f"Create index: {json_idx}")
+            self.http.post(url, json_idx)
 
     def ingest(self):
         chunk_to_load = True
@@ -141,36 +281,8 @@ class Ingester():
         # => Doing it manually seems safer.
 
         # ingest successful
-        self.queue_manager.delete_chunks()
+        self.queue_manager.unlock_chunks()
         return True
-
-    def _get_loadbalancer_url(self, i):
-        http_servers_count = len(self.queue_manager.chunk_meta.http_servers)
-        if http_servers_count == 0:
-            url = self.queue_manager.chunk_meta.data_url
-        else:
-            url = self.queue_manager.chunk_meta.http_servers[i%http_servers_count]
-        return url
-
-    def _compute_args(self, chunks_locked, transaction_id):
-        args = []
-        for i, chunk_file in enumerate(chunks_locked):
-            (database, chunk_id, chunk_file_path, is_overlap, table) = chunk_file
-            if is_overlap:
-                chunk_file_format = "chunk_{}_overlap.txt"
-            else:
-                chunk_file_format = "chunk_{}.txt"
-
-            base_url = self._get_loadbalancer_url(i)
-            chunk_file_url = self._get_chunk_file_url(base_url, chunk_file_path, chunk_id, chunk_file_format)
-            (host, port) = _get_chunk_location(self.repl_url,
-                                               chunk_id,
-                                               database,
-                                               transaction_id)
-
-            ingest_args = IngestArgs(host, port, transaction_id, chunk_file_url, chunk_id, table, is_overlap)
-            args.append(ingest_args)
-        return args
 
     def _ingest_parallel_chunks(self, transaction_id, chunks_locked):
         args = self._compute_args(chunks_locked, transaction_id)
@@ -178,34 +290,6 @@ class Ingester():
             for chunk, startedAt, endedAt in pool.imap_unordered(_ingest_chunk, args):
                 logging.debug('Chunk %s ingest started at %s ended at %s' % (chunk, startedAt, endedAt))
         return True
-
-    def get_transactions(self):
-        database = self.chunk_meta.database
-        url = urllib.parse.urljoin(self.repl_url,
-                                   "ingest/trans?database=" + database)
-        responseJson = self.http.get(url)
-
-        current_db = responseJson["databases"][database]
-        transaction_id = current_db["transactions"][0]["id"]
-        _LOG.debug(f"transaction ID: {transaction_id}")
-
-        transaction_ids = []
-        transactions = responseJson['databases'][database]['transactions']
-        if len(transactions) != 0:
-            _LOG.info("Transactions in flight:")
-            for trans in transactions:
-                _LOG.info("  id: %s state: %s",
-                          trans['id'], trans['state'])
-                if trans['state'] not in [ABORTED_STATE, FINISHED_STATE]:
-                    transaction_ids.append(trans['id'])
-
-        return transaction_ids
-
-    def abort_transactions(self):
-        for transaction_id in self.get_transactions():
-            success = False
-            self._close_transaction(transaction_id, success)
-            _LOG.info("Abort transaction: %s", transaction_id)
 
     def _start_transaction(self):
         database = self.chunk_meta.database
@@ -219,27 +303,6 @@ class Ingester():
         transaction_id = current_db["transactions"][0]["id"]
         _LOG.debug(f"transaction ID: {transaction_id}")
         return transaction_id
-
-    def _close_transaction(self, transaction_id, success):
-        database = self.chunk_meta.database
-        tmp_url = posixpath.join("ingest/trans/", str(transaction_id))
-        if success is True:
-            tmp_url += "?abort=0"
-        else:
-            tmp_url += "?abort=1"
-        url = urllib.parse.urljoin(self.repl_url, tmp_url)
-        responseJson = self.http.put(url)
-
-        for trans in responseJson['databases'][database]['transactions']:
-            _LOG.debug("Close transaction (id: %s state: %s)",
-                       trans['id'], trans['state'])
-
-    def _get_chunk_file_url(self, base_url, chunk_file_path, chunk_id, file_format):
-        chunk_filename = file_format.format(chunk_id)
-        relative_url = os.path.join(chunk_file_path, chunk_filename)
-        file_url = urllib.parse.urljoin(base_url, relative_url)
-        _LOG.debug("Chunk file url %s", file_url)
-        return file_url
 
 @lru_cache(maxsize=None)
 def _get_chunk_location(repl_url, chunk, database, transaction_id):
@@ -289,6 +352,7 @@ def _ingest_file(host, port, transaction_id, chunk_file_url, chunk_id, table, is
     _LOG.debug("_ingest_chunk: payload: %s", payload)
     responseJson = Http().post(url, payload)
     _LOG.debug("Ingest: responseJson: %s", responseJson)
+
 
     # TODO manage responseJson error everywhere!!!
 

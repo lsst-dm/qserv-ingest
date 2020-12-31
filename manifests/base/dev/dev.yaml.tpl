@@ -1,11 +1,3 @@
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: repl-creds
-data:
-  qserv: ''
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -35,6 +27,18 @@ spec:
             configMapKeyRef:
               name: config-data-url
               key: DATA_URL
+        - name: "REQUESTS_CA_BUNDLE"
+          valueFrom:
+            configMapKeyRef:
+              name: config-data-url
+              key: REQUESTS_CA_BUNDLE
+        volumeMounts:
+        - name: config-data-url
+          mountPath: /config-data-url
+      volumes:
+        - name: config-data-url
+          configMap:
+            name: config-data-url
         image: <INGEST_IMAGE>
         imagePullPolicy: Always
         name: ingest
@@ -43,5 +47,5 @@ spec:
             mountPath: /home/qserv/.lsst
       volumes:
         - name: repl-creds
-          configMap:
-            name: repl-creds
+          secret:
+            name: secret-repl-creds-qserv

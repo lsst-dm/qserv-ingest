@@ -8,8 +8,8 @@ RUN apk update \
     && pip install mysqlclient==2.0.1 \
     && apk del build-deps mariadb-dev
 
-RUN pip install PyYAML==5.3.1 requests==2.25.0 \
-    SQLAlchemy==1.3.20
+RUN pip install PyYAML==5.3.1 jsonpath-ng==1.5.2 \
+    requests==2.25.0 SQLAlchemy==1.3.20
 
 #USER qserv
 # FIXME use a secret below:

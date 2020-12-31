@@ -1,0 +1,115 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: qserv-ingest-
+spec:
+  entrypoint: ingest
+  volumes:
+  - name: repl-creds
+    secret:
+      secretName: secret-repl-creds-qserv
+  arguments:
+    parameters:
+    - name: image
+      value: qserv/ingest:df79e9f
+  templates:
+  - name: ingest-step
+    inputs:
+      parameters:
+      - name: script
+    container:
+      command:
+        - "{{inputs.parameters.script}}"
+      env:
+      - name: DATA_URL
+        valueFrom:
+          configMapKeyRef:
+            name: config-data-url
+            key: DATA_URL
+      image: "{{workflow.parameters.image}}"
+      imagePullPolicy: Always
+      volumeMounts:
+        - name: repl-creds
+          mountPath: /home/qserv/.lsst
+  - name: transactions
+    resource:
+      action: create
+      successCondition: status.succeeded > 0
+      failureCondition: status.failed > 3
+      manifest: |
+        apiVersion: batch/v1
+        kind: Job
+        metadata:
+          generateName: qserv-ingest-transactions-
+          labels:
+            cleanup: "true"
+        spec:
+          parallelism: 4
+          completions: 4
+          template:
+            spec:
+              containers:
+              - name: ingest 
+                command:
+                - ingest-chunks.sh
+                env:
+                - name: DATA_URL
+                  valueFrom:
+                    configMapKeyRef:
+                      name: config-data-url
+                      key: DATA_URL
+                image: {{workflow.parameters.image}}
+                imagePullPolicy: Always
+                volumeMounts:
+                  - name: repl-creds
+                    mountPath: /home/qserv/.lsst
+                  - name: config-data-url
+                    mountPath: /config-data-url
+              restartPolicy: Never
+              volumes:
+                - name: repl-creds
+                  secret:
+                    secretName: secret-repl-creds-qserv
+                - name: config-data-url
+                  configMap:
+                    name: config-data-url
+  - name: cleanup
+    inputs:
+      parameters:
+      - name: selector
+    resource:
+      action: delete
+      flags: [
+        "configmap", "--selector", "{{inputs.parameters.selector}}"
+      ]
+  - name: main
+    dag:
+      tasks:
+      - name: queue
+        template: ingest-step
+        arguments:
+          parameters: [{name: script, value: load-queue.sh}]
+      - name: register
+        template: ingest-step
+        arguments:
+          parameters: [{name: script, value: register.sh}]
+      - name: transactions
+        template: transactions
+        dependencies: [queue, register]
+      - name: publish
+        template: ingest-step
+        arguments:
+          parameters: [{name: script, value: publish.sh}]
+        dependencies: [transactions]
+      - name: index-tables
+        template: ingest-step
+        arguments:
+          parameters: [{name: script, value: index-tables.sh}]
+        dependencies: [publish]
+      - name: cleanup
+        arguments:
+          parameters:
+          - name: selector
+            value: cleanup=true
+        template: cleanup
+        dependencies: [index-tables]
