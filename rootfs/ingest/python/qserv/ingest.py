@@ -251,9 +251,7 @@ def _get_chunk_location(repl_url, chunk, database, transaction_id):
 
     # Get location host and port
     host = responseJson["location"]["host"]
-    # FIXME Ask Igor Gaponenko for a method to get this parameter?
-    # Or set it from qserv-operator?
-    port = 25004
+    port = responseJson["location"]["port"]
     _LOG.info("Location for chunk %d: %s %d", chunk, host, port)
 
     return (host, port)
@@ -263,13 +261,13 @@ def _ingest_chunk(ingest_args):
     kwargs = ingest_args.get_kwargs()
     chunk_file_url = kwargs['chunk_file_url']
     try:
-        logging.debug("Start ingest of chunk file: %s", chunk_file_url)
+        logging.debug("Start ingesting chunk contribution: %s", chunk_file_url)
         startedAt = time.strftime("%H:%M:%S", time.localtime())
 
         _ingest_file(**kwargs)
         endedAt = time.strftime("%H:%M:%S", time.localtime())
     except Exception as e:
-        _LOG.critical('Error while ingesting chunk file %s: %s',
+        _LOG.critical('Error while ingesting chunk contribution: %s: %s',
                       chunk_file_url,
                       e)
         raise(ValueError(e))

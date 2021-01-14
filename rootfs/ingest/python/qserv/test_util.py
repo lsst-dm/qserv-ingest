@@ -52,3 +52,4 @@ def test_json_get():
     data = qserv.util.json_get(__file__,"servers.json")
     assert (data['http_servers'][0] == "https://server1")
     assert (data['http_servers'][2] == "https://server3")
+
