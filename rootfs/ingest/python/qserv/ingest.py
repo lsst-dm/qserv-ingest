@@ -251,7 +251,7 @@ def _get_chunk_location(repl_url, chunk, database, transaction_id):
 
     # Get location host and port
     host = responseJson["location"]["host"]
-    port = responseJson["location"]["port"]
+    port = 25004
     _LOG.info("Location for chunk %d: %s %d", chunk, host, port)
 
     return (host, port)
