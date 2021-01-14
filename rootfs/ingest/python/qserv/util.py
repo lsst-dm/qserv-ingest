@@ -48,21 +48,27 @@ import requests
 TMP_DIR = "/tmp"
 _LOG = logging.getLogger(__name__)
 
+def http_file_exists(base_url, filename):
+    """Check if a file exists on a remote HTTP server
+    """
+    str_url = urllib.parse.urljoin(base_url, filename)
+    response = requests.head(str_url)
+    return (response.status_code == 200)
+
 
 def json_get(base_url, filename):
     """Load json file at a given URL
     """
-    url = urllib.parse.urlsplit(base_url, scheme="file")
+    str_url = urllib.parse.urljoin(base_url, filename)
+    url = urllib.parse.urlsplit(str_url, scheme="file")
     if url.scheme in ["http", "https"]:
-        file_url = urllib.parse.urljoin(base_url, filename)
-        r = requests.get(file_url)
+        r = requests.get(str_url)
         return r.json()
     elif url.scheme == "file":
-        file_url = urllib.parse.urljoin(url.path, filename)
-        with open(file_url, "r") as f:
+        with open(url.path, "r") as f:
             return json.load(f)
     else:
-        raise Exception("Unsupported URI scheme for ", base_url)
+        raise Exception("Unsupported URI scheme for ", url)
 
 
 def trailing_slash(url):

@@ -11,7 +11,7 @@ if [ -z "$OVERLAY" ]
 then
     KUSTOMIZE_DIR="$DIR/manifests/base"
 else
-    KUSTOMIZE_DIR="$DIR/manifests/overlays/$OVERLAY"
+    KUSTOMIZE_DIR="$DIR/manifests/$OVERLAY"
 fi
 
 kubectl apply -k "$KUSTOMIZE_DIR/$JOB"

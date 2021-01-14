@@ -21,8 +21,13 @@ spec:
         volumeMounts:
           - name: repl-creds
             mountPath: /home/qserv/.lsst
+          - name: config-data-url
+            mountPath: /config-data-url
       restartPolicy: Never
       volumes:
         - name: repl-creds
           secret:
             secretName: repl-creds
+        - name: config-data-url
+          configMap:
+            name: config-data-url

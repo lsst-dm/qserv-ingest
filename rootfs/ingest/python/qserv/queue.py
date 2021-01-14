@@ -83,11 +83,11 @@ class QueueManager():
             _LOG.warn("No table to load")
             self.current_table = None
 
-    def _get_locked_chunks(self):
-        # "SELECT chunk_id, chunk_file_url FROM task WHERE pod = ?"
+    def _get_locked_chunkfiles(self):
         query = select([self.task.c.database,
                         self.task.c.chunk_id,
-                        self.task.c.chunk_file_url,
+                        self.task.c.chunk_file_path,
+                        self.task.c.is_overlap,
                         self.task.c.table])
         query = query.where(self.task.c.pod == self.pod)
         result = self.engine.execute(query)
@@ -105,28 +105,30 @@ class QueueManager():
         sql = "DELETE FROM task"
         self.engine.execute(sql)
 
-        for (url, chunks, tbl) in self.chunk_meta.get_chunks():
-            for c in chunks:
-                _LOG.debug("Add chunk (%s, %s) to queue", c, tbl)
+        for (path, chunk_ids, is_overlap, table) in self.chunk_meta.get_chunk_files_info():
+            for chunk_id in chunk_ids:
+                _LOG.debug("Add chunk (%s, %s, %s) to queue", chunk_id, table, is_overlap)
                 self.engine.execute(
                     self.task.insert(),
                     {"database": self.chunk_meta.database,
-                     "chunk_id": c,
-                     "chunk_file_url": url,
-                     "table": tbl})
+                     "chunk_id": chunk_id,
+                     "chunk_file_path": path,
+                     "is_overlap": is_overlap,
+                     "table": table})
 
-    def lock_chunks(self):
+    def lock_chunkfiles(self):
         """TODO/FIXME Document
-           If a chunk is already locked in queue for current pod, get it
-           if not, lock it then return its id and file base url,
-           or None if queue is empty
+           If chunk files are already locked in queue for current pod, return them
+           if not, lock a batch of then and then return their representation,
+           or None if chunk file queue is empty
         Returns
         -------
-        Integer number, String,  String
+        A list of chunk files representation where:
+        chunk_file = (string database, int chunk_id, bool is_overlap, string table)
         """
 
-        # Check chunks were previously locked for this pod
-        chunks_locked = self._get_locked_chunks()
+        # Check chunks which were previously locked for this pod
+        chunks_locked = self._get_locked_chunkfiles()
         chunks_locked_count = len(chunks_locked)
         if chunks_locked_count != 0:
             _LOG.debug("Chunks already locked by pod: %s",
@@ -146,7 +148,7 @@ class QueueManager():
 
                 self.engine.execute(query)
 
-                chunks_locked = self._get_locked_chunks()
+                chunks_locked = self._get_locked_chunkfiles()
                 chunks_locked_count = len(chunks_locked)
                 _LOG.debug("chunks_locked_count: %s", chunks_locked_count)
                 if chunks_locked_count < self._chunks_to_lock_number:

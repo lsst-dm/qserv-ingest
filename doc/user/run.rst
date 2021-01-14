@@ -49,10 +49,10 @@ Prepare configuration
 
 .. code:: sh
 
-    cp -r overlays/in2p3 overlays/<CUSTOM_INGEST>
+    cp -r manifests/in2p3 manifests/<CUSTOM_INGEST>
     cp env.example.sh env.sh
 
-- In `overlays/<MY_INGEST>/init/kustomization.yaml`, set:
+- In `manifests/<MY_INGEST>/init/kustomization.yaml`, set:
   - `DATA_URL` to the **root URL of the HTTP server serving input data**
   - `REQUESTS_CA_BUNDLE` to the local path of the CA chain of this server, if needed.
 - In `env.sh`, set `OVERLAY` to `<CUSTOM_INGEST>`, and eventually `INSTANCE` to the name of current Qserv instance.
