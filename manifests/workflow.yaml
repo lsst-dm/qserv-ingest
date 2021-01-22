@@ -34,8 +34,8 @@ spec:
   - name: transactions
     resource:
       action: create
-      successCondition: status.succeeded > 0
-      failureCondition: status.failed > 3
+      successCondition: status.succeeded = 4
+      failureCondition: status.failed > 0
       manifest: |
         apiVersion: batch/v1
         kind: Job
