@@ -1,15 +1,6 @@
 commonLabels:
   org: lsst
   app: qserv
-  tier: ingest
-
-resources:
-- init.yaml
-
-secretGenerator:
-- name: repl-creds 
-  files:
-  - qserv
 
 configMapGenerator:
 - name: config-data-url

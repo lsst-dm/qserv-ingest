@@ -31,12 +31,14 @@ Register database and table inside replication service
 # -------------------------------
 import argparse
 import logging
+import sys
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
 import qserv.http as http
 import qserv.util as util
+from qserv.ingest import DatabaseStatus, Ingester
 from qserv.metadata import ChunkMetadata
 import urllib
 
@@ -44,7 +46,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Initialize database and "
                                      "table inside Qserv replication service")
 
-    parser.add_argument("url", type=str,
+    parser.add_argument("repl_url", type=str,
                         help="Replication web service base URL",
                         action=util.BaseUrlAction)
     parser.add_argument("data_url", type=str, help="Input data URL",
@@ -63,39 +65,12 @@ if __name__ == "__main__":
         logger.setLevel(logging.INFO)
     logger.addHandler(logging.StreamHandler())
 
-    logger.debug("Loading metadata")
-    metadata = ChunkMetadata(args.data_url)
+    ingester = Ingester(args.data_url, args.repl_url)
+    db_status = ingester.get_db_status()
 
-    path = "/ingest/database/"
-    url = urllib.parse.urljoin(args.url, path)
-    json = metadata.json_db
-    logger.debug("Starting a database registration request: %s with %s",
-                 url, json)
-
-    http_session = http.Http()
-
-    http_session.post(url, json)
-
-    if args.felis:
-        logger.info("Loaded Felis schema for tables %s", args.felis.keys())
-
-    path = "/ingest/table/"
-    url = urllib.parse.urljoin(args.url, path)
-
-    for json_data in metadata.get_tables_json():
-        if args.felis is not None and json_data["table"] in args.felis:
-            schema = args.felis[json_data["table"]]
-            json_data["schema"] = schema + json_data["schema"]
-        logger.debug("Starting a table registration request: %s with %s",
-                     url, json_data)
-        http_session.post(url, json_data)
-
-    path = "/ingest/config/"
-    url = urllib.parse.urljoin(args.url, path)
-    json = {"database": metadata.database,
-            "CAINFO": "/etc/pki/tls/certs/ca-bundle.crt",
-            "SSL_VERIFYPEER": 1
-           }
-
-    logger.debug("Configuring ingest parameters: %s with %s", url, json)
-    http_session.put(url, json)
+    if db_status == DatabaseStatus.NOT_REGISTERED:
+        ingester.database_register()
+        ingester.database_register_tables(args.felis)
+        ingester.database_config()
+    elif db_status == DatabaseStatus.PUBLISHED:
+        sys.exit(1)

@@ -21,7 +21,7 @@
 # see <http://www.lsstcorp.org/LegalNotices/>.
 
 """
-Publish database and tables from replication service to Qserv
+Tools used by ingest algorithm
 
 @author  Fabrice Jammes, IN2P3
 """
@@ -29,36 +29,26 @@ Publish database and tables from replication service to Qserv
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
-import argparse
-import logging
+import sys
+import sys
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-import qserv.http as http
-from qserv.ingest import DatabaseStatus, Ingester
 from qserv.metadata import ChunkMetadata
-import qserv.util as util
+import pytest
+import urllib.parse
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Initialize database and"
-                                     "table inside Qserv replication service")
+# ---------------------------------
+# Local non-exported definitions --
+# ---------------------------------
 
-    parser.add_argument("repl_url", type=str,
-                        help="Replication web service base URL",
-                        action=util.BaseUrlAction)
-    parser.add_argument("data_url", type=str, help="Input data/metadata URL",
-                        action=util.BaseUrlAction)
-    parser.add_argument("--verbose", "-v", action="store_true",
-                        help="Use debug logging")
-    args = parser.parse_args()
-
-    logger = logging.getLogger()
-    if args.verbose:
-        logger.setLevel(logging.DEBUG)
-    else:
-        logger.setLevel(logging.INFO)
-    logger.addHandler(logging.StreamHandler())
-
-    ingester = Ingester(args.data_url, args.repl_url)
-    db_status = ingester.database_publish()
+def test_get_loadbalancer_url():
+    """Check if a file exists on a remote HTTP server
+    """
+    data_url = "https://raw.githubusercontent.com/lsst-dm/qserv-ingest/tickets/DM-28108/data/cosmoDC2_v1_1_4_image_testintegration/"
+    server_json = urllib.parse.urljoin(__file__, "servers.json")
+    chunk_meta = ChunkMetadata(data_url, server_json)
+    url = chunk_meta.get_loadbalancer_url(1)
+    assert (url == "https://server2/lsst-dm/qserv-ingest/tickets/DM-28108/data/cosmoDC2_v1_1_4_image_testintegration/")
+    

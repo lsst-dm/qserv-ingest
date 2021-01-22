@@ -1,7 +1,5 @@
 bases:
-- ../../../base/init
-patchesStrategicMerge:
-- init.yaml
+- ../../base/configmap
 
 configMapGenerator:
 - name: config-data-url

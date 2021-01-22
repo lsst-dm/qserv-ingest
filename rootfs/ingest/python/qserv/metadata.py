@@ -69,6 +69,7 @@ class ChunkMetadata():
 
         # Get HTTP configuration
         url = urllib.parse.urlsplit(self.data_url, scheme="file")
+        self.url_path = url.path
         self.http_servers = []
         if servers_file and url.scheme in ["http", "https"]:
             with open(servers_file, "r") as f:
@@ -78,6 +79,7 @@ class ChunkMetadata():
         filename = self.metadata['database']
         self.json_db = json_get(self.data_url, filename)
         self.database = self.json_db['database']
+        self.family = "layout_{}_{}".format(self.json_db['num_stripes'], self.json_db['num_sub_stripes'])
         self.init_tables()
 
     def get_chunk_files_info(self):
@@ -96,6 +98,14 @@ class ChunkMetadata():
                     if _is_director(table):
                         files_info.append((path, d[_CHUNK], True, _get_name(table)))
         return files_info
+    
+    def get_loadbalancer_url(self, i):
+        http_servers_count = len(self.http_servers)
+        if http_servers_count == 0:
+            url = self.data_url
+        else:
+            url = urllib.parse.urljoin(self.http_servers[i%http_servers_count],self.url_path)
+        return url
 
     def get_tables_names(self):
         table_names = []

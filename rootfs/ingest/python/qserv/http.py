@@ -93,7 +93,7 @@ class Http():
             raise Exception(
                 'Error in JSON response (GET)', url,
                 responseJson["error"])
-        _LOG.info("success")
+        _LOG.info("GET: success")
         return responseJson
 
     def post(self, url, payload, auth=True):
@@ -112,7 +112,7 @@ class Http():
             raise Exception(
                 'Error in JSON response (POST)', url,
                 responseJson["error"], responseJson["error_ext"])
-        _LOG.debug("success")
+        _LOG.debug("POST: success")
         return responseJson
 
     def put(self, url, payload=None):
@@ -131,7 +131,7 @@ class Http():
             raise Exception(
                 'Error in JSON response (PUT)', url,
                 responseJson["error"])
-        _LOG.info("success")
+        _LOG.info("PUT: success")
         return responseJson
 
     def delete(self, url):
@@ -147,5 +147,5 @@ class Http():
             raise Exception(
                 'Error in JSON response (DELETE)', url,
                 responseJson["error"])
-        _LOG.info("success")
+        _LOG.info("DELETE: success")
         return responseJson
