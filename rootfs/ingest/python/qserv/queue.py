@@ -63,13 +63,13 @@ class QueueManager():
         self.ordered_tables_to_load = self.chunk_meta.get_tables_names()
         _LOG.debug("Ordered tables to load: %s", self.ordered_tables_to_load)
         self.next_current_table()
+
+    def set_transaction_size(self, chunk_queue_fraction):
+        """ Set number of chunk files managed by a single transaction
+        """
         chunk_files_count = self._count_chunk_files()
-
         _LOG.debug("Chunk files queue size: %s", chunk_files_count)
-
-        # TODO add a parameter
-        nb_transaction = 10
-        tmp = int(chunk_files_count / nb_transaction)
+        tmp = int(chunk_files_count / chunk_queue_fraction)
         if tmp != 0:
             self._chunks_to_lock_number = tmp
         else:
@@ -193,3 +193,16 @@ class QueueManager():
 
     def _is_queue_empty(self):
         return (self.current_table == None)
+
+    def get_noningested_chunkfiles(self):
+        """Return all chunk files in queue not successfully loaded
+        """
+        query = select([self.task.c.database,
+                        self.task.c.chunk_id,
+                        self.task.c.chunk_file_path,
+                        self.task.c.is_overlap,
+                        self.task.c.table])
+        query = query.where(self.task.c.succeed.is_(None))
+        result = self.engine.execute(query)
+        chunks = result.fetchall()
+        return chunks

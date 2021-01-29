@@ -1,11 +1,10 @@
 #!/bin/sh
 
 # Ask replication system to create tables indexes for Qserv data
+set -euxo pipefail
 
 DIR=$(cd "$(dirname "$0")"; pwd -P)
 . "$DIR"/env.sh
 
-set -euxo pipefail
-
 # Publish database
-replctl-index -v "$DATA_URL" "$REPL_URL"
+replctl-index -v "$data_url" "$REPL_URL"

@@ -30,12 +30,11 @@ Tools used by ingest algorithm
 #  Imports of standard modules --
 # -------------------------------
 import sys
-import sys
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-from qserv.metadata import ChunkMetadata
+from . import metadata
 import pytest
 import urllib.parse
 
@@ -46,9 +45,9 @@ import urllib.parse
 def test_get_loadbalancer_url():
     """Check if a file exists on a remote HTTP server
     """
-    data_url = "https://raw.githubusercontent.com/lsst-dm/qserv-ingest/tickets/DM-28108/data/cosmoDC2_v1_1_4_image_testintegration/"
+    data_url = "https://raw.githubusercontent.com/lsst-dm/qserv-ingest/master/data/cosmoDC2_v1_1_4_image_testintegration/"
     server_json = urllib.parse.urljoin(__file__, "servers.json")
-    chunk_meta = ChunkMetadata(data_url, server_json)
+    chunk_meta = metadata.ChunkMetadata(data_url, server_json)
     url = chunk_meta.get_loadbalancer_url(1)
-    assert (url == "https://server2/lsst-dm/qserv-ingest/tickets/DM-28108/data/cosmoDC2_v1_1_4_image_testintegration/")
+    assert (url == "https://server2/lsst-dm/qserv-ingest/master/data/cosmoDC2_v1_1_4_image_testintegration/")
     

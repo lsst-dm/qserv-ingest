@@ -43,21 +43,12 @@ import urllib.parse
 # Imports for other modules --
 # ----------------------------
 from .http import Http
-from jsonpath_ng import jsonpath
-from jsonpath_ng.ext import parse
+from . import jsonparser
 from .metadata import ChunkMetadata
 from .queue import QueueManager
 from .util import trailing_slash
 
 TMP_DIR = "/tmp"
-
-ABORTED_STATE = "ABORTED"
-FINISHED_STATE = "FINISHED"
-
-class DatabaseStatus(Enum):
-    NOT_REGISTERED = -1
-    REGISTERED_NOT_PUBLISHED = 0
-    PUBLISHED = 1
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -98,7 +89,7 @@ class Ingester():
 
 
     def abort_transactions(self):
-        for transaction_id in self.get_transactions():
+        for transaction_id in self.get_transactions_started():
             success = False
             self._close_transaction(transaction_id, success)
             _LOG.info("Abort transaction: %s", transaction_id)
@@ -108,6 +99,19 @@ class Ingester():
         _LOG.info(f"Create secondary index")
         payload = {"database": self.chunk_meta.database, "allow_for_published":1, "local":1, "rebuild":1}
         self.http.post(url, payload)
+
+    def check_supertransactions_success(self):
+        """ Check all super-transactions have ran successfully
+        """
+        trans = self.get_transactions_started()
+        _LOG.debug(f"IDs of transactions in STARTED state: {trans}")
+        if len(trans)>0:
+            raise Exception(f"Database publication prevented by started transactions: {trans}")
+        chunks = self.queue_manager.get_noningested_chunkfiles()
+        if len(chunks)>0:
+            _LOG.error(f"Non ingested chunk files: {chunks}")
+            raise Exception(f"Database publication forbidden: non-ingested chunk files: {len(chunks)}")
+        _LOG.info("All chunk files in queue successfully ingested")
 
     def _compute_args(self, chunks_locked, transaction_id):
         args = []
@@ -198,41 +202,29 @@ class Ingester():
     def get_db_status(self):
         url = urllib.parse.urljoin(self.repl_url, "replication/config")
         responseJson = self.http.get(url)
-        jsonpath_expr = parse("$.config.families[?(name=\"{}\")].databases[?(name=\"{}\")].is_published".format(self.chunk_meta.family, self.chunk_meta.database))
-        result = jsonpath_expr.find(responseJson)
-        if len(result) == 0:
-            r = DatabaseStatus.NOT_REGISTERED
-        elif len(result) == 1:
-            if result[0].value == 0:
-                r = DatabaseStatus.REGISTERED_NOT_PUBLISHED
-            else:
-                r = DatabaseStatus.PUBLISHED
-        else:
-            raise ValueError("Unexpected answer from %s", url)
-        _LOG.debug("Status: %s",r)
-        return r
+        status = jsonparser.parse_database_status(responseJson, self.chunk_meta.database, self.chunk_meta.family)
+        _LOG.debug(f"Database {self.chunk_meta.family}:{self.chunk_meta.database} status: {status}")
+        return status
 
-    def get_transactions(self):
+    def _get_transactions(self, states):
+        """
+        Return transactions
+        """
         database = self.chunk_meta.database
         url = urllib.parse.urljoin(self.repl_url,
                                    "ingest/trans?database=" + database)
         responseJson = self.http.get(url)
-
-        current_db = responseJson["databases"][database]
-        transaction_id = current_db["transactions"][0]["id"]
-        _LOG.debug(f"transaction ID: {transaction_id}")
-
-        transaction_ids = []
-        transactions = responseJson['databases'][database]['transactions']
-        if len(transactions) != 0:
-            _LOG.info("Transactions in flight:")
-            for trans in transactions:
-                _LOG.info("  id: %s state: %s",
-                          trans['id'], trans['state'])
-                if trans['state'] not in [ABORTED_STATE, FINISHED_STATE]:
-                    transaction_ids.append(trans['id'])
+        transaction_ids = jsonparser.filter_transactions(responseJson, database, states)
 
         return transaction_ids
+
+    def get_transactions_started(self):
+        states = [jsonparser.TransactionState.STARTED]
+        return self._get_transactions(states)
+
+    def get_transactions_not_finished(self):
+        states = [jsonparser.TransactionState.ABORTED, jsonparser.TransactionState.STARTED]
+        return self._get_transactions(states)
 
     def index_all_tables(self):
         url = urllib.parse.urljoin(self.repl_url, "replication/sql/index")
@@ -240,7 +232,8 @@ class Ingester():
             _LOG.info(f"Create index: {json_idx}")
             self.http.post(url, json_idx)
 
-    def ingest(self):
+    def ingest(self, chunk_queue_fraction):
+        self.queue_manager.set_transaction_size(chunk_queue_fraction)
         chunk_to_load = True
         while chunk_to_load:
             chunk_to_load = self._ingest_transaction()
@@ -312,9 +305,7 @@ def _get_chunk_location(repl_url, chunk, database, transaction_id):
                "transaction_id": transaction_id}
     responseJson = Http().post(url, payload)
 
-    # Get location host and port
-    host = responseJson["location"]["host"]
-    port = 25004
+    host, port = jsonparser.get_location(responseJson)
     _LOG.info("Location for chunk %d: %s %d", chunk, host, port)
 
     return (host, port)
@@ -352,7 +343,3 @@ def _ingest_file(host, port, transaction_id, chunk_file_url, chunk_id, table, is
     _LOG.debug("_ingest_chunk: payload: %s", payload)
     responseJson = Http().post(url, payload)
     _LOG.debug("Ingest: responseJson: %s", responseJson)
-
-
-    # TODO manage responseJson error everywhere!!!
-
