@@ -35,7 +35,7 @@ import sys
 # Imports for other modules --
 # ----------------------------
 import pytest
-import qserv.util
+from . import util
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -44,12 +44,12 @@ import qserv.util
 def test_file_exists():
     """Check if a file exists on a remote HTTP server
     """
-    assert qserv.util.http_file_exists("https://www.k8s-school.fr/team/", "index.html")
-    assert not qserv.util.http_file_exists("https://www.k8s-school.fr/team/", "false.html")
+    assert util.http_file_exists("https://www.k8s-school.fr/team/", "index.html")
+    assert not util.http_file_exists("https://www.k8s-school.fr/team/", "false.html")
     
 def test_json_get():
     
-    data = qserv.util.json_get(__file__,"servers.json")
+    data = util.json_get(__file__,"servers.json")
     assert (data['http_servers'][0] == "https://server1")
     assert (data['http_servers'][2] == "https://server3")
 

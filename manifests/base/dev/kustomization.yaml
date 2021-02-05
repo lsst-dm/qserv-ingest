@@ -1,18 +1,25 @@
 commonLabels:
-  org: lsst
   app: qserv
+  org: lsst
 
 resources:
 - dev.yaml
 
 configMapGenerator:
-- name: config-data-url
-  files:
+- files:
   - servers.json
   literals:
   - DATA_URL="https://raw.githubusercontent.com/lsst-dm/qserv-ingest/master/data/cosmoDC2_v1_1_4_image_testintegration/"
+  name: config-data-url
 generatorOptions:
+  disableNameSuffixHash: true
   labels:
     kustomize.generated.resources: qserv.ingest
-  disableNameSuffixHash: true
-
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+images:
+- name: INGEST_IAMGE
+  newName: foo/bar
+- name: INGEST_IMAGE
+  newName: qserv/ingest
+  newTag: 12b9b38-dirty

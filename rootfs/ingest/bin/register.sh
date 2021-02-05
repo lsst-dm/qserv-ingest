@@ -1,12 +1,10 @@
 #!/bin/sh
 
 # Ask Qserv replication system to register a Qserv database, prior to data ingestion
+set -euxo pipefail
 
-# Load python-3
 DIR=$(cd "$(dirname "$0")"; pwd -P)
 . "$DIR"/env.sh
 
-set -euxo pipefail
-
-# Register database and table
+# Register database and tables
 replctl-register -v "$REPL_URL" "$DATA_URL"
