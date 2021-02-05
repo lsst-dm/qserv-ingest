@@ -7,7 +7,6 @@
     "sub_chunk_id_key": "subChunkId",
     "is_director": 1,
     "director_key": "galaxy_id",
-    "auto_build_secondary_index": 1,
     "latitude_key": "coord_dec",
     "longitude_key": "coord_ra",
     "schema": [
