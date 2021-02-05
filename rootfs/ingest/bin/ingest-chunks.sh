@@ -54,7 +54,7 @@ if [ -e /config-data-url/servers.json ]; then
 fi
 
 replctl-ingest --verbose \
-    --chunk_queue-fraction "$chunk_queue_fraction" \
+    --chunk-queue-fraction "$chunk_queue_fraction" \
     "$data_url" \
     "$QUEUE_URL" \
     "$REPL_URL" \

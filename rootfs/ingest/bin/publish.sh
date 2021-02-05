@@ -40,3 +40,4 @@ fi
 # Publish database
 replctl-publish -v "$data_url" \
     "$REPL_URL"
+

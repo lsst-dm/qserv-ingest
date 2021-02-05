@@ -89,3 +89,4 @@ def parse_database_status(responseJson, database, family):
     else:
         raise ValueError("Unexpected answer from replication service", responseJson)
     return status
+

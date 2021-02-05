@@ -69,9 +69,9 @@ class QueueManager():
         """
         chunk_files_count = self._count_chunk_files()
         _LOG.debug("Chunk files queue size: %s", chunk_files_count)
-        tmp = int(chunk_files_count / chunk_queue_fraction)
-        if tmp != 0:
-            self._chunks_to_lock_number = tmp
+        tmp_chunk_per_transaction = int(chunk_files_count / chunk_queue_fraction)
+        if tmp_chunk_per_transaction != 0:
+            self._chunks_to_lock_number = tmp_chunk_per_transaction
         else:
             self._chunks_to_lock_number = 1
 

@@ -47,7 +47,7 @@ if __name__ == "__main__":
                                      "driving chunk files ingest")
     parser.add_argument("--check", "-c", action='store_true',
                         help="Check if chunk file ingestion has been performed successfully")
-    parser.add_argument("--chunk_queue-fraction", "-f", type=int, metavar="FRACTION",
+    parser.add_argument("--chunk-queue-fraction", "-f", type=int, metavar="FRACTION",
                         help="Fraction of chunk queue loaded per super-transaction"
                         "mysql://user:pass@host:port/database.")
     parser.add_argument("data_url", type=str, help="Input data URL",
