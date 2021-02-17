@@ -31,6 +31,14 @@ Prerequisites
 
 The namespace containing this instance will be called `<QSERV_NAMESPACE>`.
 
+-  Save `<QSERV_NAMESPACE>` as the namespace  for all subsequent `kubectl` commands:
+
+.. code:: sh
+
+    kubectl config set-context --current --namespace=<QSERV_NAMESPACE>
+
+For additional informations, check official documentation for `setting the namespace preference <https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/#setting-the-namespace-preference>`__
+
 - Privileges to create pods and persistent volumes inside `<QSERV_NAMESPACE>`.
 
 - An HTTP(s) server providing access to input data and metadata. All pods inside `<QSERV_NAMESPACE>` must be able to access this HTTP server.
