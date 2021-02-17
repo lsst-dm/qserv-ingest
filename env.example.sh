@@ -7,3 +7,5 @@ INGEST_IMAGE="qserv/ingest:$TAG"
 INGEST_DEPS_IMAGE="qserv/ingest-deps:latest"
 INSTANCE="qserv"
 OVERLAY="base"
+
+REPL_CTL_PORT="8080"
