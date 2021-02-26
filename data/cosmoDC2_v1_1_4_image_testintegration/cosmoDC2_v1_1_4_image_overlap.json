@@ -1,5 +1,7 @@
 {
     "database": "cosmoDC2_v1_1_4_image_overlap",
+    "auto_build_secondary_index": 1,
+    "local_load_secondary_index": 1,
     "num_stripes": 340,
     "num_sub_stripes": 3,
     "overlap": 0.01667,

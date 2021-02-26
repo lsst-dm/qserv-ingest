@@ -2,6 +2,11 @@
 Set up ingest input data
 ########################
 
+Prerequisites
+=============
+
+- An HTTP(s) server providing access to input data and metadata.
+
 Example
 =======
 
@@ -43,6 +48,14 @@ Metadata files below describe input data and are required by `qserv-ingest`:
                 "chunks":[
                     57866,
                     57867
+                ]
+                # Add overlap section if, for a given chunk, a chunks files does not have an overlap file, and vice-versa,
+                # this might happen if a chunk has an empty overlap or if an empty chunk has a non-empty overlap.
+                # If overlap section is missing then, for a given chunk, each chunk file must have a corresponding overlap file
+                # (i.e. chunk_XXX.txt and chunk_XXX_overlap.txt must exist).
+                "overlaps":[
+                    57800,
+                    57801
                 ]
                 },
                 {

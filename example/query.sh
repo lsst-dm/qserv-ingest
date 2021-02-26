@@ -7,10 +7,12 @@ DIR=$(cd "$(dirname "$0")"; pwd -P)
 . "$DIR"/../env.sh
 
 CZAR_HOST="${INSTANCE}-czar-0.${INSTANCE}-czar"
-DATABASE="dc2_object_run2_2i_dr6_wfd"
+# DATABASE="dc2_object_run2_2i_dr6_wfd"
 # DATABASE="cosmoDC2_v1_1_4_image_test"
-# DATABASE="cosmoDC2_v1_1_4_image_overlap"
+DATABASE="cosmoDC2_v1_1_4_image_overlap"
 
+time kubectl exec -it $INSTANCE-czar-0 -- \
+    bash -lc ". /qserv/stack/loadLSST.bash && setup mariadb && mysql --socket /qserv/data/mysql/mysql.sock --user=root --pass=CHANGEME -e 'select count(*) from qservMeta.${DATABASE}__position;'"
 time kubectl exec -it $INSTANCE-ingest-db-0 -- \
     bash -lc "mysql --host $CZAR_HOST --port 4040 --user qsmaster -e 'SELECT * FROM $DATABASE.position LIMIT 10'"
 time kubectl exec -it $INSTANCE-ingest-db-0 -- \

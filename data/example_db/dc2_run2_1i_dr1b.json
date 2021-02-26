@@ -1,5 +1,6 @@
 {
     "database": "dc2_run2_1i_dr1b",
+    "auto_build_secondary_index":0,
     "num_stripes": 340,
     "num_sub_stripes": 3,
     "overlap": 0.01667,
