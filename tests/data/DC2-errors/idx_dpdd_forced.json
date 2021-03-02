@@ -1,0 +1,14 @@
+{
+   "database":"dc2_errors",
+   "table":"dpdd_forced",
+   "index":"objectId",
+   "spec":"DEFAULT",
+   "comment":"None",
+   "columns":[
+      {
+         "column":"objectId",
+         "length":0,
+         "ascending":1
+      }
+   ]
+}

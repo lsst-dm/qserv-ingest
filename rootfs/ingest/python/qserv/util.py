@@ -44,8 +44,6 @@ import requests
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
-
-TMP_DIR = "/tmp"
 _LOG = logging.getLogger(__name__)
 
 def http_file_exists(base_url, filename):
@@ -78,6 +76,8 @@ def trailing_slash(url):
 
 
 class BaseUrlAction(argparse.Action):
+    """Add trailing slash to url
+    """
     def __call__(self, parser, namespace, values, option_string):
         x = trailing_slash(values)
         setattr(namespace, self.dest, x)
@@ -124,3 +124,7 @@ class FelisAction(argparse.Action):
                     {"name": column["name"],
                      "type": column["mysql:datatype"] + nullstring})
         setattr(namespace, self.dest, schemas)
+
+def increase_wait_time(wait_sec):
+    if wait_sec < 10:
+        wait_sec *= 2

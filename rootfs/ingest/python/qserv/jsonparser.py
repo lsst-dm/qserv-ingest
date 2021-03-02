@@ -90,3 +90,31 @@ def parse_database_status(responseJson, database, family):
         raise ValueError("Unexpected answer from replication service", responseJson)
     return status
 
+def raise_error(responseJson, check_retry = False):
+    """Check JSON response for error
+       return True if check_retry = True and if error allows retrying request
+       return False if no error in JSON response
+       raise exception in case of error in JSON response for a non-retriable request
+    """
+    retry = False
+    if not responseJson["success"]:
+        _LOG.critical(responseJson["error"])
+        error_ext = ''
+        if "error_ext" in responseJson:
+            _LOG.critical(responseJson["error_ext"])
+            error_ext = responseJson["error_ext"]
+            if check_retry:
+                retry = _check_retry(error_ext)
+        if not retry:
+            raise Exception(
+            'Error in JSON response',
+            responseJson["error"], error_ext)
+    return retry
+
+def _check_retry(error_ext):
+    if "retry_allowed" in error_ext and error_ext["retry_allowed"] != 0:
+        retry = True
+    else:
+        retry = False
+    return retry
+

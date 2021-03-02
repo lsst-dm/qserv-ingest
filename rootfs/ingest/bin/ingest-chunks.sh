@@ -55,7 +55,7 @@ fi
 
 replctl-ingest --verbose \
     --chunk-queue-fraction "$chunk_queue_fraction" \
-    "$data_url" \
+    "$DATA_URL" \
     "$QUEUE_URL" \
     "$REPL_URL" \
     $servers_opt

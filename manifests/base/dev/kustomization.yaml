@@ -9,7 +9,7 @@ configMapGenerator:
 - files:
   - servers.json
   literals:
-  - DATA_URL="https://raw.githubusercontent.com/lsst-dm/qserv-ingest/master/data/cosmoDC2_v1_1_4_image_testintegration/"
+  - DATA_URL="http://dataserver/DC2-errors"
   name: config-data-url
 generatorOptions:
   disableNameSuffixHash: true
@@ -22,4 +22,4 @@ images:
   newName: foo/bar
 - name: INGEST_IMAGE
   newName: qserv/ingest
-  newTag: 12b9b38-dirty
+  newTag: a59f841-dirty

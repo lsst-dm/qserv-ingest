@@ -46,15 +46,16 @@ from .http import Http
 from . import jsonparser
 from .metadata import ChunkMetadata
 from .queue import QueueManager
-from .util import trailing_slash
-
-TMP_DIR = "/tmp"
+from .util import increase_wait_time, trailing_slash
 
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
 AUTH_PATH = "~/.lsst/qserv"
 _LOG = logging.getLogger(__name__)
+
+# Max attempts to retry ingesting a file on replication service retriable error
+MAX_RETRY_ATTEMPTS = 3
 
 class IngestArgs():
     def __init__(self, host, port, transaction_id, chunk_file_url, chunk_id, table, is_overlap):
@@ -87,7 +88,6 @@ class Ingester():
         if queue_url is not None:
             self.queue_manager = QueueManager(queue_url, self.chunk_meta)
 
-
     def abort_transactions(self):
         for transaction_id in self.get_transactions_started():
             success = False
@@ -98,7 +98,8 @@ class Ingester():
         url = urllib.parse.urljoin(self.repl_url, "ingest/index/secondary")
         _LOG.info(f"Create secondary index")
         payload = {"database": self.chunk_meta.database, "allow_for_published":1, "local":1, "rebuild":1}
-        self.http.post(url, payload)
+        r = self.http.post(url, payload)
+        jsonparser.raise_error(r)
 
     def check_supertransactions_success(self):
         """ Check all super-transactions have ran successfully
@@ -142,6 +143,7 @@ class Ingester():
             tmp_url += "?abort=1"
         url = urllib.parse.urljoin(self.repl_url, tmp_url)
         responseJson = self.http.put(url)
+        jsonparser.raise_error(responseJson)
 
         for trans in responseJson['databases'][database]['transactions']:
             _LOG.debug("Close transaction (id: %s state: %s)",
@@ -153,7 +155,8 @@ class Ingester():
         path = "/ingest/database/{}".format(self.chunk_meta.database)
         url = urllib.parse.urljoin(self.repl_url, path)
         _LOG.debug("Publish database: %s", url)
-        self.http.put(url)
+        responseJson = self.http.put(url)
+        jsonparser.raise_error(responseJson)
 
     def database_register(self):
         """Register a database inside replication system
@@ -161,8 +164,9 @@ class Ingester():
         """
         url = urllib.parse.urljoin(self.repl_url, "/ingest/database/")
         payload = self.chunk_meta.json_db
-        _LOG.debug("Starting a database registration request: %s with %s", url, payload)
-        self.http.post(url, payload)
+        _LOG.debug("Starting a database registration request: %s with %s", url, payload) 
+        responseJson = self.http.post(url, payload)
+        jsonparser.raise_error(responseJson)
 
     def database_register_tables(self, felis=None):
         """Register a database inside replication system
@@ -179,7 +183,8 @@ class Ingester():
                 json_data["schema"] = schema + json_data["schema"]
             _LOG.debug("Starting a table registration request: %s with %s",
                         url, json_data)
-            self.http.post(url, json_data)
+            responseJson = self.http.post(url, json_data)
+            jsonparser.raise_error(responseJson)
 
     def database_config(self):
         """Configure a database inside replication system
@@ -190,7 +195,8 @@ class Ingester():
                 "SSL_VERIFYPEER": 1
             }
         _LOG.debug("Configure database inside replication system, url: %s, json: %s", url, json)
-        self.http.put(url, json)
+        responseJson = self.http.put(url, json)
+        jsonparser.raise_error(responseJson)
 
     def _get_chunk_file_url(self, base_url, chunk_file_path, chunk_id, file_format):
         chunk_filename = file_format.format(chunk_id)
@@ -202,6 +208,7 @@ class Ingester():
     def get_db_status(self):
         url = urllib.parse.urljoin(self.repl_url, "replication/config")
         responseJson = self.http.get(url)
+        jsonparser.raise_error(responseJson)
         status = jsonparser.parse_database_status(responseJson, self.chunk_meta.database, self.chunk_meta.family)
         _LOG.debug(f"Database {self.chunk_meta.family}:{self.chunk_meta.database} status: {status}")
         return status
@@ -214,6 +221,7 @@ class Ingester():
         url = urllib.parse.urljoin(self.repl_url,
                                    "ingest/trans?database=" + database)
         responseJson = self.http.get(url)
+        jsonparser.raise_error(responseJson)
         transaction_ids = jsonparser.filter_transactions(responseJson, database, states)
 
         return transaction_ids
@@ -230,7 +238,8 @@ class Ingester():
         url = urllib.parse.urljoin(self.repl_url, "replication/sql/index")
         for json_idx in self.chunk_meta.get_json_indexes():
             _LOG.info(f"Create index: {json_idx}")
-            self.http.post(url, json_idx)
+            responseJson = self.http.post(url, json_idx)
+            jsonparser.raise_error(responseJson)
 
     def ingest(self, chunk_queue_fraction):
         self.queue_manager.set_transaction_size(chunk_queue_fraction)
@@ -263,18 +272,14 @@ class Ingester():
         except Exception as e:
             _LOG.critical('Ingest failed during transaction: %s, %s', transaction_id, e)
             ingest_success = False
+            # Stop process when any transaction abort
             raise(e)
         finally:
             if transaction_id:
                 self._close_transaction(transaction_id,
                                         ingest_success)
+                self.queue_manager.release_locked_chunkfiles(ingest_success)
 
-        # TODO release chunk in queue if process crash
-        # so that it can be locked by an other pod?
-        # => Doing it manually seems safer.
-
-        # ingest successful
-        self.queue_manager.unlock_chunks()
         return True
 
     def _ingest_parallel_chunks(self, transaction_id, chunks_locked):
@@ -289,6 +294,7 @@ class Ingester():
         url = urllib.parse.urljoin(self.repl_url, "ingest/trans")
         payload = {"database": database}
         responseJson = self.http.post(url, payload)
+        jsonparser.raise_error(responseJson)
 
         # For catching the super transaction ID
         # Want to print responseJson["databases"]["hsc_test_w_2020_14_00"]["transactions"]
@@ -304,6 +310,7 @@ def _get_chunk_location(repl_url, chunk, database, transaction_id):
                "database": database,
                "transaction_id": transaction_id}
     responseJson = Http().post(url, payload)
+    jsonparser.raise_error(responseJson)
 
     host, port = jsonparser.get_location(responseJson)
     _LOG.info("Location for chunk %d: %s %d", chunk, host, port)
@@ -341,5 +348,20 @@ def _ingest_file(host, port, transaction_id, chunk_file_url, chunk_id, table, is
                 "overlap":int(is_overlap),
                 "url":chunk_file_url}
     _LOG.debug("_ingest_chunk: payload: %s", payload)
-    responseJson = Http().post(url, payload)
+    retry_attempts = 0
+    retry = True
+    responseJson = ""
+    wait_sec = 1
+    while retry:
+        _LOG.debug("_ingest_chunk: url %s, retry attempts: %s, payload: %s", url, retry_attempts, payload)
+        responseJson = Http().post(url, payload)
+        if retry_attempts < MAX_RETRY_ATTEMPTS:
+            check_retry = True
+        else:
+            check_retry = False
+        retry = jsonparser.raise_error(responseJson, check_retry)
+        if retry:
+            time.sleep(wait_sec)
+            wait_sec = increase_wait_time(wait_sec)
+            retry_attempts += 1
     _LOG.debug("Ingest: responseJson: %s", responseJson)

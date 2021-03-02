@@ -12,8 +12,8 @@ spec:
     parameters:
     - name: image
       value: qserv/ingest:df79e9f
-      # chunk_queue_fraction is the number of pods running concurrent super-transactions
-    - name: chunk_queue_fraction
+      # supertransactions is the number of pods running concurrent super-transactions
+    - name: supertransactions
       value: 10
   templates:
   - name: ingest-step
@@ -37,7 +37,7 @@ spec:
   - name: transactions
     resource:
       action: create
-      successCondition: status.succeeded = {{workflow.parameters.chunk_queue_fraction}} 
+      successCondition: status.succeeded = {{workflow.parameters.supertransactions}} 
       failureCondition: status.failed > 0
       manifest: |
         apiVersion: batch/v1
@@ -47,8 +47,7 @@ spec:
           labels:
             cleanup: "true"
         spec:
-          parallelism: {{workflow.parameters.chunk_queue_fraction}} 
-          completions: {{workflow.parameters.chunk_queue_fraction}}
+          parallelism: {{workflow.parameters.supertransactions}}
           template:
             spec:
               containers:
@@ -56,7 +55,7 @@ spec:
                 command:
                 - ingest-chunks.sh
                 args:
-                - "{{workflow.parameters.chunk_queue_fraction}}"
+                - "{{workflow.parameters.supertransactions}}"
                 env:
                 - name: DATA_URL
                   valueFrom:
@@ -101,7 +100,7 @@ spec:
       - name: transactions
         template: transactions
         dependencies: [queue, register]
-      - name: check
+      - name: check-transactions
         template: ingest-step
         arguments:
           parameters: [{name: script, value: check-transactions.sh}]
@@ -110,12 +109,17 @@ spec:
         template: ingest-step
         arguments:
           parameters: [{name: script, value: publish.sh}]
-        dependencies: [check]
+        dependencies: [check-transactions]
       - name: index-tables
         template: ingest-step
         arguments:
           parameters: [{name: script, value: index-tables.sh}]
         dependencies: [publish]
+      - name: validate
+        template: ingest-step
+        arguments:
+          parameters: [{name: script, value: validate.sh}]
+        dependencies: [index-tables]
       - name: cleanup
         arguments:
           parameters:

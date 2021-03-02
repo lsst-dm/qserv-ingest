@@ -7,4 +7,4 @@ DIR=$(cd "$(dirname "$0")"; pwd -P)
 . "$DIR"/env.sh
 
 # Publish database
-replctl-index -v "$data_url" "$REPL_URL"
+replctl-index -v "$DATA_URL" "$REPL_URL"

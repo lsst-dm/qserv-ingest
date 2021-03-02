@@ -21,7 +21,8 @@
 # see <http://www.lsstcorp.org/LegalNotices/>.
 
 """
-User-friendly client library for Qserv replication service.
+Manage a chunk files queue used to orchestrate Qserv replication service
+on the client side
 
 @author  Fabrice Jammes, IN2P3
 """
@@ -31,6 +32,7 @@ User-friendly client library for Qserv replication service.
 # -------------------------------
 import logging
 import socket
+import time
 
 # ----------------------------
 # Imports for other modules --
@@ -38,7 +40,9 @@ import socket
 import sqlalchemy
 from sqlalchemy import MetaData, Table
 from sqlalchemy.engine.url import make_url
-from sqlalchemy.sql import select, delete, func
+from sqlalchemy.pool import StaticPool
+from sqlalchemy.sql import asc, select, delete, func
+from .util import increase_wait_time
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -54,11 +58,11 @@ class QueueManager():
     def __init__(self, connection, chunk_meta):
 
         db_url = make_url(connection)
-        self.engine = sqlalchemy.create_engine(db_url)
+        self.engine = sqlalchemy.create_engine(db_url, poolclass=StaticPool, pool_pre_ping=True)
         self.pod = socket.gethostname()
 
         db_meta = MetaData(bind=self.engine)
-        self.task = Table('task', db_meta, autoload=True)
+        self.queue = Table('chunkfile_queue', db_meta, autoload=True)
         self.chunk_meta = chunk_meta
         self.ordered_tables_to_load = self.chunk_meta.get_tables_names()
         _LOG.debug("Ordered tables to load: %s", self.ordered_tables_to_load)
@@ -67,24 +71,20 @@ class QueueManager():
     def set_transaction_size(self, chunk_queue_fraction):
         """ Set number of chunk files managed by a single transaction
         """
-        chunk_files_count = self._count_chunk_files()
+        chunk_files_count = self._count_chunk_files_per_database()
         _LOG.debug("Chunk files queue size: %s", chunk_files_count)
-        tmp_chunk_per_transaction = int(chunk_files_count / chunk_queue_fraction)
-        if tmp_chunk_per_transaction != 0:
-            self._chunks_to_lock_number = tmp_chunk_per_transaction
-        else:
-            self._chunks_to_lock_number = 1
+        self._chunks_to_lock_number = int(chunk_files_count / chunk_queue_fraction) + 1
 
-    def _count_chunk_files(self, not_loaded = True):
-        """Count not chunk files
-           if loaded is True count chunk file which are not loaded
-           else count all chunks file
+    def _count_chunk_files_per_database(self):
+        """Count chunk files for current database
+           if loaded is 'True' count chunk files which are not loaded
+           else count all chunks files.
         """
-        query = select([func.count('*')]).select_from(self.task)
-        if not_loaded is True:
-            query = query.where(self.task.c.succeed.is_(None))
+        query = select([func.count('*')]).select_from(self.queue)
+        query = query.where(self.queue.c.database == self.chunk_meta.database)
         result = self.engine.execute(query)
         chunk_files_count = next(result)[0]
+        result.close()
         return chunk_files_count
 
     def next_current_table(self):
@@ -95,18 +95,21 @@ class QueueManager():
             self.current_table = None
 
     def _get_locked_chunkfiles(self):
-        query = select([self.task.c.database,
-                        self.task.c.chunk_id,
-                        self.task.c.chunk_file_path,
-                        self.task.c.is_overlap,
-                        self.task.c.table])
-        query = query.where(self.task.c.pod == self.pod).where(self.task.c.succeed.is_(None))
+        query = select([self.queue.c.database,
+                        self.queue.c.chunk_id,
+                        self.queue.c.chunk_file_path,
+                        self.queue.c.is_overlap,
+                        self.queue.c.table])
+        query = query.where(self.queue.c.locking_pod == self.pod)
+        query = query.where(self.queue.c.succeed.is_(None))
+        query = query.where(self.queue.c.database == self.chunk_meta.database)
         result = self.engine.execute(query)
         chunks = result.fetchall()
+        result.close()
         return chunks
 
     def load(self):
-        """If queue is empty load chunks files in queue
+        """If queue is empty for current database, then load chunks files in queue
            else do nothing
            Chunks description should be available at chunks_url
         Returns
@@ -114,7 +117,7 @@ class QueueManager():
         Nothing
         """
 
-        chunk_files_count = self._count_chunk_files(not_loaded=False)
+        chunk_files_count = self._count_chunk_files_per_database()
         if chunk_files_count != 0:
             _LOG.warn("Chunk queue not empty, skip chunk queue load")
             return
@@ -123,7 +126,7 @@ class QueueManager():
             for chunk_id in chunk_ids:
                 _LOG.debug("Add chunk (%s, %s, %s) to queue", chunk_id, table, is_overlap)
                 self.engine.execute(
-                    self.task.insert(),
+                    self.queue.insert(),
                     {"database": self.chunk_meta.database,
                      "chunk_id": chunk_id,
                      "chunk_file_path": path,
@@ -131,10 +134,9 @@ class QueueManager():
                      "table": table})
 
     def lock_chunkfiles(self):
-        """TODO/FIXME Document
-           If chunk files are already locked in queue for current pod, return them
-           if not, lock a batch of then and then return their representation,
-           or None if chunk file queue is empty
+        """If some chunk files are already locked in queue for current pod, return them
+           if not, lock a batch of them and then return their representation,
+           or None if all chunk files have been ingested
         Returns
         -------
         A list of chunk files representation where:
@@ -151,13 +153,23 @@ class QueueManager():
             _LOG.debug("Current table: %s", self.current_table)
             while not self._is_queue_empty() and chunks_locked_count < self._chunks_to_lock_number:
 
-                sql = "UPDATE task SET pod = '{}', start = NOW() "
-                sql += "WHERE pod IS NULL AND `table` = '{}' "
-                sql += "AND `database` = '{}' "
-                sql += "ORDER BY chunk_id ASC LIMIT {};"
-                query = sql.format(self.pod, self.current_table,
-                                   self.chunk_meta.database,
-                                   self._chunks_to_lock_number-chunks_locked_count)
+                # SqlAlchemy has only limited support for MariaDB SQL extension
+                # See https://docs.sqlalchemy.org/en/14/dialects/mysql.html?highlight=mysql_limit#mysql-mariadb-sql-extensions
+                # So code below might be the only remaining solution to use these extensions:
+                # sql = "UPDATE chunkfile_queue SET locking_pod = '{}' "
+                # sql += "WHERE locking_pod IS NULL AND `table` = '{}' "
+                # sql += "AND `database` = '{}' "
+                # sql += "ORDER BY chunk_id ASC LIMIT {};"
+                # query = sql.format(self.pod, self.current_table,
+                #                    self.chunk_meta.database,
+                #                    self._chunks_to_lock_number-chunks_locked_count)
+
+                chunk_to_lock = self._chunks_to_lock_number-chunks_locked_count
+                query = self.queue.update(mysql_limit=chunk_to_lock).values(locking_pod=self.pod)
+                query = query.where(self.queue.c.locking_pod.is_(None))
+                query = query.where(self.queue.c.database == self.chunk_meta.database)
+                query = query.where(self.queue.c.table == self.current_table)
+
                 _LOG.debug("Query: %s", query)
 
                 self.engine.execute(query)
@@ -175,34 +187,51 @@ class QueueManager():
                       chunks_locked)
         return chunks_locked
 
-    def unlock_chunks(self):
-        """Unlock chunks in queue when they have been ingested
-           and the super-transaction has been successfully closed
+    def release_locked_chunkfiles(self, ingest_success):
+        """ Mark chunks files as "succeed" in chunk queue if super-transaction has been successfully commited
+            Release chunks files in queue when the super-transaction has been aborted
+
+            WARN: this operation will be retried until it succeed so that chunk queue state is consistent with ingest state
         Returns
         -------
         Integer number, String
         """
-        # pod column is UNIQUE index
-        logging.debug("Unlock chunk in queue")
-        sql = "UPDATE task SET succeed = NOW() "
-        sql += "WHERE pod = '{}'"
-        query = sql.format(self.pod)
-        _LOG.debug("Query: %s", query)
+        if ingest_success:
+            query = self.queue.update().values(succeed=1)
+            logging.debug("Mark chunk files as 'succeed' in queue")
+            query = self.queue.update().values(succeed=1)
+        else:
+            logging.debug("Unlock chunk files in queue")
+            query = self.queue.update().values(locking_pod=None)
 
-        self.engine.execute(query)
+        query = query.where(self.queue.c.locking_pod == self.pod)
+        query = query.where(self.queue.c.succeed.is_(None))
+
+        wait_sec = 1
+        while True:
+            try:
+                _LOG.debug("Query: %s", query)
+                self.engine.execute(query)
+                break
+            except:
+                _LOG.critical("Retry failed query %s", query)
+                time.sleep(wait_sec)
+                # Sleep for longer and longer
+                wait_sec = increase_wait_time(wait_sec)
 
     def _is_queue_empty(self):
         return (self.current_table == None)
 
     def get_noningested_chunkfiles(self):
-        """Return all chunk files in queue not successfully loaded
+        """Return all chunk files in queue not successfully loaded for current database
         """
-        query = select([self.task.c.database,
-                        self.task.c.chunk_id,
-                        self.task.c.chunk_file_path,
-                        self.task.c.is_overlap,
-                        self.task.c.table])
-        query = query.where(self.task.c.succeed.is_(None))
+        query = select([self.queue.c.database,
+                        self.queue.c.chunk_id,
+                        self.queue.c.chunk_file_path,
+                        self.queue.c.is_overlap,
+                        self.queue.c.table])
+        query = query.where(self.queue.c.succeed.is_(None))
+        query = query.where(self.queue.c.database == self.chunk_meta.database)
         result = self.engine.execute(query)
         chunks = result.fetchall()
         return chunks
