@@ -8,4 +8,4 @@ INGEST_DEPS_IMAGE="qserv/ingest-deps:latest"
 INSTANCE="qserv"
 OVERLAY="base"
 
-REPL_CTL_PORT="25080"
+REPL_CTL_PORT="8080"
