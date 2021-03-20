@@ -40,6 +40,6 @@ fi
 
 replctl-ingest --check \
     --verbose \
-    "$data_url" \
+    "$DATA_URL" \
     "$QUEUE_URL" \
     "$REPL_URL"

@@ -1,0 +1,7 @@
+{
+    "http_servers":[
+        "http://dataserver",
+        "http://dataserver",
+        "http://dataserver"
+    ]
+}

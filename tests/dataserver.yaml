@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dataserver
+  labels:
+    app: dataserver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dataserver
+  template:
+    metadata:
+      labels:
+        app: dataserver
+    spec:
+      containers:
+      - name: nginx
+        image: qserv/dataserver:latest 
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dataserver 
+spec:
+  selector:
+    app: dataserver
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80

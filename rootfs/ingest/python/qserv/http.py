@@ -41,8 +41,6 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
-TMP_DIR = "/tmp"
-
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
@@ -106,13 +104,7 @@ class Http():
                 'Error in HTTP response (POST)', url,
                 r.status_code)
         responseJson = r.json()
-        if not responseJson["success"]:
-            _LOG.critical(responseJson["error"])
-            _LOG.critical(responseJson["error_ext"])
-            raise Exception(
-                'Error in JSON response (POST)', url,
-                responseJson["error"], responseJson["error_ext"])
-        _LOG.debug("POST: success")
+        _LOG.debug("POST %s: success", url)
         return responseJson
 
     def put(self, url, payload=None):

@@ -1,0 +1,14 @@
+bases:
+- ../../base/configmap
+
+configMapGenerator:
+- name: config-data-url
+  behavior: replace
+  files:
+  - servers.json
+  literals:
+  - DATA_URL=http://dataserver/DC2-errors
+generatorOptions:
+  labels:
+    kustomize.generated.resources: qserv.ingest
+  disableNameSuffixHash: true

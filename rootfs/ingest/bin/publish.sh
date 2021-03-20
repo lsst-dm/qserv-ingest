@@ -38,6 +38,6 @@ if [ $# -ne 0 ] ; then
 fi
 
 # Publish database
-replctl-publish -v "$data_url" \
+replctl-publish -v "$DATA_URL" \
     "$REPL_URL"
 
