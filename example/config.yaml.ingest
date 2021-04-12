@@ -1,0 +1,14 @@
+data:
+    # TODO Add section below
+    # webdav_servers:
+    servers:
+        - https://ccnetlsst01.in2p3.fr:65101
+        - https://ccnetlsst01.in2p3.fr:65101
+    path:
+        - cosmoDC2_v1.1.4_image/
+qserv:
+    query_url: "mysql://qsmaster:@qserv-czar:4040"
+    queue_url: "mysql://qsingest:@qserv-ingest-db-0.qserv-ingest-db/qservIngest"
+    # Override the default value stored in input metadata
+    # 1: build secondary index after each transaction, 0: build secondary index after ingest
+    auto_build_secondary_index: 0

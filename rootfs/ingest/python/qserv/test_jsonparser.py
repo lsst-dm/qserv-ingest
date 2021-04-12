@@ -43,20 +43,20 @@ import pytest
 # Local non-exported definitions --
 # ---------------------------------
 
-_DATABASE='cosmoDC2_v1_1_4_image_overlap'
+_DATABASE='cosmoDC2_v1_1_4_image'
 _FAMILY="layout_340_3"
 
 def test_parse_not_finished_transaction():
 
-    jsonstring=('{"databases": {"cosmoDC2_v1_1_4_image_overlap": {"num_chunks": 5, "transactions": ['
-        '{"begin_time": 1611956328241, "database": "cosmoDC2_v1_1_4_image_overlap", "end_time": 1611956328693, "id": 8, "state": "FINISHED"}, '
-        '{"begin_time": 1611956328068, "database": "cosmoDC2_v1_1_4_image_overlap", "end_time": 1611956330782, "id": 7, "state": "FINISHED"}, '
-        '{"begin_time": 1611956328039, "database": "cosmoDC2_v1_1_4_image_overlap", "end_time": 1611956328477, "id": 6, "state": "ABORTED"}, '
-        '{"begin_time": 1611956327716, "database": "cosmoDC2_v1_1_4_image_overlap", "end_time": 1611956328168, "id": 5, "state": "FINISHED"}, '
-        '{"begin_time": 1611956327578, "database": "cosmoDC2_v1_1_4_image_overlap", "end_time": 1611956327978, "id": 4, "state": "FINISHED"}, '
-        '{"begin_time": 1611956327057, "database": "cosmoDC2_v1_1_4_image_overlap", "end_time": 1611956327652, "id": 3, "state": "FINISHED"}, '
-        '{"begin_time": 1611956326857, "database": "cosmoDC2_v1_1_4_image_overlap", "end_time": 0, "id": 2, "state": "STARTED"}, '
-        '{"begin_time": 1611956326351, "database": "cosmoDC2_v1_1_4_image_overlap", "end_time": 1611956326806, "id": 1, "state": "ABORTED"}]}},'
+    jsonstring=('{"databases": {"cosmoDC2_v1_1_4_image": {"num_chunks": 5, "transactions": ['
+        '{"begin_time": 1611956328241, "database": "cosmoDC2_v1_1_4_image", "end_time": 1611956328693, "id": 8, "state": "FINISHED"}, '
+        '{"begin_time": 1611956328068, "database": "cosmoDC2_v1_1_4_image", "end_time": 1611956330782, "id": 7, "state": "FINISHED"}, '
+        '{"begin_time": 1611956328039, "database": "cosmoDC2_v1_1_4_image", "end_time": 1611956328477, "id": 6, "state": "ABORTED"}, '
+        '{"begin_time": 1611956327716, "database": "cosmoDC2_v1_1_4_image", "end_time": 1611956328168, "id": 5, "state": "FINISHED"}, '
+        '{"begin_time": 1611956327578, "database": "cosmoDC2_v1_1_4_image", "end_time": 1611956327978, "id": 4, "state": "FINISHED"}, '
+        '{"begin_time": 1611956327057, "database": "cosmoDC2_v1_1_4_image", "end_time": 1611956327652, "id": 3, "state": "FINISHED"}, '
+        '{"begin_time": 1611956326857, "database": "cosmoDC2_v1_1_4_image", "end_time": 0, "id": 2, "state": "STARTED"}, '
+        '{"begin_time": 1611956326351, "database": "cosmoDC2_v1_1_4_image", "end_time": 1611956326806, "id": 1, "state": "ABORTED"}]}},'
         '"error": "", "error_ext": {}, "success": 1}')
     jsondata = json.loads(jsonstring)
     transactions = jsonparser.filter_transactions(jsondata, _DATABASE, [jsonparser.TransactionState.FINISHED])

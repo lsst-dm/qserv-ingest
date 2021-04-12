@@ -142,6 +142,7 @@ class Ingester():
         else:
             tmp_url += "?abort=1"
         url = urllib.parse.urljoin(self.repl_url, tmp_url)
+        _LOG.debug("Attempt to close transaction (PUT %s)", url)
         responseJson = self.http.put(url)
         jsonparser.raise_error(responseJson)
 
@@ -322,7 +323,7 @@ def _ingest_chunk(ingest_args):
     kwargs = ingest_args.get_kwargs()
     chunk_file_url = kwargs['chunk_file_url']
     try:
-        logging.debug("Start ingesting chunk contribution: %s", chunk_file_url)
+        _LOG.debug("Start ingesting chunk contribution: %s", chunk_file_url)
         startedAt = time.strftime("%H:%M:%S", time.localtime())
 
         _ingest_file(**kwargs)
