@@ -7,7 +7,7 @@ configMapGenerator:
   files:
   - servers.json
   literals:
-  - DATA_URL="https://raw.githubusercontent.com/lsst-dm/qserv-ingest/master/tests/data/DC2/"
+  - DATA_URL="http://dataserver/DC2/"
 generatorOptions:
   labels:
     kustomize.generated.resources: qserv.ingest

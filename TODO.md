@@ -1,4 +1,15 @@
-- two-mode: 
+- In validate, SQLAlchemy has a weird bahavior:
+
+  Query: SELECT count(*) AS count_1
+  FROM dpdd_ref
+  Query total time: 0.069575
+  Query result: 0
+
+  Result with regular mysql client is 37??
+
+
+
+- two-mode:
   * crash on error, as before
   * continue at max: cancel ingest for chunks which produce some special error or have been ingested too much time without success.
 
