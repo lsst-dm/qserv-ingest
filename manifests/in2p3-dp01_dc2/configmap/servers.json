@@ -1,0 +1,8 @@
+{
+    "http_servers":[
+        "https://ccnetlsst01.in2p3.fr:65101",
+        "https://ccnetlsst02.in2p3.fr:65101",
+        "https://ccnetlsst03.in2p3.fr:65101",
+        "https://ccnetlsst04.in2p3.fr:65101"
+    ]
+}
