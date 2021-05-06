@@ -45,6 +45,7 @@ from urllib3.util import Retry
 # Local non-exported definitions --
 # ---------------------------------
 AUTH_PATH = "~/.lsst/qserv"
+DEFAULT_TIMEOUT=11
 _LOG = logging.getLogger(__name__)
 
 
@@ -57,6 +58,22 @@ def authorize():
         authKey = getpass.getpass()
     return authKey
 
+class TimeoutHTTPAdapter(HTTPAdapter):
+    """ Manage http connection time-out
+        See https://findwork.dev/blog/advanced-usage-python-requests-timeouts-retries-hooks/
+    """
+    def __init__(self, *args, **kwargs):
+        self.timeout = DEFAULT_TIMEOUT
+        if "timeout" in kwargs:
+            self.timeout = kwargs["timeout"]
+            del kwargs["timeout"]
+        super().__init__(*args, **kwargs)
+
+    def send(self, request, **kwargs):
+        timeout = kwargs.get("timeout")
+        if timeout is None:
+            kwargs["timeout"] = self.timeout
+        return super().send(request, **kwargs)
 
 class Http():
     """Manage http connections
@@ -70,10 +87,10 @@ class Http():
             backoff_factor=1,
             total=10,
             status_forcelist=[429, 500, 502, 503, 504],
-            method_whitelist=["HEAD", "GET", "PUT", "OPTIONS"]
+            method_whitelist=["HEAD", "GET", "PUT", "DELETE", "OPTIONS", "TRACE"]
         )
 
-        adapter = HTTPAdapter(max_retries=retry_strategy)
+        adapter = TimeoutHTTPAdapter(max_retries=retry_strategy)
         self.http = requests.Session()
         self.http.mount("https://", adapter)
         self.http.mount("http://", adapter)
