@@ -142,6 +142,7 @@ class Ingester():
         else:
             tmp_url += "?abort=1"
         url = urllib.parse.urljoin(self.repl_url, tmp_url)
+        _LOG.debug("Attempt to close transaction (url: %s)", url)
         responseJson = self.http.put(url)
         jsonparser.raise_error(responseJson)
 
