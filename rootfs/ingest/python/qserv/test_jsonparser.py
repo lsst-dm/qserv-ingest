@@ -43,7 +43,7 @@ import pytest
 # Local non-exported definitions --
 # ---------------------------------
 
-_DATABASE='cosmoDC2_v1_1_4_image_overlap'
+_DATABASE='cosmoDC2_v1_1_4_image'
 _FAMILY="layout_340_3"
 
 def test_parse_not_finished_transaction():

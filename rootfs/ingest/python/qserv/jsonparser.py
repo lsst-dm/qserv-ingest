@@ -77,7 +77,7 @@ def get_location(responseJson):
     return (host, port)
 
 def parse_database_status(responseJson, database, family):
-    jsonpath_expr = parse("$.config.families[?(name=\"{}\")].databases[?(name=\"{}\")].is_published".format(family, database))
+    jsonpath_expr = parse("$.config.databases[?(database=\"{}\")].is_published".format(database))
     result = jsonpath_expr.find(responseJson)
     if len(result) == 0:
         status = DatabaseStatus.NOT_REGISTERED
