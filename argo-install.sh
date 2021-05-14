@@ -2,7 +2,8 @@
 
 set -euxo pipefail
 
-kubectl apply -f https://raw.githubusercontent.com/argoproj/argo/stable/manifests/quick-start-postgres.yaml
+# kubectl apply -f https://raw.githubusercontent.com/argoproj/argo/stable/manifests/quick-start-postgres.yaml
+kubectl apply -f manifests/quick-start-postgres.yaml
 kubectl patch configmaps/workflow-controller-configmap -p '{"data":{"containerRuntimeExecutor":"k8sapi"}}'
 
 NS=$(kubectl config view --minify --output 'jsonpath={..namespace}')
