@@ -61,7 +61,8 @@ Get the project
 
 .. code:: sh
 
-    git clone https://github.com/lsst-dm/qserv-ingest
+    RELEASE="2021.05.02"
+    git clone --single-branch -b "$RELEASE" --depth 1 https://github.com/lsst-dm/qserv-ingest
     cd qserv-ingest
 
 Prepare configuration
