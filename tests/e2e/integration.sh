@@ -31,6 +31,7 @@ INSTANCE=$(kubectl get qservs.qserv.lsst.org -o=jsonpath='{.items[0].metadata.na
 
 echo "Run integration tests for Qserv"
 "$INGEST_DIR"/argo-install.sh
+"$INGEST_DIR"/argo-client-install.sh
 kubectl apply -f "$INGEST_DIR"/tests/dataserver.yaml
 POD=$(kubectl get pods -l app=dataserver -o jsonpath='{.items[0].metadata.name}')
 kubectl wait --for=condition=available --timeout=600s deployment dataserver
