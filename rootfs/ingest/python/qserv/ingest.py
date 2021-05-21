@@ -332,7 +332,7 @@ def _ingest_chunk(ingest_args):
         _LOG.critical('Error while ingesting chunk contribution: %s: %s',
                       chunk_file_url,
                       e)
-        raise(ValueError(e))
+        raise(e)
     return chunk_file_url, startedAt, endedAt
 
 
