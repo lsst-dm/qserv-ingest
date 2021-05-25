@@ -51,12 +51,7 @@ if __name__ == "__main__":
                         help="Use debug logging")
     args = parser.parse_args()
 
-    logger = logging.getLogger()
-    if args.verbose:
-        logger.setLevel(logging.DEBUG)
-    else:
-        logger.setLevel(logging.INFO)
-    logger.addHandler(logging.StreamHandler())
+    logger = util.get_default_logger(args.verbose)
 
     validator = validator.Validator(args.data_url, args.qserv_url, args.servers)
     validator.query()

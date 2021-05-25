@@ -36,6 +36,7 @@ import logging
 from multiprocessing.pool import ThreadPool
 import os
 import posixpath
+import random
 import time
 import urllib.parse
 
@@ -73,7 +74,7 @@ class IngestArgs():
         return self.__dict__
 
 class Ingester():
-    """Manage chunk ingestion tasks
+    """ Manage chunk ingestion tasks
     """
 
     def __init__(self, data_url, repl_url, queue_url=None, servers_file=None):
@@ -165,7 +166,7 @@ class Ingester():
         """
         url = urllib.parse.urljoin(self.repl_url, "/ingest/database/")
         payload = self.chunk_meta.json_db
-        _LOG.debug("Starting a database registration request: %s with %s", url, payload) 
+        _LOG.debug("Starting a database registration request: %s with %s", url, payload)
         responseJson = self.http.post(url, payload)
         jsonparser.raise_error(responseJson)
 

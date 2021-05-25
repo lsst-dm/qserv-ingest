@@ -61,12 +61,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    logger = logging.getLogger()
-    if args.verbose:
-        logger.setLevel(logging.DEBUG)
-    else:
-        logger.setLevel(logging.INFO)
-    logger.addHandler(logging.StreamHandler())
+    logger = util.get_default_logger(args.verbose)
 
     ingester = Ingester(args.data_url, args.repl_url)
 
