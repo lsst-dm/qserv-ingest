@@ -11,6 +11,20 @@ kubectl patch configmaps/workflow-controller-configmap -p '{"data":{"containerRu
 NS=$(kubectl config view --minify --output 'jsonpath={..namespace}')
 NS=$([ ! -z "$NS" ] && echo "$NS" || echo "default")
 
-kubectl create rolebinding --clusterrole=edit --serviceaccount="$NS":default argo
+cat <<EOF | kubectl apply -f -
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: argo
+  namespace: $NS
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: edit
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: $NS
+EOF
 
 kubectl wait --for=condition=available --timeout=600s deployment argo-server minio postgres workflow-controller

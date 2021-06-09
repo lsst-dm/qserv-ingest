@@ -13,10 +13,10 @@ RUN apk update \
 COPY rootfs/usr/local/share/ca-certificates /usr/local/share/ca-certificates
 RUN update-ca-certificates
 
-RUN pip3 install --upgrade pip==21.1.1
+RUN pip3 install --upgrade pip==21.1.2
 
 RUN pip3 install PyYAML==5.3.1 jsonpath-ng==1.5.2 \
-    requests==2.25.0 SQLAlchemy==1.3.20
+    requests==2.25.1 SQLAlchemy==1.3.20
 
 #USER qserv
 # FIXME use a secret below:

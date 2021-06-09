@@ -46,6 +46,20 @@ import requests
 # ---------------------------------
 _LOG = logging.getLogger(__name__)
 
+def get_default_logger(verbose):
+    """Check if a file exists on a remote HTTP server
+    """
+    logger = logging.getLogger()
+    if verbose:
+        logger.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
+    streamHandler = logging.StreamHandler()
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    streamHandler.setFormatter(formatter)
+    logger.addHandler(streamHandler)
+    return logger
+
 def http_file_exists(base_url, filename):
     """Check if a file exists on a remote HTTP server
     """
@@ -128,3 +142,4 @@ class FelisAction(argparse.Action):
 def increase_wait_time(wait_sec):
     if wait_sec < 10:
         wait_sec *= 2
+        
