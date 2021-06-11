@@ -13,7 +13,7 @@ https://confluence.lsstcorp.org/pages/viewpage.action?pageId=133333850
 
 ```
 RELEASE="2021.06.01-rc1"
-git tag "$RELEASE"
+git tag -a "$RELEASE" -m "Version $RELEASE"
 git push --tag
 ./build-image.sh
 ./push-image.sh
