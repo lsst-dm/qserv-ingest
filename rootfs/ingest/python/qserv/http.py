@@ -117,7 +117,7 @@ class Http():
             payload["auth_key"] = authKey
         try:
             r = requests.post(url, json=payload)
-        except requests.exceptions.RequestException as e:
+        except (requests.exceptions.RequestException, ConnectionResetError) as e:
             _LOG.critical("Error when sending POST request to url %s", url)
             e.args = (f"POST request to url {url} with payload {payload} failed", *e.args)
             raise e

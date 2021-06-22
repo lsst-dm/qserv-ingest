@@ -329,6 +329,7 @@ def _ingest_chunk(ingest_args):
 
         _ingest_file(**kwargs)
         endedAt = time.strftime("%H:%M:%S", time.localtime())
+        _LOG.debug("Finished ingesting chunk contribution: %s", chunk_file_url)
     except Exception as e:
         _LOG.critical('Error while ingesting chunk contribution: %s: %s',
                       chunk_file_url,
