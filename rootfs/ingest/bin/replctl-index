@@ -30,7 +30,6 @@ Index table columns using replication service to Qserv
 #  Imports of standard modules --
 # -------------------------------
 import argparse
-import logging
 
 # ----------------------------
 # Imports for other modules --
@@ -55,7 +54,5 @@ if __name__ == "__main__":
     logger = util.get_default_logger(args.verbose)
 
     ingester = ingest.Ingester(args.data_url, args.repl_url)
-    if args.secondary:
-        ingester.build_secondary_index()
-    else:
-        ingester.index_all_tables()
+    ingester.index(args.secondary)
+

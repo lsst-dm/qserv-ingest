@@ -1,0 +1,10 @@
+CONTEXT?:
+https://confluence.lsstcorp.org/pages/viewpage.action?pageId=133333850#UserguidefortheQservIngestsystem(APIversion3)-Transactioncontexts
+- which pod handle which transaction
+- 2nd index creation time vs succeed time: see https://lsstc.slack.com/archives/C996604NR/p1625568808221400
+
+- Add prom exporter:
+  - running thread, when are they started: see contrib
+  - thread error
+  - chunk queue state
+  - aborted transaction

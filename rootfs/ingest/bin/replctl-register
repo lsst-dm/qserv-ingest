@@ -30,7 +30,6 @@ Register database and table inside replication service
 #  Imports of standard modules --
 # -------------------------------
 import argparse
-import logging
 import sys
 
 # ----------------------------
@@ -62,11 +61,9 @@ if __name__ == "__main__":
     logger = util.get_default_logger(args.verbose)
 
     ingester = Ingester(args.data_url, args.repl_url)
-    db_status = ingester.get_db_status()
+    database_status = ingester.get_database_status()
 
-    if db_status == DatabaseStatus.NOT_REGISTERED:
-        ingester.database_register()
-        ingester.database_register_tables(args.felis)
-        ingester.database_config()
-    elif db_status == DatabaseStatus.PUBLISHED:
+    if database_status == DatabaseStatus.NOT_REGISTERED:
+        ingester.database_register_and_config(args.felis)
+    elif database_status == DatabaseStatus.PUBLISHED:
         sys.exit(1)

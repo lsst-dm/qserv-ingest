@@ -30,7 +30,6 @@ Publish database and tables from replication service to Qserv
 #  Imports of standard modules --
 # -------------------------------
 import argparse
-import logging
 
 # ----------------------------
 # Imports for other modules --
@@ -55,4 +54,5 @@ if __name__ == "__main__":
     logger = util.get_default_logger(args.verbose)
 
     ingester = Ingester(args.data_url, args.repl_url)
-    db_status = ingester.database_publish()
+    ingester.database_publish()
+

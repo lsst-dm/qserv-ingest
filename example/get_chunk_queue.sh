@@ -3,7 +3,7 @@
 
 set -euxo pipefail
 
-DATABASE='dp01_dc2_catalogs'
+DATABASE='skysim5000_v1_1_1_parquet'
 
 PASSWORD=CHANGEME
 echo "NOT STAGED"

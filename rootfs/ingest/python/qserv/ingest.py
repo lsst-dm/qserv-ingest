@@ -30,14 +30,17 @@ User-friendly client library for Qserv replication service.
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
-from enum import Enum
+from enum import Enum, auto
 from functools import lru_cache
+import json
 import logging
 from multiprocessing.pool import ThreadPool
 import os
 import posixpath
 import random
+import socket
 import time
+from typing import List
 import urllib.parse
 
 # ----------------------------
@@ -48,6 +51,7 @@ from . import jsonparser
 from .metadata import ChunkMetadata
 from .queue import QueueManager
 from .util import increase_wait_time, trailing_slash
+from .replicationclient import ReplicationClient
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -57,6 +61,13 @@ _LOG = logging.getLogger(__name__)
 
 # Max attempts to retry ingesting a file on replication service retriable error
 MAX_RETRY_ATTEMPTS = 3
+
+class TransactionAction(Enum):
+    ABORT_ALL = auto()
+    CLOSE = auto()
+    CLOSE_ALL = auto()
+    LIST_STARTED = auto()
+    START = auto()
 
 class IngestArgs():
     def __init__(self, host, port, transaction_id, chunk_file_url, chunk_id, table, is_overlap):
@@ -81,7 +92,7 @@ class Ingester():
         """ Retrieve chunk metadata and connection to concurrent queue manager
         """
 
-        self.repl_url = trailing_slash(repl_url)
+        self.repl_client = ReplicationClient(repl_url)
 
         self.http = Http()
 
@@ -89,23 +100,10 @@ class Ingester():
         if queue_url is not None:
             self.queue_manager = QueueManager(queue_url, self.chunk_meta)
 
-    def abort_transactions(self):
-        for transaction_id in self.get_transactions_started():
-            success = False
-            self._close_transaction(transaction_id, success)
-            _LOG.info("Abort transaction: %s", transaction_id)
-
-    def build_secondary_index(self):
-        url = urllib.parse.urljoin(self.repl_url, "ingest/index/secondary")
-        _LOG.info(f"Create secondary index")
-        payload = {"database": self.chunk_meta.database, "allow_for_published":1, "local":1, "rebuild":1}
-        r = self.http.post(url, payload)
-        jsonparser.raise_error(r)
-
     def check_supertransactions_success(self):
         """ Check all super-transactions have ran successfully
         """
-        trans = self.get_transactions_started()
+        trans = self.repl_client.get_transactions_started(self.chunk_meta.database)
         _LOG.debug(f"IDs of transactions in STARTED state: {trans}")
         if len(trans)>0:
             raise Exception(f"Database publication prevented by started transactions: {trans}")
@@ -115,7 +113,7 @@ class Ingester():
             raise Exception(f"Database publication forbidden: non-ingested chunk files: {len(chunks)}")
         _LOG.info("All chunk files in queue successfully ingested")
 
-    def _compute_args(self, chunks_locked, transaction_id):
+    def _compute_args(self, chunks_locked, transaction_id: int):
         args = []
         for i, chunk_file in enumerate(chunks_locked):
             (database, chunk_id, chunk_file_path, is_overlap, table) = chunk_file
@@ -126,79 +124,30 @@ class Ingester():
 
             base_url = self.queue_manager.chunk_meta.get_loadbalancer_url(i)
             chunk_file_url = self._get_chunk_file_url(base_url, chunk_file_path, chunk_id, chunk_file_format)
-            (host, port) = _get_chunk_location(self.repl_url,
-                                               chunk_id,
-                                               database,
-                                               transaction_id)
+            (host, port) = self.repl_client.get_chunk_location(chunk_id,
+                                                               database,
+                                                               transaction_id)
 
             ingest_args = IngestArgs(host, port, transaction_id, chunk_file_url, chunk_id, table, is_overlap)
             args.append(ingest_args)
         return args
 
-    def _close_transaction(self, transaction_id, success):
-        database = self.chunk_meta.database
-        tmp_url = posixpath.join("ingest/trans/", str(transaction_id))
-        if success is True:
-            tmp_url += "?abort=0"
-        else:
-            tmp_url += "?abort=1"
-        url = urllib.parse.urljoin(self.repl_url, tmp_url)
-        _LOG.debug("Attempt to close transaction (PUT %s)", url)
-        responseJson = self.http.put(url)
-        jsonparser.raise_error(responseJson)
-
-        for trans in responseJson['databases'][database]['transactions']:
-            _LOG.debug("Close transaction (id: %s state: %s)",
-                       trans['id'], trans['state'])
-
     def database_publish(self):
-        """Publish a database inside replication system
         """
-        path = "/ingest/database/{}".format(self.chunk_meta.database)
-        url = urllib.parse.urljoin(self.repl_url, path)
-        _LOG.debug("Publish database: %s", url)
-        responseJson = self.http.put(url)
-        jsonparser.raise_error(responseJson)
-
-    def database_register(self):
-        """Register a database inside replication system
-           using data_url/<database_name>.json as input data
+        Publish a Qserv database inside replication system
         """
-        url = urllib.parse.urljoin(self.repl_url, "/ingest/database/")
-        payload = self.chunk_meta.json_db
-        _LOG.debug("Starting a database registration request: %s with %s", url, payload)
-        responseJson = self.http.post(url, payload)
-        jsonparser.raise_error(responseJson)
+        database = self.chunk_meta.database
+        db_status = self.repl_client.database_publish(database)
 
-    def database_register_tables(self, felis=None):
-        """Register a database inside replication system
-           using data_url/<database_name>.json as input data
+    def database_register_and_config(self, felis=None):
         """
-        if felis:
-            _LOG.info("Loaded Felis schema for tables %s", felis.keys())
-
-        url = urllib.parse.urljoin(self.repl_url, "/ingest/table/")
-
-        for json_data in self.chunk_meta.get_tables_json():
-            if felis is not None and json_data["table"] in felis:
-                schema = felis[json_data["table"]]
-                json_data["schema"] = schema + json_data["schema"]
-            _LOG.debug("Starting a table registration request: %s with %s",
-                        url, json_data)
-            responseJson = self.http.post(url, json_data)
-            jsonparser.raise_error(responseJson)
-
-    def database_config(self):
-        """Configure a database inside replication system
+        Register a database, its tables and its configuration inside replication system
+        using data_url/<database_name>.json as input data
         """
-        url = urllib.parse.urljoin(self.repl_url, "/ingest/config/")
-        json = {"database": self.chunk_meta.database,
-                "CAINFO": "/etc/pki/tls/certs/ca-bundle.crt",
-                "SSL_VERIFYPEER": 1
-            }
-        _LOG.debug("Configure database inside replication system, url: %s, json: %s", url, json)
-        responseJson = self.http.put(url, json)
-        jsonparser.raise_error(responseJson)
+        self.repl_client.database_register(self.chunk_meta.json_db)
+        self.repl_client.database_register_tables(self.chunk_meta.get_tables_json(), felis)
+        self.repl_client.database_config(self.chunk_meta.database)
+
 
     def _get_chunk_file_url(self, base_url, chunk_file_path, chunk_id, file_format):
         chunk_filename = file_format.format(chunk_id)
@@ -207,50 +156,35 @@ class Ingester():
         _LOG.debug("Chunk file url %s", file_url)
         return file_url
 
-    def get_db_status(self):
-        url = urllib.parse.urljoin(self.repl_url, "replication/config")
-        responseJson = self.http.get(url)
-        jsonparser.raise_error(responseJson)
-        status = jsonparser.parse_database_status(responseJson, self.chunk_meta.database, self.chunk_meta.family)
-        _LOG.debug(f"Database {self.chunk_meta.family}:{self.chunk_meta.database} status: {status}")
-        return status
-
-    def _get_transactions(self, states):
+    def get_database_status(self):
         """
-        Return transactions
+        Return the status of a Qserv catalog database
         """
-        database = self.chunk_meta.database
-        url = urllib.parse.urljoin(self.repl_url,
-                                   "ingest/trans?database=" + database)
-        responseJson = self.http.get(url)
-        jsonparser.raise_error(responseJson)
-        transaction_ids = jsonparser.filter_transactions(responseJson, database, states)
-
-        return transaction_ids
-
-    def get_transactions_started(self):
-        states = [jsonparser.TransactionState.STARTED]
-        return self._get_transactions(states)
-
-    def get_transactions_not_finished(self):
-        states = [jsonparser.TransactionState.ABORTED, jsonparser.TransactionState.STARTED]
-        return self._get_transactions(states)
-
-    def index_all_tables(self):
-        url = urllib.parse.urljoin(self.repl_url, "replication/sql/index")
-        for json_idx in self.chunk_meta.get_json_indexes():
-            _LOG.info(f"Create index: {json_idx}")
-            responseJson = self.http.post(url, json_idx)
-            jsonparser.raise_error(responseJson)
+        return self.repl_client.get_database_status(self.chunk_meta.database, self.chunk_meta.family)
 
     def ingest(self, chunk_queue_fraction):
+        """
+        Ingest chunk files for a transaction
+        """
         self.queue_manager.set_transaction_size(chunk_queue_fraction)
         chunk_to_load = True
         while chunk_to_load:
             chunk_to_load = self._ingest_transaction()
 
+    def index(self, secondary=False):
+        """
+        Index Qserv shared tables or create secondary index
+        """
+        if secondary:
+            database = self.chunk_meta.database
+            self.repl_client.build_secondary_index(database)
+        else:
+            json_indexes = self.chunk_meta.get_json_indexes()
+            self.repl_client.index_all_tables(json_indexes)
+
     def _ingest_transaction(self):
-        """Get a chunk from a queue server,
+        """
+        Get a chunk from a queue server,
         then load it inside Qserv,
         during a super-transation
 
@@ -269,8 +203,8 @@ class Ingester():
         transaction_id = None
         chunk = None
         try:
-            transaction_id = self._start_transaction()
-            ingest_success = self._ingest_parallel_chunks(transaction_id, chunks_locked)
+            transaction_id = self.repl_client.start_transaction(self.chunk_meta.database)
+            ingest_success = self._ingest_parallel_contributions(transaction_id, chunks_locked)
         except Exception as e:
             _LOG.critical('Ingest failed during transaction: %s, %s', transaction_id, e)
             ingest_success = False
@@ -278,48 +212,42 @@ class Ingester():
             raise(e)
         finally:
             if transaction_id:
-                self._close_transaction(transaction_id,
-                                        ingest_success)
+                self.repl_client.close_transaction(self.chunk_meta.database,
+                                       transaction_id,
+                                       ingest_success)
                 self.queue_manager.release_locked_chunkfiles(ingest_success)
 
         return True
 
-    def _ingest_parallel_chunks(self, transaction_id, chunks_locked):
+    def _ingest_parallel_contributions(self, transaction_id: int, chunks_locked):
         args = self._compute_args(chunks_locked, transaction_id)
         with ThreadPool() as pool:
-            for chunk, startedAt, endedAt in pool.imap_unordered(_ingest_chunk, args):
+            for chunk, startedAt, endedAt in pool.imap_unordered(_ingest_contribution, args):
                 logging.debug('Chunk %s ingest started at %s ended at %s' % (chunk, startedAt, endedAt))
         return True
 
-    def _start_transaction(self):
+    def transaction_helper(self, action: TransactionAction, trans_id: List[int]=None):
+        """
+        High-level method which help in managing transaction(s)
+        """
         database = self.chunk_meta.database
-        url = urllib.parse.urljoin(self.repl_url, "ingest/trans")
-        payload = {"database": database}
-        responseJson = self.http.post(url, payload)
-        jsonparser.raise_error(responseJson)
+        if TransactionAction.ABORT_ALL:
+            self.repl_client.abort_transactions(database)
+        elif TransactionAction.START:
+            transaction_id = self.repl_client.start_transaction(database)
+            _LOG.info("Start transaction %s", transaction_id)
+        elif TransactionAction.CLOSE:
+            self.repl_client.close_transaction(database, trans_id, True)
+            _LOG.info("Commit transaction %s", trans_id)
+        elif TransactionAction.CLOSE_ALL:
+            transaction_ids = self.repl_client.get_transactions_started(database)
+            for i in transaction_ids:
+                self.repl_client.close_transaction(database, i, True)
+                _LOG.info("Commit transaction %s", i)
+        elif TransactionAction.LIST_STARTED:
+            self.repl_client.get_transactions_started(database)
 
-        # For catching the super transaction ID
-        # Want to print responseJson["databases"]["hsc_test_w_2020_14_00"]["transactions"]
-        current_db = responseJson["databases"][database]
-        transaction_id = current_db["transactions"][0]["id"]
-        _LOG.debug(f"transaction ID: {transaction_id}")
-        return transaction_id
-
-@lru_cache(maxsize=None)
-def _get_chunk_location(repl_url, chunk, database, transaction_id):
-    url = urllib.parse.urljoin(repl_url, "ingest/chunk")
-    payload = {"chunk": chunk,
-               "database": database,
-               "transaction_id": transaction_id}
-    responseJson = Http().post(url, payload)
-    jsonparser.raise_error(responseJson)
-
-    host, port = jsonparser.get_location(responseJson)
-    _LOG.info("Location for chunk %d: %s %d", chunk, host, port)
-
-    return (host, port)
-
-def _ingest_chunk(ingest_args):
+def _ingest_contribution(ingest_args):
 
     kwargs = ingest_args.get_kwargs()
     chunk_file_url = kwargs['chunk_file_url']
@@ -327,7 +255,7 @@ def _ingest_chunk(ingest_args):
         _LOG.debug("Start ingesting chunk contribution: %s", chunk_file_url)
         startedAt = time.strftime("%H:%M:%S", time.localtime())
 
-        _ingest_file(**kwargs)
+        ReplicationClient.ingest_file(**kwargs)
         endedAt = time.strftime("%H:%M:%S", time.localtime())
         _LOG.debug("Finished ingesting chunk contribution: %s", chunk_file_url)
     except Exception as e:
@@ -338,33 +266,4 @@ def _ingest_chunk(ingest_args):
     return chunk_file_url, startedAt, endedAt
 
 
-def _ingest_file(host, port, transaction_id, chunk_file_url, chunk_id, table, is_overlap):
-    # See https://confluence.lsstcorp.org/display/DM/Ingest%3A+11.1.+The+REST+services, section 1.1.7
 
-    worker_url = "http://{}:{}".format(host,port)
-    url = urllib.parse.urljoin(worker_url, "ingest/file")
-    _LOG.debug("_ingest_chunk: url: %s", url)
-    payload = {"transaction_id":transaction_id,
-                "table":table,
-                "column_separator":",",
-                "chunk":chunk_id,
-                "overlap":int(is_overlap),
-                "url":chunk_file_url}
-    _LOG.debug("_ingest_chunk: payload: %s", payload)
-    retry_attempts = 0
-    retry = True
-    responseJson = ""
-    wait_sec = 1
-    while retry:
-        _LOG.debug("_ingest_chunk: url %s, retry attempts: %s, payload: %s", url, retry_attempts, payload)
-        responseJson = Http().post(url, payload)
-        if retry_attempts < MAX_RETRY_ATTEMPTS:
-            check_retry = True
-        else:
-            check_retry = False
-        retry = jsonparser.raise_error(responseJson, check_retry)
-        if retry:
-            time.sleep(wait_sec)
-            wait_sec = increase_wait_time(wait_sec)
-            retry_attempts += 1
-    _LOG.debug("Ingest: responseJson: %s", responseJson)

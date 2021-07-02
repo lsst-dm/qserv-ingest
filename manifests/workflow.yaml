@@ -44,8 +44,6 @@ spec:
         kind: Job
         metadata:
           generateName: qserv-ingest-transactions-
-          labels:
-            cleanup: "true"
         spec:
           parallelism: {{workflow.parameters.supertransactions}}
           template:
@@ -78,15 +76,6 @@ spec:
                   configMap:
                     name: config-data-url
           backoffLimit: 0
-  - name: cleanup
-    inputs:
-      parameters:
-      - name: selector
-    resource:
-      action: delete
-      flags: [
-        "configmap", "--selector", "{{inputs.parameters.selector}}"
-      ]
   - name: main
     dag:
       tasks:
@@ -120,11 +109,4 @@ spec:
         template: ingest-step
         arguments:
           parameters: [{name: script, value: validate.sh}]
-        dependencies: [index-tables]
-      - name: cleanup
-        arguments:
-          parameters:
-          - name: selector
-            value: cleanup=true
-        template: cleanup
         dependencies: [index-tables]
