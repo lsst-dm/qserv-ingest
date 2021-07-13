@@ -30,13 +30,15 @@ INGEST_DIR="."
 INSTANCE=$(kubectl get qservs.qserv.lsst.org -o=jsonpath='{.items[0].metadata.name}')
 
 echo "Run integration tests for Qserv"
-"$INGEST_DIR"/argo-install.sh
-"$INGEST_DIR"/argo-client-install.sh
 kubectl apply -f "$INGEST_DIR"/tests/dataserver.yaml
 POD=$(kubectl get pods -l app=dataserver -o jsonpath='{.items[0].metadata.name}')
 kubectl wait --for=condition=available --timeout=600s deployment dataserver
 kubectl cp ""$INGEST_DIR"/tests/data" "$POD":/www
+
+# Use qserv-ingest development version
 cp "$INGEST_DIR"/env.example.sh "$INGEST_DIR"/env.sh
+sed -i "s/^INGEST_RELEASE=.*$/INGEST_RELEASE=''/" env.sh
+
 "$INGEST_DIR"/argo-submit.sh
 argo watch @latest
 PODS_ARGO_FAILED=$(kubectl get pods -l workflows.argoproj.io/completed=true -o jsonpath='{.items[*].metadata.name}' --field-selector=status.phase=Failed)

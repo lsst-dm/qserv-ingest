@@ -43,15 +43,16 @@ For additional informations, check official documentation for `setting the names
 
 - An HTTP(s) server providing access to input data and metadata. All pods inside `<QSERV_NAMESPACE>` must be able to access this HTTP server.
 
-- An instance of Argo Workflow running in `<QSERV_NAMESPACE>`. The example script `argo-install.sh` located at the top-level of the `https://github.com/lsst-dm/qserv-ingest` repository allows to install an evaluation version which is supported by the ingest process.
+- An instance of Argo Workflow running in `<QSERV_NAMESPACE>`, and the `argo` client.
+  The example script `prereq-install.sh` located at the top-level of the `https://github.com/lsst-dm/qserv-ingest` repository allows to install a version which is supported by the ingest process.
+  It will also install `helm`, a package manager for Kubernetes.
 
 .. code:: sh
 
-    $ kubectl get pod -l app=minio -l "app in (minio, argo-server, postgres)"
-    NAME                           READY   STATUS    RESTARTS   AGE
-    argo-server-5f677d9b46-mxr98   1/1     Running   21         7d2h
-    minio                          1/1     Running   8          7d2h
-    postgres-6b5c55f477-4wmqd      1/1     Running   8          7d2h
+    $ kubectl get pod -l app.kubernetes.io/part-of=argo-workflows
+    NAME                                                  READY   STATUS    RESTARTS   AGE
+    argo-workflows-server-9f9bd4cc4-wkm5z                 1/1     Running   0          1m
+    argo-workflows-workflow-controller-57779f5f96-2r9jf   1/1     Running   1          1m
 
 Prepare Qserv ingest
 ====================

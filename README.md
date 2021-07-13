@@ -12,7 +12,10 @@ https://confluence.lsstcorp.org/pages/viewpage.action?pageId=133333850
 ## How to publish a new release
 
 ```
-RELEASE="2021.06.01-rc1"
+RELEASE="2021.6.4-rc1"
+sed -i "s/^INGEST_RELEASE=.*$/INGEST_RELEASE='$RELEASE'/" env.example.sh
+git add env.example.sh
+git commit -m "Publish new release $RELEASE"
 git tag -a "$RELEASE" -m "Version $RELEASE"
 git push --tag
 ./build-image.sh

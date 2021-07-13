@@ -34,7 +34,6 @@ Loop on ingest task while ingest queue is not empty:
 #  Imports of standard modules --
 # -------------------------------
 import argparse
-import logging
 
 # ----------------------------
 # Imports for other modules --

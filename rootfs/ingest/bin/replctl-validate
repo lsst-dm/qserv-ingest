@@ -30,7 +30,6 @@ Index table columns using replication service to Qserv
 #  Imports of standard modules --
 # -------------------------------
 import argparse
-import logging
 
 # ----------------------------
 # Imports for other modules --

@@ -22,4 +22,4 @@ images:
   newName: foo/bar
 - name: INGEST_IMAGE
   newName: qserv/ingest
-  newTag: a59f841-dirty
+  newTag: 2021.6.4-rc1-5-gf679640-dirty
