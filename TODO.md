@@ -1,4 +1,11 @@
-- In validate, SQLAlchemy has a weird bahavior:
+## Argo/Config
+
+See if example/config.yaml can be set in argo CLI (i.e. in params.yaml):
+https://argoproj.github.io/argo-workflows/examples/#parameters
+argo submit arguments-parameters.yaml --parameter-file params.yaml
+
+
+## In validate, SQLAlchemy has a weird bahavior:
 
   Query: SELECT count(*) AS count_1
   FROM dpdd_ref
@@ -9,7 +16,7 @@
 
 
 
-- two-mode:
+## two-mode:
   * crash on error, as before
   * continue at max: cancel ingest for chunks which produce some special error or have been ingested too much time without success.
 

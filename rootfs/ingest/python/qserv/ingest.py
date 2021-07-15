@@ -85,20 +85,19 @@ class IngestArgs():
         return self.__dict__
 
 class Ingester():
-    """ Manage chunk ingestion tasks
+    """
+    Manage chunk ingestion tasks
     """
 
-    def __init__(self, data_url, repl_url, queue_url=None, servers_file=None):
-        """ Retrieve chunk metadata and connection to concurrent queue manager
+    def __init__(self, chunk_metadata: ChunkMetadata, replication_url: str, queue_manager: QueueManager=None):
         """
-
-        self.repl_client = ReplicationClient(repl_url)
-
+        Retrieve chunk metadata and connection to concurrent queue manager
+        """
+        self.chunk_meta = chunk_metadata
+        self.queue_manager = queue_manager
         self.http = Http()
+        self.repl_client = ReplicationClient(replication_url)
 
-        self.chunk_meta = ChunkMetadata(data_url, servers_file)
-        if queue_url is not None:
-            self.queue_manager = QueueManager(queue_url, self.chunk_meta)
 
     def check_supertransactions_success(self):
         """ Check all super-transactions have ran successfully

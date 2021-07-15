@@ -53,7 +53,7 @@ from .util import increase_wait_time, trailing_slash
 # ---------------------------------
 AUTH_PATH = "~/.lsst/qserv"
 _LOG = logging.getLogger(__name__)
-_VERSION = 3
+_VERSION = 4
 
 # Max attempts to retry ingesting a file on replication service retriable error
 MAX_RETRY_ATTEMPTS = 3
@@ -115,7 +115,7 @@ class ReplicationClient():
         responseJson = self.http.get(url)
         jsonparser.raise_error(responseJson)
         if responseJson['version'] != _VERSION:
-            raise ValueError("Invalid replication server version (is %s, expected %s)", responseJson['version'], _VERSION)
+            raise ValueError(f"Invalid replication server version (is {responseJson['version']}, expected {_VERSION})")
         _LOG.info("Replication service version: v%s", _VERSION)
 
     def database_config(self, database):

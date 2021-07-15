@@ -1,12 +1,12 @@
 #!/bin/sh
-# Validate ingest of a database inside Qserv 
+# Validate ingest of a database inside Qserv
 
 # @author  Fabrice Jammes, IN2P3
 
 set -euxo pipefail
 
 DIR=$(cd "$(dirname "$0")"; pwd -P)
-. "$DIR"/env.sh
+. $DIR/env.sh
 
 usage() {
   cat << EOD
@@ -34,13 +34,4 @@ if [ $# -ne 0 ] ; then
     usage
     exit 2
 fi
-
-servers_opt=''
-if [ -e /config-data-url/servers.json ]; then
-    servers_opt="-s /config-data-url/servers.json"
-fi
-
-replctl-validate --verbose \
-    "$DATA_URL" \
-    "$QSERV_URL" \
-    $servers_opt
+replctl-validate --verbose --config "$INGEST_CONFIG"

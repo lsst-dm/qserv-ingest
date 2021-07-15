@@ -27,7 +27,7 @@ jobs:
           cp env.example.sh env.sh
           # Set development version
           sed -i "s/^INGEST_RELEASE=.*$//" env.sh
-          ./build-image.sh
+          ./build.sh
           mkdir -p artifacts
           docker save "${{ env.IMAGE }}" > artifacts/image.tar
           echo "${{ env.IMAGE }}" > artifacts/image-tag

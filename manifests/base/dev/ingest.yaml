@@ -1,12 +1,14 @@
+# Configuration file for Qserv ingest client
+# Use TELEPRESENCE_ROOT to retrieve when using telepresence
 ingest:
     input:
         # TODO Add section below
         # webdav_servers:
         servers:
-            - https://ccnetlsst01.in2p3.fr:65101
-            - https://ccnetlsst01.in2p3.fr:65101
+            - http://dataserver
+            - http://dataserver
         path:
-            - cosmoDC2_v1.1.4_image/
+            - DC2-errors/
     qserv:
         # Override the default value stored in input metadata
         # 1: build secondary index after each transaction

@@ -4,7 +4,7 @@
 set -euxo pipefail
 
 DIR=$(cd "$(dirname "$0")"; pwd -P)
-. "$DIR"/env.sh
+. $DIR/env.sh
 
 # Publish database
-replctl-index -s -v "$DATA_URL" "$REPL_URL"
+replctl-index -s -v --config $INGEST_CONFIG

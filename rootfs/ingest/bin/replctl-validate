@@ -34,23 +34,19 @@ import argparse
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-import qserv.validator as validator
+from qserv.ingest import Ingester
+from qserv.metadata import ChunkMetadata
 import qserv.util as util
+from qserv.validator import Validator
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Validate ingest for a database")
-    parser.add_argument("data_url", type=str, help="Input data/metadata URL",
-                        action=util.BaseUrlAction)
-    parser.add_argument("qserv_url", type=str,
-                        help="Qserv query service URL",
-                        action=util.BaseUrlAction)
-    parser.add_argument("--servers", "-s", type=str, metavar="SERVERS_FILE",
-                        help="List of http servers providing input data, in json format")
-    parser.add_argument("--verbose", "-v", action="store_true",
-                        help="Use debug logging")
+    util.add_default_arguments(parser)
+
     args = parser.parse_args()
 
     logger = util.get_default_logger(args.verbose)
 
-    validator = validator.Validator(args.data_url, args.qserv_url, args.servers)
+    chunk_metadata = ChunkMetadata(args.config.path, args.config.servers)
+    validator = Validator(chunk_metadata, args.config.query_url)
     validator.query()

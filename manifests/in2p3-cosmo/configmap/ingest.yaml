@@ -1,0 +1,27 @@
+ingest:
+    input:
+        # Servers which provides input data
+        # TODO Add support for webdav protocol
+        # Use file:// as first element in list when using local data
+        servers:
+            - https://ccnetlsst01.in2p3.fr:65101
+            - https://ccnetlsst02.in2p3.fr:65101
+            - https://ccnetlsst03.in2p3.fr:65101
+            - https://ccnetlsst04.in2p3.fr:65101
+        # Path on server where input data is available
+        path: cosmoDC2_v1.1.4_image/
+    qserv:
+        # TODO add support for secondary index generation method
+        # Override the default value stored in input metadata
+        # 1: build secondary index after each transaction
+        # 0: build secondary index after ingest
+        auto_build_secondary_index: 0
+
+        # URL of Qserv services
+        # Proxy URL
+        query_url: "mysql://qsmaster:@qserv-czar:4040"
+        # Ingest database URL
+        queue_url: "mysql://qsingest:@qserv-ingest-db-0.qserv-ingest-db/qservIngest"
+        # Replication service URL
+        replication_url: http://qserv-repl-ctl-0.qserv-repl-ctl:8080
+

@@ -6,7 +6,7 @@
 set -euxo pipefail
 
 DIR=$(cd "$(dirname "$0")"; pwd -P)
-. "$DIR"/env.sh
+. $DIR/env.sh
 
 usage() {
   cat << EOD
@@ -17,7 +17,6 @@ Usage: `basename $0`
     -h          this message
 
   Check if all ingest super-transactions have ran successfully.
-  Use \$DATA_URL to access input chunk files.
 
 EOD
 }
@@ -36,10 +35,4 @@ if [ $# -ne 0 ] ; then
     exit 2
 fi
 
-# strip trailing slash
-
-replctl-ingest --check \
-    --verbose \
-    "$DATA_URL" \
-    "$QUEUE_URL" \
-    "$REPL_URL"
+replctl-ingest --check --verbose --config "$INGEST_CONFIG"

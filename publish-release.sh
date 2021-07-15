@@ -4,7 +4,7 @@
 
 # @author  Fabrice Jammes, IN2P3
 
-set -exuo pipefail
+set -euo pipefail
 
 releasetag=""
 
