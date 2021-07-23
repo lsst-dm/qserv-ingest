@@ -1,6 +1,6 @@
 # Set variable below to empty string in order to install
 # current development version
-INGEST_RELEASE='2021.6.4-rc1'
+INGEST_RELEASE='2021.7.1-rc1'
 
 # Select dataset to load
 # related directory must exists inside ./manifests/
