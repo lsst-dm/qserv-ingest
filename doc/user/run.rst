@@ -75,12 +75,13 @@ Prepare configuration
     cp env.example.sh env.sh
 
 #. In `env.sh`, set `OVERLAY` to `<CUSTOM_INGEST>`, and eventually `INSTANCE` to the name of current Qserv instance.
-#. In `manifests/<CUSTOM_INGEST>/configmap/kustomization.yaml`, set:
+#. In `manifests/<CUSTOM_INGEST>/configmap/ingest.yaml`, set:
 
-   #. `DATA_URL` to the **root URL of the HTTP server serving input data**
-   #. `REQUESTS_CA_BUNDLE` to the local path for the CA chain of this server, if needed.
-
-#. Edit `manifests/<CUSTOM_INGEST>/configmap/servers.json` by adding the list of HTTPS servers which provide the input data. The ingest process will load-balance the download of input files accross these web-servers.
+   #. `ingest/input/servers` to the list of http servers providing input dataset,  The ingest process will load-balance the download of input files accross these servers.
+   #. `ingest/input/path` to the **path to input data on the http server**
+   #. `ingest/qserv/query_url` to the URL which serve Qserv SQL queries
+   #. `ingest/qserv/queue_url` to the URL which serve input chunk contributions queue
+   #. `ingest/qserv/replication_url` to the URL which serve replication controller service
 
 Launch Qserv ingest
 ===================
