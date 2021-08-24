@@ -50,7 +50,7 @@ if __name__ == "__main__":
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--data",
                        help="Key-value pairs to pass configs with the request",
-                       metavar="KEY=VALUE", nargs="*", action=util.DataAction)
+                       metavar="KEY=VALUE", nargs="*", action=util.DictAction)
     group.add_argument("--json", type=str,
                        help="Json file with the request configs",
                        action=util.JsonAction)

@@ -6,7 +6,7 @@
 set -euxo pipefail
 
 DIR=$(cd "$(dirname "$0")"; pwd -P)
-. "$DIR"/env.sh
+. $DIR/env.sh
 
 chunk_queue_fraction=''
 
@@ -18,10 +18,9 @@ Usage: `basename $0` [options] chunk_queue_fraction
   Available options:
     -h          this message
 
-  Launch an ingest process, running sequentially super-transactions,
-  stop when no more chunk file remains in chunk queue,
-  ingest chunk_queue_size/chunk_queue_fraction chunk files per super-transaction
-  Use \$DATA_URL to access input data.
+  Launch an ingest process, which will ingest chunk contribution inside a super-transaction,
+  stop when no more chunk file remains in chunk queue or if a blocking error occurs
+  ingest 'chunk_queue_size/chunk_queue_fraction' chunk files per super-transaction
 
 EOD
 }
@@ -48,14 +47,6 @@ fi
 
 chunk_queue_fraction=$1
 
-servers_opt=''
-if [ -e /config-data-url/servers.json ]; then
-    servers_opt="-s /config-data-url/servers.json"
-fi
-
 replctl-ingest --verbose \
     --chunk-queue-fraction "$chunk_queue_fraction" \
-    "$DATA_URL" \
-    "$QUEUE_URL" \
-    "$REPL_URL" \
-    $servers_opt
+    --config "$INGEST_CONFIG"

@@ -1,11 +1,11 @@
 #!/bin/sh
 
-# Ask Qserv replication system to publish a Qserv database
+# Publish a Qserv database, using Qserv replication system
 
 set -euxo pipefail
 
 DIR=$(cd "$(dirname "$0")"; pwd -P)
-. "$DIR"/env.sh
+. $DIR/env.sh
 
 usage() {
   cat << EOD
@@ -14,11 +14,7 @@ Usage: `basename $0` [options]
   Available options:
     -h          this message
 
-  Launch an ingest process, running sequentially super-transactions,
-  stop when no more chunk file remains in chunk queue,
-  ingest chunk_queue_size/chunk_queue_fraction chunk files per super-transaction.
-  Use \$DATA_URL to access input data.
-
+  Publish a Qserv database, using Qserv replication system
 
 EOD
 }
@@ -38,6 +34,4 @@ if [ $# -ne 0 ] ; then
 fi
 
 # Publish database
-replctl-publish -v "$DATA_URL" \
-    "$REPL_URL"
-
+replctl-publish -v --config "$INGEST_CONFIG"

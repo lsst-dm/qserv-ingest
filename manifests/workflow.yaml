@@ -8,10 +8,12 @@ spec:
   - name: repl-creds
     secret:
       secretName: secret-repl-creds-qserv
+  - name: config
+    configMap:
+      name: config-ingest
   arguments:
     parameters:
     - name: image
-      value: qserv/ingest:df79e9f
       # supertransactions is the number of pods running concurrent super-transactions
     - name: supertransactions
       value: 10
@@ -23,21 +25,17 @@ spec:
     container:
       command:
         - "{{inputs.parameters.script}}"
-      env:
-      - name: DATA_URL
-        valueFrom:
-          configMapKeyRef:
-            name: config-data-url
-            key: DATA_URL
       image: "{{workflow.parameters.image}}"
-      imagePullPolicy: Always
+      imagePullPolicy: IfNotPresent
       volumeMounts:
         - name: repl-creds
           mountPath: /home/qserv/.lsst
+        - name: config
+          mountPath: /config
   - name: transactions
     resource:
       action: create
-      successCondition: status.succeeded = {{workflow.parameters.supertransactions}} 
+      successCondition: status.succeeded = {{workflow.parameters.supertransactions}}
       failureCondition: status.failed > 0
       manifest: |
         apiVersion: batch/v1
@@ -49,32 +47,26 @@ spec:
           template:
             spec:
               containers:
-              - name: ingest 
+              - name: ingest
                 command:
                 - ingest-chunks.sh
                 args:
                 - "{{workflow.parameters.supertransactions}}"
-                env:
-                - name: DATA_URL
-                  valueFrom:
-                    configMapKeyRef:
-                      name: config-data-url
-                      key: DATA_URL
                 image: {{workflow.parameters.image}}
-                imagePullPolicy: Always
+                imagePullPolicy: IfNotPresent
                 volumeMounts:
                   - name: repl-creds
                     mountPath: /home/qserv/.lsst
-                  - name: config-data-url
-                    mountPath: /config-data-url
+                  - name: config
+                    mountPath: /config
               restartPolicy: Never
               volumes:
                 - name: repl-creds
                   secret:
                     secretName: secret-repl-creds-qserv
-                - name: config-data-url
+                - name: config
                   configMap:
-                    name: config-data-url
+                    name: config-ingest
           backoffLimit: 0
   - name: main
     dag:

@@ -31,6 +31,7 @@ Load ingest queue with list of chunks to load
 # -------------------------------
 import argparse
 import logging
+import yaml
 
 # ----------------------------
 # Imports for other modules --
@@ -40,23 +41,13 @@ from qserv.queue import QueueManager
 import qserv.util as util
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Python wrapper"
-                                     " around Qserv replication "
-                                     "REST web service")
+    parser = argparse.ArgumentParser(description="Load Qserv ingest database with input chunk files (i.e. contributions)")
 
-    parser.add_argument("data_url", type=str,
-                        help="Input data repository root url",
-                        action=util.BaseUrlAction)
-    parser.add_argument("--verbose", "-v", action="store_true",
-                        help="Use debug logging")
-    parser.add_argument("connection", type=str, metavar="CONNECTION",
-                        help="Connection string in format "
-                        "mysql://user:pass@host:port/database.")
+    util.add_default_arguments(parser)
 
     args = parser.parse_args()
 
     logger = util.get_default_logger(args.verbose)
-
-    chunk_meta = ChunkMetadata(args.data_url)
-    queue_manager = QueueManager(args.connection, chunk_meta)
+    chunk_meta = ChunkMetadata(args.config.path, args.config.servers)
+    queue_manager = QueueManager(args.config.queue_url, chunk_meta)
     queue_manager.load()

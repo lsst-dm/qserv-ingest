@@ -30,6 +30,7 @@ Tools used by ingest algorithm
 #  Imports of standard modules --
 # -------------------------------
 import argparse
+import io
 import json
 import logging
 import os
@@ -46,8 +47,17 @@ import requests
 # ---------------------------------
 _LOG = logging.getLogger(__name__)
 
+def add_default_arguments(parser: argparse.ArgumentParser):
+    parser.add_argument('--config', help="Configuration file for ingest client",
+                        type=argparse.FileType('r'),
+                        action=IngestConfigAction,
+                        metavar="FILE")
+    parser.add_argument("--verbose", "-v", action="store_true",
+                        help="Use debug logging")
+
 def get_default_logger(verbose):
-    """Check if a file exists on a remote HTTP server
+    """
+    Create and returns default logger
     """
     logger = logging.getLogger()
     if verbose:
@@ -71,7 +81,7 @@ def http_file_exists(base_url, filename):
 def json_get(base_url, filename):
     """Load json file at a given URL
     """
-    str_url = urllib.parse.urljoin(base_url, filename)
+    str_url = urllib.parse.urljoin(trailing_slash(base_url), filename)
     url = urllib.parse.urlsplit(str_url, scheme="file")
     if url.scheme in ["http", "https"]:
         r = requests.get(str_url)
@@ -88,18 +98,42 @@ def trailing_slash(url):
         url += '/'
     return url
 
+class IngestConfig:
+    """
+    Configuration parameter for ingest client
+    """
+    def __init__(self, yaml: str):
+        self.servers = yaml['ingest']['input']['servers']
+        self.path = yaml['ingest']['input']['path']
+        self.data_url = yaml['ingest']['qserv']['queue_url']
+        self.query_url = yaml['ingest']['qserv']['query_url']
+        self.queue_url = yaml['ingest']['qserv']['queue_url']
+        self.replication_url = yaml['ingest']['qserv']['replication_url']
+
+class IngestConfigAction(argparse.Action):
+    """
+    Argparse action to read an ingest client configuration file
+    """
+    def __call__(self, parser, namespace, values: io.TextIOWrapper, option_string):
+        try:
+            yaml_data = yaml.safe_load(values)
+            config = IngestConfig(yaml_data)
+        finally:
+            values.close()
+        setattr(namespace, self.dest, config)
 
 class BaseUrlAction(argparse.Action):
-    """Add trailing slash to url
+    """
+    Add trailing slash to url
     """
     def __call__(self, parser, namespace, values, option_string):
         x = trailing_slash(values)
         setattr(namespace, self.dest, x)
 
-
-class DataAction(argparse.Action):
-    """argparse action to attempt casting the values to floats and put into a dict"""
-
+class DictAction(argparse.Action):
+    """
+    Argparse action to attempt casting the values to floats and put into a dict
+    """
     def __call__(self, parser, namespace, values, option_string):
         d = dict()
         for item in values:
@@ -121,8 +155,9 @@ class JsonAction(argparse.Action):
 
 
 class FelisAction(argparse.Action):
-    """argparse action to read a felis file into namespace"""
-
+    """
+    Argparse action to read a felis file into namespace
+    """
     def __call__(self, parser, namespace, values, option_string):
         with open(values, "r") as f:
             tables = yaml.safe_load(f)["tables"]
@@ -142,4 +177,5 @@ class FelisAction(argparse.Action):
 def increase_wait_time(wait_sec):
     if wait_sec < 10:
         wait_sec *= 2
-        
+    return wait_sec
+

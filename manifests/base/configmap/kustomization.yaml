@@ -3,11 +3,9 @@ commonLabels:
   app: qserv
 
 configMapGenerator:
-- name: config-data-url
+- name: config-ingest
   files:
-  - servers.json
-  literals:
-  - DATA_URL="http://dataserver/DC2/"
+  - ingest.yaml
 generatorOptions:
   labels:
     kustomize.generated.resources: qserv.ingest

@@ -37,6 +37,7 @@ import time
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
+from .metadata import ChunkMetadata
 import sqlalchemy
 from sqlalchemy import MetaData, Table
 from sqlalchemy.engine.url import make_url
@@ -52,10 +53,11 @@ _LOG = logging.getLogger(__name__)
 
 
 class QueueManager():
-    """Class implementing chunk queue manager for Qserv ingest process
+    """
+    Class implementing chunk queue manager for Qserv ingest process
     """
 
-    def __init__(self, connection, chunk_meta):
+    def __init__(self, connection, chunk_metadata: ChunkMetadata):
 
         db_url = make_url(connection)
         self.engine = sqlalchemy.create_engine(db_url, poolclass=StaticPool, pool_pre_ping=True)
@@ -63,20 +65,22 @@ class QueueManager():
 
         db_meta = MetaData(bind=self.engine)
         self.queue = Table('chunkfile_queue', db_meta, autoload=True)
-        self.chunk_meta = chunk_meta
+        self.chunk_meta = chunk_metadata
         self.ordered_tables_to_load = self.chunk_meta.get_tables_names()
         _LOG.debug("Ordered tables to load: %s", self.ordered_tables_to_load)
         self.next_current_table()
 
     def set_transaction_size(self, chunk_queue_fraction):
-        """ Set number of chunk files managed by a single transaction
+        """
+        Set number of chunk files managed by a single transaction
         """
         chunk_files_count = self._count_chunk_files_per_database()
         _LOG.debug("Chunk files queue size: %s", chunk_files_count)
         self._chunks_to_lock_number = int(chunk_files_count / chunk_queue_fraction) + 1
 
     def _count_chunk_files_per_database(self):
-        """Count chunk files for current database
+        """
+        Count chunk files for current database
            if loaded is 'True' count chunk files which are not loaded
            else count all chunks files.
         """

@@ -2,12 +2,10 @@ bases:
 - ../../base/configmap
 
 configMapGenerator:
-- name: config-data-url
+- name: config-ingest
   behavior: replace
   files:
-  - servers.json
-  literals:
-  - DATA_URL=https://ccnetlsst01.in2p3.fr:65101/cosmoDC2_v1.1.4_image/
+  - ingest.yaml
 generatorOptions:
   labels:
     kustomize.generated.resources: qserv.ingest

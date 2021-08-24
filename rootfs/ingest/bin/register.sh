@@ -4,7 +4,7 @@
 set -euxo pipefail
 
 DIR=$(cd "$(dirname "$0")"; pwd -P)
-. "$DIR"/env.sh
+. $DIR/env.sh
 
 # Register database and tables
-replctl-register -v "$REPL_URL" "$DATA_URL"
+replctl-register -v --config "$INGEST_CONFIG"

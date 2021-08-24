@@ -1,5 +1,4 @@
-GIT_HASH="$(git describe --dirty --always)"
-TAG=${OP_VERSION:-${GIT_HASH}}
+TAG="$(git describe --dirty --always)"
 
 BASE_IMAGE="nginx:1.19.6-alpine"
 # Image version created by build procedure

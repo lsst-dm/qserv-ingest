@@ -72,8 +72,8 @@ class Validator():
        - lauch SQL query against currently ingested database
     """
 
-    def __init__(self, data_url, qserv_url, servers_file):
-        self.chunk_meta = ChunkMetadata(data_url, servers_file)
+    def __init__(self, chunk_metadata: ChunkMetadata,  qserv_url: str):
+        self.chunk_meta = chunk_metadata
 
         qserv_url = trailing_slash(qserv_url)
 
