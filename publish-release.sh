@@ -47,5 +47,5 @@ git add .
 git commit -m "Publish new release $releasetag"
 git tag -a "$releasetag" -m "Version $releasetag"
 git push --tag
-$DIR/build-image.sh
+$DIR/build.sh
 $DIR/push-image.sh
