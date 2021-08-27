@@ -43,9 +43,9 @@ fi
 releasetag=$1
 
 sed -i "s/^INGEST_RELEASE=.*$/INGEST_RELEASE='$releasetag'/" $DIR/env.example.sh
-git add . 
+git add .
 git commit -m "Publish new release $releasetag"
 git tag -a "$releasetag" -m "Version $releasetag"
-git push --tag
+git push --follow-tags
 $DIR/build.sh
 $DIR/push-image.sh
