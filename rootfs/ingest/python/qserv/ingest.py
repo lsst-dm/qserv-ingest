@@ -172,7 +172,8 @@ class Ingester():
 
     def index(self, secondary=False):
         """
-        Index Qserv shared tables or create secondary index
+        Index Qserv MySQL sharded tables
+        or create secondary index
         """
         if secondary:
             database = self.chunk_meta.database

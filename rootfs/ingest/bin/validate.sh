@@ -34,4 +34,4 @@ if [ $# -ne 0 ] ; then
     usage
     exit 2
 fi
-replctl-validate --verbose --config "$INGEST_CONFIG"
+replctl --verbose --config "$INGEST_CONFIG" validate

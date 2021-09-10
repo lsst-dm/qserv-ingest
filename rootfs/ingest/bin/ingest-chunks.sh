@@ -47,6 +47,6 @@ fi
 
 chunk_queue_fraction=$1
 
-replctl-ingest --verbose \
-    --chunk-queue-fraction "$chunk_queue_fraction" \
-    --config "$INGEST_CONFIG"
+replctl --verbose --config "$INGEST_CONFIG" \
+    ingest --chunk-queue-fraction "$chunk_queue_fraction"
+

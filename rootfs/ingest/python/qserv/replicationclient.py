@@ -39,6 +39,7 @@ import posixpath
 import random
 import socket
 import time
+from typing import Any
 import urllib.parse
 
 # ----------------------------
@@ -53,7 +54,7 @@ from .util import increase_wait_time, trailing_slash
 # ---------------------------------
 AUTH_PATH = "~/.lsst/qserv"
 _LOG = logging.getLogger(__name__)
-_VERSION = 4
+_VERSION = 7
 
 # Max attempts to retry ingesting a file on replication service retriable error
 MAX_RETRY_ATTEMPTS = 3
@@ -73,6 +74,8 @@ class ReplicationClient():
         self.http = Http()
 
         self._check_version()
+
+        self.index_url = urllib.parse.urljoin(self.repl_url, "replication/sql/index")
 
     def abort_transactions(self, database):
         """
@@ -179,6 +182,20 @@ class ReplicationClient():
         _LOG.debug(f"Database {family}:{database} status: {status}")
         return status
 
+    def get_current_indexes(self, database, tables: list):
+        url = urllib.parse.urljoin(self.repl_url, "replication/sql/index")
+        for t in tables:
+            params={'database': database,
+                    'overlap': 1,
+                    'table': t}
+            responseJson = self.http.get(self.index_url, params)
+            jsonparser.raise_error(responseJson)
+            indexes = dict()
+            jsonparser.get_indexes(responseJson, indexes)
+        _LOG.info("Indexes %s", indexes)
+        jsonparser.raise_error(responseJson)
+        return indexes
+
     def _get_transactions(self, states, database):
         """
         Return transactions
@@ -199,12 +216,12 @@ class ReplicationClient():
         states = [jsonparser.TransactionState.ABORTED, jsonparser.TransactionState.STARTED]
         return self._get_transactions(states, database)
 
-    def index_all_tables(self, json_indexes):
-        url = urllib.parse.urljoin(self.repl_url, "replication/sql/index")
+    def index_all_tables(self, json_indexes: Any):
         for json_idx in json_indexes:
             _LOG.info(f"Create index: {json_idx}")
-            responseJson = self.http.post(url, json_idx)
+            responseJson = self.http.post(self.index_url, json_idx)
             jsonparser.raise_error(responseJson)
+
 
     @staticmethod
     def ingest_file(host, port, transaction_id, chunk_file_url, chunk_id, table, is_overlap):

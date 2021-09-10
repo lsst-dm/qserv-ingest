@@ -1,3 +1,8 @@
+## Validate ticket/DM-29567 on kind/CI
+
+- put sql+result on github release
+- Improve error management for job see https://stackoverflow.com/questions/69266116/do-not-delete-pods-even-if-job-fails and argoWorkflow 'withItems' parameter
+
 ## Argo/Config
 
 See if example/config.yaml can be set in argo CLI (i.e. in params.yaml):

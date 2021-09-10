@@ -36,15 +36,23 @@ import sys
 # Imports for other modules --
 # ----------------------------
 from . import jsonparser
-from . import util
+from . import http
+import os
 import pytest
 
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
 
+_CWD = os.path.dirname(os.path.abspath(__file__))
 _DATABASE='cosmoDC2_v1_1_4_image'
 _FAMILY="layout_340_3"
+
+def test_get_indexes():
+
+    responseJson = http.json_get(_CWD,"indexes.json")
+    indexes = jsonparser.get_indexes(responseJson)
+    print(indexes)
 
 def test_parse_not_finished_transaction():
 
@@ -69,6 +77,8 @@ def test_parse_not_finished_transaction():
     assert (len(transactions) == 2)
 
 def test_parse_database_status():
-    responseJson = util.json_get(__file__,"replicationconfig.json")
+    responseJson = http.json_get(_CWD,"replicationconfig.json")
     status = jsonparser.parse_database_status(responseJson, _DATABASE, _FAMILY)
     assert(status == jsonparser.DatabaseStatus.REGISTERED_NOT_PUBLISHED)
+
+

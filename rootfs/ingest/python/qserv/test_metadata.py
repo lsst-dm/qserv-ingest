@@ -35,6 +35,7 @@ import sys
 # Imports for other modules --
 # ----------------------------
 from . import metadata
+import os
 import pytest
 import urllib.parse
 
@@ -42,12 +43,13 @@ import urllib.parse
 # Local non-exported definitions --
 # ---------------------------------
 
+_CWD = os.path.dirname(os.path.abspath(__file__))
+
 def test_get_loadbalancer_url():
     """Check if a file exists on a remote HTTP server
     """
     data_url = "https://raw.githubusercontent.com/lsst-dm/qserv-ingest/master/data/cosmoDC2_v1_1_4_image_testintegration/"
-    server_json = urllib.parse.urljoin(__file__, "servers.json")
+    server_json = urllib.parse.urljoin(_CWD, "servers.json")
     chunk_meta = metadata.ChunkMetadata(data_url, server_json)
     url = chunk_meta.get_loadbalancer_url(1)
     assert (url == "https://server2/lsst-dm/qserv-ingest/master/data/cosmoDC2_v1_1_4_image_testintegration/")
-    

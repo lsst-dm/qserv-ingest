@@ -18,4 +18,4 @@ kind: Kustomization
 images:
 - name: INGEST_IMAGE
   newName: qserv/ingest
-  newTag: 2021.8.1-rc1-7-gfcc07fa-dirty
+  newTag: 2021.10.1-rc1-8-g0e69473

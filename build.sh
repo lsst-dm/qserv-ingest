@@ -9,4 +9,5 @@ set -euxo pipefail
 DIR=$(cd "$(dirname "$0")"; pwd -P)
 . ./env.build.sh
 
+# Build ingest image
 docker image build --build-arg BASE_IMAGE="$BASE_IMAGE" --tag "$INGEST_IMAGE" "$DIR"

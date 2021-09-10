@@ -37,7 +37,7 @@ import urllib.parse
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-from .util import http_file_exists, json_get, trailing_slash
+from .http import json_get
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -50,10 +50,8 @@ _FILE_TYPES = [_CHUNK, _OVERLAP]
 
 _LOG = logging.getLogger(__name__)
 
-
 def _get_name(table):
     return table['json']['table']
-
 
 class ChunkMetadata():
     """Manage metadata related to data to ingest (database, tables and chunk files)
@@ -79,14 +77,22 @@ class ChunkMetadata():
         self.json_db = json_get(self.data_url, filename)
         self.database = self.json_db['database']
         self.family = "layout_{}_{}".format(self.json_db['num_stripes'], self.json_db['num_sub_stripes'])
-        self.init_tables()
+        self._init_tables()
 
     def get_chunk_files_info(self):
-        # TODO add iterator over all chunks?
+        """
+        Retrieve information about input chunk files (CSV formatted)
+        in order to insert them inside the chunk contribution queue
+
+        Returns a list of informations which will allow to retrieve these file
+        each entry of the list is a tuple: (<path>, [chunk_ids], <is_overlap>, <table>)
+        where [chunk_ids] is the list of the chunks (XOR overlap) files available at a given path for a given table
+        """
         files_info = []
         for table in self.tables:
             for d in table['data']:
                 path = d['directory']
+                # TODO simplify algorithm: only director table can have (extra) overlaps
                 if self._has_extra_overlaps:
                     for ftype in _FILE_TYPES:
                         if d.get(ftype):
@@ -97,6 +103,12 @@ class ChunkMetadata():
                     if _is_director(table):
                         files_info.append((path, d[_CHUNK], True, _get_name(table)))
         return files_info
+
+    def get_file_url(self, path: str) -> str:
+        """
+        Return the url of a file located on the input data server
+        """
+        return urllib.parse.urljoin(self.data_url, path)
 
     def get_loadbalancer_url(self, i):
         http_servers_count = len(self.http_servers)
@@ -127,7 +139,7 @@ class ChunkMetadata():
             jsons.append(json_data)
         return jsons
 
-    def init_tables(self):
+    def _init_tables(self):
         self.tables = []
         self._has_extra_overlaps = False
         for t in self.metadata['tables']:
@@ -153,4 +165,4 @@ class ChunkMetadata():
                 self.tables.append(table)
 
 def _is_director(table):
-    return bool(table['json']['is_director'])
+    return('is_director' in table['json'] and len(table['json']['is_director'])==0)

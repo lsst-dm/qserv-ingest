@@ -35,4 +35,4 @@ if [ $# -ne 0 ] ; then
     exit 2
 fi
 
-replctl-ingest --check --verbose --config "$INGEST_CONFIG"
+replctl --verbose --config "$INGEST_CONFIG" ingest --check

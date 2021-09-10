@@ -21,9 +21,8 @@
 # see <http://www.lsstcorp.org/LegalNotices/>.
 
 """
-User-friendly client for Qserv replication service.
+Index table columns using replication service to Qserv
 
-@author  Hsin Fang Chiang, Rubin Observatory
 @author  Fabrice Jammes, IN2P3
 """
 
@@ -31,41 +30,109 @@ User-friendly client for Qserv replication service.
 #  Imports of standard modules --
 # -------------------------------
 import argparse
-import logging
+from enum import Enum, auto
+import sys
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-import qserv.ingest as ingest
-from qserv.http import Http
+from qserv.ingest import Ingester
+from qserv.jsonparser import DatabaseStatus
+from qserv.metadata import ChunkMetadata
+from qserv.queue import QueueManager
 import qserv.util as util
+from qserv.validator import Validator
+
+class Task(str, Enum):
+    REGISTER = "register"
+    QUEUE = "queue"
+    INGEST = "ingest"
+    PUBLISH = "publish"
+    INDEX = "index"
+    VALIDATE = "validate"
+    BENCHMARK = "benchmark"
+
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Python wrapper for Replication REST service")
+    parser = argparse.ArgumentParser(description="Create Qserv indexes (tables or secondary) "
+                                     "using Qserv replication service")
+    util.add_default_arguments(parser)
+    subparsers = parser.add_subparsers(dest='task')
 
-    parser.add_argument("url", type=str, help="Web Service URL",
-                        action=util.BaseUrlAction)
-    parser.add_argument("method", type=str, help="Request type",
-                        choices=["post", "put", "delete"])
-    group = parser.add_mutually_exclusive_group()
-    group.add_argument("--data",
-                       help="Key-value pairs to pass configs with the request",
-                       metavar="KEY=VALUE", nargs="*", action=util.DictAction)
-    group.add_argument("--json", type=str,
-                       help="Json file with the request configs",
-                       action=util.JsonAction)
-    parser.add_argument("--verbose", "-v", action="store_true",
-                        help="Use debug logging")
+    # QUEUE step management
+    parser_queue = subparsers.add_parser(Task.QUEUE, help="Load Qserv ingest database with input chunk files (i.e. contributions)")
+
+    # REGISTER step management
+    parser_register = subparsers.add_parser(Task.REGISTER, help="Initialize database and "
+                                     "table inside Qserv replication service")
+    parser_register.add_argument("--felis", type=str,
+                            help=" A Felis schema file containing the table schema",
+                            action=util.FelisAction)
+
+    # INGEST step management
+    parser_ingest = subparsers.add_parser(Task.INGEST, help="Launch Qserv replication service super-transactions "
+                                     "driving chunk files ingest")
+    parser_ingest.add_argument("--check", "-c", action='store_true',
+                        help="Check if chunk file ingest has been performed successfully")
+    parser_ingest.add_argument("--chunk-queue-fraction", "-f", type=int, metavar="FRACTION",
+                        help="Fraction of chunk queue loaded per super-transaction")
+
+    # PUBLISH step management
+    parser_publish = subparsers.add_parser(Task.PUBLISH, help="Publish Qserv database")
+
+    # INDEX step management
+    parser_index = subparsers.add_parser(Task.INDEX,
+                                         help="Create Qserv indexes (tables or secondary) using Qserv replication service")
+    parser.add_argument("--secondary", "-s", action="store_true",
+                        help="Create secondary index, and do not index tables")
+
+    # VALIDATE step management
+    parser_publish = subparsers.add_parser(Task.VALIDATE, help="Validate ingest for a database")
+
+    # BENCHMARK step management
+    parser_publish = subparsers.add_parser(Task.BENCHMARK, help="Benchmark ingest for a database")
+
     args = parser.parse_args()
 
     logger = util.get_default_logger(args.verbose)
 
-    payload = args.data or args.json or dict()
-    logging.debug("Starting a request: %s with %s", args.url, payload)
-    http = Http()
-    if args.method == "post":
-        http.post(args.url, payload)
-    elif args.method == "put":
-        http.put(args.url)
-    elif args.method == "delete":
-        http.delete(args.url)
+    logger.debug("Ingest configuration: %s", args.config.__dict__)
+    logger.debug("Task: %s", args.task)
+
+
+    chunk_metadata = ChunkMetadata(args.config.path, args.config.servers)
+
+    if args.task == Task.QUEUE:
+        logger.debug("Queue")
+        queue_manager = QueueManager(args.config.queue_url, chunk_metadata)
+        queue_manager.load()
+    elif args.task == Task.REGISTER:
+        ingester = Ingester(chunk_metadata, args.config.replication_url)
+        database_status = ingester.get_database_status()
+        if database_status == DatabaseStatus.NOT_REGISTERED:
+            ingester.database_register_and_config(args.felis)
+        elif database_status == DatabaseStatus.PUBLISHED:
+            sys.exit(1)
+    elif args.task == Task.INGEST:
+        queue_manager = QueueManager(args.config.queue_url, chunk_metadata)
+        ingester = Ingester(chunk_metadata, args.config.replication_url, queue_manager)
+        if args.check:
+            ingester.check_supertransactions_success()
+        else:
+            ingester.ingest(args.chunk_queue_fraction)
+    elif args.task == Task.PUBLISH:
+        ingester = Ingester(chunk_metadata, args.config.replication_url)
+        ingester.database_publish()
+    elif args.task == Task.INDEX:
+        ingester = Ingester(chunk_metadata, args.config.replication_url)
+        ingester.index(args.secondary)
+    elif args.task == Task.VALIDATE:
+        validator = Validator(chunk_metadata, args.config.query_url, True)
+        validator.query()
+    elif args.task == Task.BENCHMARK:
+        validator = Validator(chunk_metadata, args.config.query_url)
+        if validator.benchmark():
+            logger.info("Query results are identical to those expected")
+        else:
+            logger.fatal("Query results are not identical to those expected")
+            sys.exit(1)

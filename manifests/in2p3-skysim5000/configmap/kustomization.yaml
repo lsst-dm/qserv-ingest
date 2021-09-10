@@ -6,6 +6,7 @@ configMapGenerator:
   behavior: replace
   files:
   - ingest.yaml
+  - dbbench.ini
 generatorOptions:
   labels:
     kustomize.generated.resources: qserv.ingest

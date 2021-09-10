@@ -3,7 +3,7 @@ kind: Workflow
 metadata:
   generateName: qserv-ingest-
 spec:
-  entrypoint: ingest
+  entrypoint: main
   volumes:
   - name: repl-creds
     secret:
@@ -14,9 +14,11 @@ spec:
   arguments:
     parameters:
     - name: image
-      # supertransactions is the number of pods running concurrent super-transactions
-    - name: supertransactions
+      # superTransactions is the number of pods running concurrent super-transactions
+    - name: superTransactions
       value: 10
+    - name: backoffLimit
+      value: 5
   templates:
   - name: ingest-step
     inputs:
@@ -35,15 +37,15 @@ spec:
   - name: transactions
     resource:
       action: create
-      successCondition: status.succeeded = {{workflow.parameters.supertransactions}}
-      failureCondition: status.failed > 0
+      successCondition: status.succeeded = {{workflow.parameters.superTransactions}}
+      failureCondition: status.failed > {{workflow.parameters.backoffLimit}}
       manifest: |
         apiVersion: batch/v1
         kind: Job
         metadata:
           generateName: qserv-ingest-transactions-
         spec:
-          parallelism: {{workflow.parameters.supertransactions}}
+          parallelism: {{workflow.parameters.superTransactions}}
           template:
             spec:
               containers:
@@ -51,7 +53,7 @@ spec:
                 command:
                 - ingest-chunks.sh
                 args:
-                - "{{workflow.parameters.supertransactions}}"
+                - "{{workflow.parameters.superTransactions}}"
                 image: {{workflow.parameters.image}}
                 imagePullPolicy: IfNotPresent
                 volumeMounts:
@@ -67,7 +69,19 @@ spec:
                 - name: config
                   configMap:
                     name: config-ingest
-          backoffLimit: 0
+          backoffLimit: {{workflow.parameters.backoffLimit}}
+  - name: index-tables
+    steps:
+    - - name: index-tables
+        template: ingest-step
+        arguments:
+          parameters: [{name: script, value: index-tables.sh}]
+  - name: benchmark
+    steps:
+    - - name: benchmark
+        template: ingest-step
+        arguments:
+          parameters: [{name: script, value: benchmark.sh}]
   - name: main
     dag:
       tasks:
@@ -93,12 +107,13 @@ spec:
           parameters: [{name: script, value: publish.sh}]
         dependencies: [check-transactions]
       - name: index-tables
-        template: ingest-step
-        arguments:
-          parameters: [{name: script, value: index-tables.sh}]
+        template: index-tables
         dependencies: [publish]
       - name: validate
         template: ingest-step
         arguments:
           parameters: [{name: script, value: validate.sh}]
         dependencies: [index-tables]
+      - name: benchmark
+        template: benchmark
+        dependencies: [validate]
