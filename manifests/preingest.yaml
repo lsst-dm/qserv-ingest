@@ -1,0 +1,246 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  generateName: preingest-
+  annotations:
+    workflows.argoproj.io/description: |
+      This workflow takes Rubin Science Pipeline parquet tabke outputs and 
+      convert to the format of what the downstream ingest workflow expects.
+      The task "split" reads the inputs in the bucket and prints the list of files.
+      Each "map" task then reads each file, performs operations,and writes outputs.
+      Finally, "reduce" makes the metadata json with the folder of partitioned chunks.
+    workflows.argoproj.io/version: ">= 3.0.0"
+spec:
+  entrypoint: main
+  volumes:
+  - name: secret-vol
+    secret:
+      secretName: secret-argo-gcs-artifact
+  templates:
+    - name: main
+      dag:
+        tasks:
+          - name: split
+            template: split
+            arguments:
+              artifacts:
+                - name: input-folder
+                  gcs:
+                    bucket: qserv-us-central1-argo-artifact
+                    key: dc2/w_2021_40/input-parquet-source
+                    serviceAccountKeySecret:
+                      name: secret-argo-gcs-artifact
+                      key: qserv-dev-argo.json
+          - name: map
+            template: map
+            arguments:
+              parameters:
+                - name: input_filename
+                  value: "{{item}}"
+              artifacts:
+                - name: inparq
+                  gcs:
+                    bucket: qserv-us-central1-argo-artifact
+                    key: "dc2/w_2021_40/input-parquet-source/{{item}}"
+                    serviceAccountKeySecret:
+                      name: secret-argo-gcs-artifact
+                      key: qserv-dev-argo.json
+                - name: schema_abh
+                  gcs:
+                    bucket: qserv-us-central1-argo-artifact
+                    key: dc2/w_2021_40/configs-source/schema.abh.source
+                    serviceAccountKeySecret:
+                      name: secret-argo-gcs-artifact
+                      key: qserv-dev-argo.json
+                - name: partition_config
+                  gcs:
+                    bucket: qserv-us-central1-argo-artifact
+                    key: dc2/w_2021_40/configs-source/partition.json
+                    serviceAccountKeySecret:
+                      name: secret-argo-gcs-artifact
+                      key: qserv-dev-argo.json
+            dependencies:
+              - split
+            withParam: "{{tasks.split.outputs.result}}"
+          - name: reduce
+            template: reduce
+            dependencies:
+              - map
+    # The `split` task looks at the bucket and dumps the list of parquet files to stdout 
+    - name: split
+      inputs:
+        artifacts:
+          - name: input-folder
+            path: /mnt/inparq
+      script:
+        image: python:alpine3.6
+        command:
+          - python
+        source: |
+          import json
+          import os
+          import sys
+          ls = os.listdir("/mnt/inparq")
+          json.dump(ls, sys.stdout)
+    # One map per input parquet file is started. Each get its own parquet input file.
+    - name: map
+      inputs:
+        parameters:
+          - name: input_filename
+        artifacts:
+          - name: inparq
+          - name: partition_config
+          - name: schema_abh
+      steps:
+      - - name: pq2csv
+          template: pq2csv
+          arguments:
+            parameters: [{name: filename, value: "{{inputs.parameters.input_filename}}"}]
+            artifacts:
+              - name: parq
+                from: "{{inputs.artifacts.inparq}}"
+              - name: abh
+                from: "{{inputs.artifacts.schema_abh}}"
+      - - name: sed
+          template: sed
+          arguments:
+            parameters: [{name: filename, value: "{{inputs.parameters.input_filename}}"}]
+            artifacts:
+              - name: csv
+                from: "{{steps.pq2csv.outputs.artifacts.csv}}"
+      - - name: partition
+          template: partition
+          arguments:
+            parameters: [{name: filename, value: "{{inputs.parameters.input_filename}}"}]
+            artifacts:
+              - name: corrected_csv
+                from: "{{steps.sed.outputs.artifacts.corrected_csv}}"
+              - name: partition_config
+                from: "{{inputs.artifacts.partition_config}}"
+    - name: pq2csv
+      inputs:
+        parameters:
+          - name: filename
+        artifacts:
+          - name: parq
+            path: /mnt/input.parq
+          - name: abh
+            path: /mnt/schema.abh
+      volumes:
+        - name: out
+          emptyDir: { }
+      container:
+        image: hsinfang/pq2csv
+        volumeMounts:
+          - name: out
+            mountPath: /mnt_out
+        args: ["pq2csv", "--verbose", "--display", "--resetindex", "--schema", "/mnt/schema.abh", "/mnt/input.parq", "/mnt_out/output.csv"]
+        resources:
+          requests:
+            memory: 20Gi
+      outputs:
+        artifacts:
+          - name: csv
+            path: /mnt_out/output.csv
+            archive:
+              none: { }
+            gcs:
+              bucket: qserv-us-central1-argo-artifact
+              key: "{{workflow.name}}/csv/{{inputs.parameters.filename}}.csv"
+              serviceAccountKeySecret:
+                name: secret-argo-gcs-artifact
+                key: qserv-dev-argo.json
+    - name: sed
+      inputs:
+        parameters:
+        - name: filename
+        artifacts:
+        - name: csv
+          path: /mnt/input.csv
+      script:
+        image: alpine:latest
+        command: [sh, -x]
+        source: |
+          #!/bin/sh
+          sed 's/True/1/g;s/False/0/g;s/-inf/\\N/g;s/inf/\\N/g' /mnt/input.csv > /mnt_out/corrected.csv
+        volumeMounts:
+          - name: out
+            mountPath: /mnt_out
+      volumes:
+        - name: out
+          emptyDir: { }
+      outputs:
+        artifacts:
+          - name: corrected_csv
+            path: /mnt_out/corrected.csv
+            archive:
+              none: { }
+            gcs:
+              bucket: qserv-us-central1-argo-artifact
+              key: "{{workflow.name}}/corrected_csv/{{inputs.parameters.filename}}.csv"
+              serviceAccountKeySecret:
+                name: secret-argo-gcs-artifact
+                key: qserv-dev-argo.json
+    - name: partition
+      inputs:
+        parameters:
+        - name: filename
+        artifacts:
+        - name: corrected_csv
+          path: /mnt/input.csv
+        - name: partition_config
+          path: /mnt/partition.json
+      container:
+        image: qserv/lite-qserv:fritzm
+        resources:
+          requests:
+            memory: 15Gi
+        command: ["sph-partition"]
+        args: ["--verbose", "-c", "/mnt/partition.json", "--in.path", "/mnt/input.csv", "--out.dir", "/mnt_out"]
+        volumeMounts:
+          - name: out
+            mountPath: /mnt_out
+      volumes:
+        - name: out
+          emptyDir: { }
+      outputs:
+        artifacts:
+          - name: partitioned_chunks
+            path: /mnt_out/
+            archive:
+              none: { }
+            gcs:
+              bucket: qserv-us-central1-argo-artifact
+              key: "{{workflow.name}}/partitioned_chunks/{{inputs.parameters.filename}}.chunkSets/"
+              serviceAccountKeySecret:
+                name: secret-argo-gcs-artifact
+                key: qserv-dev-argo.json
+    - name: reduce
+      container:
+        image: hsinfang/makemeta
+        command: ["make_metadata"]
+        args: ["qserv-us-central1-argo-artifact/{{workflow.name}}/partitioned_chunks", "--out", "/mnt_out/metadata.json"]
+        env:
+          - name: GOOGLE_APPLICATION_CREDENTIALS
+            value: /secret/qserv-dev-argo.json
+        volumeMounts:
+          - name: out
+            mountPath: /mnt_out
+          - name: secret-vol
+            readOnly: true
+            mountPath: /secret
+      volumes:
+        - name: out
+          emptyDir: { }
+      outputs:
+        artifacts:
+          - name: metadata
+            path: /mnt_out/metadata.json
+            archive:
+              none: { }
+            gcs:
+              bucket: qserv-us-central1-argo-artifact
+              key: "{{workflow.name}}/metadata.json"
+              serviceAccountKeySecret:
+                name: secret-argo-gcs-artifact
+                key: qserv-dev-argo.json
