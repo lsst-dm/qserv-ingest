@@ -12,6 +12,10 @@ metadata:
     workflows.argoproj.io/version: ">= 3.0.0"
 spec:
   entrypoint: main
+  arguments:
+    parameters:
+    - name: workflow-table-name
+    - name: prefix
   volumes:
   - name: secret-vol
     secret:
@@ -27,7 +31,7 @@ spec:
                 - name: input-folder
                   gcs:
                     bucket: qserv-us-central1-argo-artifact
-                    key: dc2/w_2021_40/input-parquet-source
+                    key: "dp02/{{workflow.parameters.prefix}}/{{workflow.parameters.workflow-table-name}}/input-parquet"
                     serviceAccountKeySecret:
                       name: secret-argo-gcs-artifact
                       key: qserv-dev-argo.json
@@ -41,21 +45,21 @@ spec:
                 - name: inparq
                   gcs:
                     bucket: qserv-us-central1-argo-artifact
-                    key: "dc2/w_2021_40/input-parquet-source/{{item}}"
+                    key: "dp02/{{workflow.parameters.prefix}}/{{workflow.parameters.workflow-table-name}}/input-parquet/{{item}}"
                     serviceAccountKeySecret:
                       name: secret-argo-gcs-artifact
                       key: qserv-dev-argo.json
                 - name: schema_abh
                   gcs:
                     bucket: qserv-us-central1-argo-artifact
-                    key: dc2/w_2021_40/configs-source/schema.abh.source
+                    key: "dp02/{{workflow.parameters.prefix}}/{{workflow.parameters.workflow-table-name}}/configs/schema.abh"
                     serviceAccountKeySecret:
                       name: secret-argo-gcs-artifact
                       key: qserv-dev-argo.json
                 - name: partition_config
                   gcs:
                     bucket: qserv-us-central1-argo-artifact
-                    key: dc2/w_2021_40/configs-source/partition.json
+                    key: "dp02/{{workflow.parameters.prefix}}/{{workflow.parameters.workflow-table-name}}/configs/partition.json"
                     serviceAccountKeySecret:
                       name: secret-argo-gcs-artifact
                       key: qserv-dev-argo.json
