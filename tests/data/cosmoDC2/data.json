@@ -3,9 +3,7 @@
     "table": "data",
     "auth_key": "",
     "is_partitioned": 1,
-    "chunk_id_key": "chunkId",
-    "sub_chunk_id_key": "subChunkId",
-    "is_director": 0,
+    "director_table": "position",
     "director_key": "galaxy_id",
     "schema": [
         {
