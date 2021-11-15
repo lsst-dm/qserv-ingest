@@ -111,7 +111,10 @@ if __name__ == "__main__":
         database_status = ingester.get_database_status()
         if database_status == DatabaseStatus.NOT_REGISTERED:
             ingester.database_register_and_config(args.felis)
+        elif database_status == DatabaseStatus.REGISTERED_NOT_PUBLISHED:
+            logger.warn("Skip current database registration: database has been registered previously")
         elif database_status == DatabaseStatus.PUBLISHED:
+            logger.fatal("Fail current database registration: database has been published previously")
             sys.exit(1)
     elif args.task == Task.INGEST:
         queue_manager = QueueManager(args.config.queue_url, chunk_metadata)

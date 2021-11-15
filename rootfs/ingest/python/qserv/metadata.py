@@ -133,6 +133,12 @@ class ChunkMetadata():
         return json_indexes
 
     def get_tables_json(self):
+        """
+        Retrieve information about database tables
+        in order to register them with the replication service
+
+        Returns a list of json data, one for each table, director tables are at the beginning of the list
+        """
         jsons = []
         for t in self.tables:
             json_data = t['json']
