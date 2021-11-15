@@ -136,7 +136,11 @@ class ChunkMetadata():
         jsons = []
         for t in self.tables:
             json_data = t['json']
-            jsons.append(json_data)
+            # Director tables need to be loaded first
+            if _is_director(t):
+                jsons.insert(0, json_data)
+            else:
+                jsons.append(json_data)
         return jsons
 
     def _init_tables(self):
