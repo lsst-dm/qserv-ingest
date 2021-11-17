@@ -1,0 +1,14 @@
+{
+    "database": "dp01_dc2_catalogs",
+    "table": "object",
+    "index": "idx_ra",
+    "spec": "DEFAULT",
+    "comment": "The index on the spatial coordinate ra",
+    "columns": [
+        {
+            "column": "ra",
+            "length": 0,
+            "ascending": 1
+        }
+    ]
+}

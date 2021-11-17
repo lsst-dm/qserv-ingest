@@ -1,0 +1,137 @@
+{
+    "database": "dp01_dc2_catalogs",
+    "table": "position",
+    "auth_key": "",
+    "auto_build_secondary_index":1,
+    "is_partitioned": 1,
+    "director_table": "object",
+    "director_key": "objectId",
+    "latitude_key": "coord_dec",
+    "longitude_key": "coord_ra",
+    "schema": [
+        {
+            "name": "objectId",
+            "type": "bigint(20) NOT NULL"
+        },
+        {
+            "name": "coord_ra",
+            "type": "DOUBLE NOT NULL"
+        },
+        {
+            "name": "coord_dec",
+            "type": "DOUBLE NOT NULL"
+        },
+        {
+            "name": "parent",
+            "type": "bigint(20) NOT NULL"
+        },
+        {
+            "name": "deblend_nChild",
+            "type": "INT"
+        },
+        {
+            "name": "detect_isPrimary",
+            "type": "BOOLEAN"
+        },
+        {
+            "name": "extinction_bv",
+            "type": "DOUBLE"
+        },
+        {
+            "name": "detect_isPatchInner",
+            "type": "BOOLEAN"
+        },
+        {
+            "name": "detect_isTractInner",
+            "type": "BOOLEAN"
+        },
+        {
+            "name": "merge_footprint_i",
+            "type": "BOOLEAN"
+        },
+        {
+            "name": "merge_footprint_r",
+            "type": "BOOLEAN"
+        },
+        {
+            "name": "merge_footprint_z",
+            "type": "BOOLEAN"
+        },
+        {
+            "name": "merge_footprint_y",
+            "type": "BOOLEAN"
+        },
+        {
+            "name": "merge_footprint_g",
+            "type": "BOOLEAN"
+        },
+        {
+            "name": "merge_footprint_u",
+            "type": "BOOLEAN"
+        },
+        {
+            "name": "merge_footprint_sky",
+            "type": "BOOLEAN"
+        },
+        {
+            "name": "merge_peak_i",
+            "type": "BOOLEAN"
+        },
+        {
+            "name": "merge_peak_r",
+            "type": "BOOLEAN"
+        },
+        {
+            "name": "merge_peak_z",
+            "type": "BOOLEAN"
+        },
+        {
+            "name": "merge_peak_y",
+            "type": "BOOLEAN"
+        },
+        {
+            "name": "merge_peak_g",
+            "type": "BOOLEAN"
+        },
+        {
+            "name": "merge_peak_u",
+            "type": "BOOLEAN"
+        },
+        {
+            "name": "merge_peak_sky",
+            "type": "BOOLEAN"
+        },
+        {
+            "name": "merge_measurement_i",
+            "type": "BOOLEAN"
+        },
+        {
+            "name": "merge_measurement_r",
+            "type": "BOOLEAN"
+        },
+        {
+            "name": "merge_measurement_z",
+            "type": "BOOLEAN"
+        },
+        {
+            "name": "merge_measurement_y",
+            "type": "BOOLEAN"
+        },
+        {
+            "name": "merge_measurement_g",
+            "type": "BOOLEAN"
+        },
+        {
+            "name": "merge_measurement_u",
+            "type": "BOOLEAN"
+        },
+        {
+            "name": "chunkId",
+            "type": "int(11) NOT NULL"
+        },
+        {
+            "name": "subChunkId",
+            "type": "int(11) NOT NULL"
+        }
+    ]
+}

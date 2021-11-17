@@ -87,7 +87,7 @@ def _dircmp(dir1: str, dir2: str) -> bool:
     left = sorted(comp.left_list)
     right = sorted(comp.right_list)
     if left != right:
-        _LOG.error("Query results filenames (%s) are not the expected ones (%s)", left, right)
+        _LOG.warning("Query results filenames (%s) are not the expected ones (%s)", left, right)
         return False
 
     has_same_files = True
@@ -101,7 +101,7 @@ def _dircmp(dir1: str, dir2: str) -> bool:
         i=0
         for l in delta:
             i+=1
-            _LOG.error(l)
+            _LOG.warning(l)
         if i != 0:
             has_same_files = False
     return has_same_files

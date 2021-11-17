@@ -57,11 +57,16 @@ class ChunkMetadata():
     """Manage metadata related to data to ingest (database, tables and chunk files)
     """
 
-    def __init__(self, path: str, servers: List[str]):
+    def __init__(self, path: str, servers: List[str] = []):
         """Download metadata located at 'data_url' and describing database, tables
            and chunks files, and then load it in a dictionnary.
+
+           If servers is an empty list, then use local files for 'data_url'
         """
-        self.data_url = urllib.parse.urljoin(servers[0], path)
+        if len(servers) != 0:
+            self.data_url = urllib.parse.urljoin(servers[0], path)
+        else:
+            self.data_url = path
 
         self.metadata = json_get(self.data_url, _METADATA_FILENAME)
         _LOG.debug("Metadata: %s", self.metadata)
@@ -132,7 +137,7 @@ class ChunkMetadata():
                 json_indexes.append(json_idx)
         return json_indexes
 
-    def get_tables_json(self):
+    def get_ordered_tables_json(self):
         """
         Retrieve information about database tables
         in order to register them with the replication service
@@ -175,4 +180,4 @@ class ChunkMetadata():
                 self.tables.append(table)
 
 def _is_director(table):
-    return('is_director' in table['json'] and len(table['json']['is_director'])==0)
+    return('director_table' in table['json'] and len(table['json']['director_table'])==0)

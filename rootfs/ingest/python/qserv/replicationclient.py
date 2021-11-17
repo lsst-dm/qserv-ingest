@@ -166,7 +166,7 @@ class ReplicationClient():
         url = urllib.parse.urljoin(self.repl_url, "/ingest/table/")
 
         if _LOG.isEnabledFor(logging.DEBUG):
-            _LOG.debug("Ordered list of table to load")
+            _LOG.debug("Ordered list of table to register")
             for json_data in tables_json_data:
                 _LOG.debug(" %s", json_data['table'])
 
