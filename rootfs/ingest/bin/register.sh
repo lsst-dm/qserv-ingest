@@ -7,4 +7,4 @@ DIR=$(cd "$(dirname "$0")"; pwd -P)
 . $DIR/env.sh
 
 # Register database and tables
-replctl-register -v --config "$INGEST_CONFIG"
+replctl -v --config "$INGEST_CONFIG" register

@@ -49,3 +49,4 @@ do
   kubectl logs $pod -c main
   echo "-----------------------------------------" 
 done
+argo wait @latest

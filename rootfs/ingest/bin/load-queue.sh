@@ -6,4 +6,4 @@ set -euxo pipefail
 DIR=$(cd "$(dirname "$0")"; pwd -P)
 . $DIR/env.sh
 
-load-queue -v --config "$INGEST_CONFIG"
+replctl -v --config "$INGEST_CONFIG" queue

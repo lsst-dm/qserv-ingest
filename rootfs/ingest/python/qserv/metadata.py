@@ -37,7 +37,7 @@ import urllib.parse
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-from .util import http_file_exists, json_get, trailing_slash
+from .http import json_get
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -50,20 +50,23 @@ _FILE_TYPES = [_CHUNK, _OVERLAP]
 
 _LOG = logging.getLogger(__name__)
 
-
 def _get_name(table):
     return table['json']['table']
-
 
 class ChunkMetadata():
     """Manage metadata related to data to ingest (database, tables and chunk files)
     """
 
-    def __init__(self, path: str, servers: List[str]):
+    def __init__(self, path: str, servers: List[str] = []):
         """Download metadata located at 'data_url' and describing database, tables
            and chunks files, and then load it in a dictionnary.
+
+           If servers is an empty list, then use local files for 'data_url'
         """
-        self.data_url = urllib.parse.urljoin(servers[0], path)
+        if len(servers) != 0:
+            self.data_url = urllib.parse.urljoin(servers[0], path)
+        else:
+            self.data_url = path
 
         self.metadata = json_get(self.data_url, _METADATA_FILENAME)
         _LOG.debug("Metadata: %s", self.metadata)
@@ -79,14 +82,22 @@ class ChunkMetadata():
         self.json_db = json_get(self.data_url, filename)
         self.database = self.json_db['database']
         self.family = "layout_{}_{}".format(self.json_db['num_stripes'], self.json_db['num_sub_stripes'])
-        self.init_tables()
+        self._init_tables()
 
     def get_chunk_files_info(self):
-        # TODO add iterator over all chunks?
+        """
+        Retrieve information about input chunk files (CSV formatted)
+        in order to insert them inside the chunk contribution queue
+
+        Returns a list of informations which will allow to retrieve these file
+        each entry of the list is a tuple: (<path>, [chunk_ids], <is_overlap>, <table>)
+        where [chunk_ids] is the list of the chunks (XOR overlap) files available at a given path for a given table
+        """
         files_info = []
         for table in self.tables:
             for d in table['data']:
                 path = d['directory']
+                # TODO simplify algorithm: only director table can have (extra) overlaps
                 if self._has_extra_overlaps:
                     for ftype in _FILE_TYPES:
                         if d.get(ftype):
@@ -97,6 +108,12 @@ class ChunkMetadata():
                     if _is_director(table):
                         files_info.append((path, d[_CHUNK], True, _get_name(table)))
         return files_info
+
+    def get_file_url(self, path: str) -> str:
+        """
+        Return the url of a file located on the input data server
+        """
+        return urllib.parse.urljoin(self.data_url, path)
 
     def get_loadbalancer_url(self, i):
         http_servers_count = len(self.http_servers)
@@ -120,14 +137,24 @@ class ChunkMetadata():
                 json_indexes.append(json_idx)
         return json_indexes
 
-    def get_tables_json(self):
+    def get_ordered_tables_json(self):
+        """
+        Retrieve information about database tables
+        in order to register them with the replication service
+
+        Returns a list of json data, one for each table, director tables are at the beginning of the list
+        """
         jsons = []
         for t in self.tables:
             json_data = t['json']
-            jsons.append(json_data)
+            # Director tables need to be loaded first
+            if _is_director(t):
+                jsons.insert(0, json_data)
+            else:
+                jsons.append(json_data)
         return jsons
 
-    def init_tables(self):
+    def _init_tables(self):
         self.tables = []
         self._has_extra_overlaps = False
         for t in self.metadata['tables']:
@@ -153,4 +180,4 @@ class ChunkMetadata():
                 self.tables.append(table)
 
 def _is_director(table):
-    return bool(table['json']['is_director'])
+    return('director_table' in table['json'] and len(table['json']['director_table'])==0)

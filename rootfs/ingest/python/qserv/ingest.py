@@ -144,7 +144,7 @@ class Ingester():
         using data_url/<database_name>.json as input data
         """
         self.repl_client.database_register(self.chunk_meta.json_db)
-        self.repl_client.database_register_tables(self.chunk_meta.get_tables_json(), felis)
+        self.repl_client.database_register_tables(self.chunk_meta.get_ordered_tables_json(), felis)
         self.repl_client.database_config(self.chunk_meta.database)
 
 
@@ -172,7 +172,8 @@ class Ingester():
 
     def index(self, secondary=False):
         """
-        Index Qserv shared tables or create secondary index
+        Index Qserv MySQL sharded tables
+        or create secondary index
         """
         if secondary:
             database = self.chunk_meta.database

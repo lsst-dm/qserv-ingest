@@ -35,6 +35,8 @@ import sys
 # Imports for other modules --
 # ----------------------------
 from . import metadata
+import logging
+import os
 import pytest
 import urllib.parse
 
@@ -42,12 +44,26 @@ import urllib.parse
 # Local non-exported definitions --
 # ---------------------------------
 
+_CWD = os.path.dirname(os.path.abspath(__file__))
+_LOG = logging.getLogger(__name__)
+
 def test_get_loadbalancer_url():
-    """Check if a file exists on a remote HTTP server
+    """ Check if a file exists on a remote HTTP server
     """
-    data_url = "https://raw.githubusercontent.com/lsst-dm/qserv-ingest/master/data/cosmoDC2_v1_1_4_image_testintegration/"
-    server_json = urllib.parse.urljoin(__file__, "servers.json")
-    chunk_meta = metadata.ChunkMetadata(data_url, server_json)
+    data_url = "https://raw.githubusercontent.com/lsst-dm/qserv-ingest/master/tests/data/cosmoDC2/"
+    servers = [
+        "https://server1",
+        "https://server2",
+        "https://server3"
+    ]
+    chunk_meta = metadata.ChunkMetadata(data_url, servers)
     url = chunk_meta.get_loadbalancer_url(1)
-    assert (url == "https://server2/lsst-dm/qserv-ingest/master/data/cosmoDC2_v1_1_4_image_testintegration/")
-    
+    assert (url == "https://server2/lsst-dm/qserv-ingest/master/tests/data/cosmoDC2/")
+
+def test_get_ordered_tables_json():
+    data_url = os.path.join(_CWD, "testdata", "dp01_dc2_catalogs")
+    chunk_meta = metadata.ChunkMetadata(data_url)
+    tables_json_data = chunk_meta.get_ordered_tables_json()
+    _LOG.info("Ordered list of tables")
+    for json_data in tables_json_data:
+        _LOG.info(" %s", json_data['table'])

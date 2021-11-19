@@ -1,0 +1,14 @@
+{
+    "database": "dp01_dc2_catalogs",
+    "table": "forced_photometry",
+    "index": "idx_objectId",
+    "spec": "DEFAULT",
+    "comment": "The non-unique index on the FK key for the object identifiers in table object",
+    "columns": [
+        {
+            "column": "objectId",
+            "length": 0,
+            "ascending": 1
+        }
+    ]
+}

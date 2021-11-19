@@ -31,6 +31,7 @@ Parse JSON responses from replication service
 # -------------------------------
 from enum import Enum
 import logging
+import typing
 
 # ----------------------------
 # Imports for other modules --
@@ -68,6 +69,16 @@ def filter_transactions(responseJson, database, states):
             if state in states:
                 transaction_ids.append(trans['id'])
     return transaction_ids
+
+def get_indexes(responseJson, existing_indexes: typing.Dict[str, set]=dict()):
+    for worker, data in responseJson['workers'].items():
+        table = list(data.keys())[0]
+        for idx_data in data[table]:
+            try:
+                existing_indexes[table].add(idx_data)
+            except KeyError:
+                existing_indexes[table] = set(idx_data)
+    return existing_indexes
 
 def get_location(responseJson):
     """ Retrieve chunk location (host and port) inside json response issued by replication service

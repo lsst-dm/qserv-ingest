@@ -34,4 +34,4 @@ if [ $# -ne 0 ] ; then
 fi
 
 # Publish database
-replctl-publish -v --config "$INGEST_CONFIG"
+replctl -v --config "$INGEST_CONFIG" publish

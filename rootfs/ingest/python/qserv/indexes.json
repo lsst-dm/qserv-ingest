@@ -1,0 +1,39 @@
+{
+    "error": "",
+    "error_ext": {},
+    "success": 1,
+    "workers": {
+      "qserv-worker-0": {
+        "position": {
+          "galaxy_id_uniq": {
+            "columns": {
+              "galaxy_id": "1"
+            },
+            "comment": "None"
+          },
+          "index_2": {
+            "columns": {
+              "ra": "1"
+            },
+            "comment": "None"
+          }
+        },
+        "positionFullOverlap_100000": {},
+        "positionFullOverlap_100031": {},
+        "positionFullOverlap_99999": {}
+      },
+      "qserv-worker-1": {
+        "position": {
+          "galaxy_id_uniq": {
+            "columns": {
+              "galaxy_id": "1"
+            },
+            "comment": "None"
+          }
+        },
+        "positionFullOverlap_100007": {},
+        "positionFullOverlap_100015": {},
+        "positionFullOverlap_100029": {}
+      }
+    }
+  }

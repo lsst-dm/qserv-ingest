@@ -9,7 +9,7 @@ ingest:
             - https://ccnetlsst03.in2p3.fr:65101
             - https://ccnetlsst04.in2p3.fr:65101
         # Path on server where input data is available
-        path: skysim5000_v1.1.1_parquet//
+        path: skysim5000_v1.1.1_parquet/
     qserv:
         # TODO add support for secondary index generation method
         # Override the default value stored in input metadata

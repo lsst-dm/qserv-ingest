@@ -31,8 +31,10 @@ User-friendly client library for Qserv replication service.
 #  Imports of standard modules --
 # -------------------------------
 import getpass
+import json
 import logging
 import os
+import urllib.parse
 
 # ----------------------------
 # Imports for other modules --
@@ -40,6 +42,7 @@ import os
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
+from . import util
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -57,6 +60,35 @@ def authorize():
         _LOG.debug("Cannot find %s", AUTH_PATH)
         authKey = getpass.getpass()
     return authKey
+
+def download_file(url: str, dest: str) -> None:
+    response = requests.get(url, stream = True)
+    text_file = open(dest,"wb")
+    for chunk in response.iter_content(chunk_size=1024):
+        text_file.write(chunk)
+    text_file.close()
+
+def file_exists(url: str) -> bool:
+    """
+    Check if a file exists on a remote HTTP server
+    """
+    response = requests.head(url)
+    return (response.status_code == 200)
+
+def json_get(base_url, filename):
+    """
+    Load json file at a given URL
+    """
+    str_url = urllib.parse.urljoin(util.trailing_slash(base_url), filename)
+    url = urllib.parse.urlsplit(str_url, scheme="file")
+    if url.scheme in ["http", "https"]:
+        r = requests.get(str_url)
+        return r.json()
+    elif url.scheme == "file":
+        with open(url.path, "r") as f:
+            return json.load(f)
+    else:
+        raise Exception("Unsupported URI scheme for ", url)
 
 class TimeoutHTTPAdapter(HTTPAdapter):
     """ Manage http connection time-out
@@ -95,9 +127,11 @@ class Http():
         self.http.mount("https://", adapter)
         self.http.mount("http://", adapter)
 
-    def get(self, url):
-        authKey = authorize()
-        r = requests.get(url, json={"auth_key": authKey})
+    def get(self, url, payload=dict(), auth=True) -> dict:
+        if auth == True:
+            authKey = authorize()
+            payload["auth_key"] = authKey
+        r = requests.get(url, json=payload)
         if (r.status_code != 200):
             raise Exception(
                 'Error in HTTP response (GET)', url,

@@ -1,0 +1,14 @@
+{
+    "database": "dp01_dc2_catalogs",
+    "table": "truth_match",
+    "index": "idx_dec",
+    "spec": "DEFAULT",
+    "comment": "The index on the spatial coordinate dec",
+    "columns": [
+        {
+            "column": "dec",
+            "length": 0,
+            "ascending": 1
+        }
+    ]
+}
