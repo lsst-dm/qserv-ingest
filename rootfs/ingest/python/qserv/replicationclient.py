@@ -54,7 +54,7 @@ from .util import increase_wait_time, trailing_slash
 # ---------------------------------
 AUTH_PATH = "~/.lsst/qserv"
 _LOG = logging.getLogger(__name__)
-_VERSION = 7
+_VERSION = 8
 
 # Max attempts to retry ingesting a file on replication service retriable error
 MAX_RETRY_ATTEMPTS = 3
