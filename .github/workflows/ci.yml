@@ -49,7 +49,7 @@ jobs:
         run: |
           docker load --input artifacts/image.tar
           echo "IMAGE=$(cat artifacts/image-tag)" >> $GITHUB_ENV
-      - name: Scan operator image
+      - name: Scan qserv-ingest image
         uses: anchore/scan-action@v2
         with:
           image: "${{ env.IMAGE }}"
@@ -84,20 +84,14 @@ jobs:
           docker exec -- kind-control-plane crictl image
       - run: |
           kubectl get nodes
-      - name: Install kustomize
-        run: |
-          VERSION="4.0.5"
-          curl -lO "https://raw.githubusercontent.com/kubernetes-sigs/kustomize/master/hack/install_kustomize.sh"
-          chmod +x ./install_kustomize.sh
-          sudo rm -f /usr/local/bin/kustomize
-          sudo ./install_kustomize.sh "$VERSION" /usr/local/bin
       - name: Checkout qserv-operator code
         uses: actions/checkout@v2
         with:
           repository: "lsst/qserv-operator"
-          ref: "2021.10.1-rc1-5-ge750797"
+          fetch-depth: 0
       - name: Deploy Qserv operator
         run: |
+          git checkout "2021.10.1-rc1-18-gffb545d"
           kubectl apply -f manifests/operator.yaml
       - name: Deploy Qserv
         run: |
