@@ -84,20 +84,8 @@ jobs:
           docker exec -- kind-control-plane crictl image
       - run: |
           kubectl get nodes
-      - name: Checkout qserv-operator code
-        uses: actions/checkout@v2
-        with:
-          repository: "lsst/qserv-operator"
-          fetch-depth: 0
-      - name: Deploy Qserv operator
-        run: |
-          git checkout "2021.10.1-rc1-18-gffb545d"
-          kubectl apply -f manifests/operator.yaml
       - name: Deploy Qserv
-        run: |
-          kubectl apply -k manifests/base
-      - name: Wait for Qserv to start
-        run: ./tests/tools/wait-qserv-ready.sh
+        run: ./tests/e2e/install-qserv.sh
       - name: Checkout code
         uses: actions/checkout@v2
         with:
