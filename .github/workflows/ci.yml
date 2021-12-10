@@ -84,12 +84,12 @@ jobs:
           docker exec -- kind-control-plane crictl image
       - run: |
           kubectl get nodes
-      - name: Deploy Qserv
-        run: ./tests/e2e/install-qserv.sh
       - name: Checkout code
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
+      - name: Deploy Qserv
+        run: ./tests/e2e/install-qserv.sh
       - name: Install pre-requisites
         run: ./prereq-install.sh
       - name: Run E2E Tests
