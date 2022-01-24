@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Launch parallel ingest tasks based on Qserv replication system
 set -euxo pipefail

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Manage not completed transactions
 

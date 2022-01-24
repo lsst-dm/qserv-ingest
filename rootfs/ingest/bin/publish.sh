@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Publish a Qserv database, using Qserv replication system
 

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Launch parallel ingest tasks using Qserv replication/ingest service
 
 # @author  Fabrice Jammes, IN2P3

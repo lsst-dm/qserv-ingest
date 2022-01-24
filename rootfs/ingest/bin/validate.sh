@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Validate ingest of a database inside Qserv
 
 # @author  Fabrice Jammes, IN2P3

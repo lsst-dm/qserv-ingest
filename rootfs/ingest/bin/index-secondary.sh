@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Ask replication system to create secondary index for Qserv data
 set -euxo pipefail

@@ -1,6 +1,6 @@
 # Set variable below to empty string in order to install
 # current development version
-INGEST_RELEASE='2021.10.1-rc1'
+INGEST_RELEASE='2022.1.1-rc1'
 
 # Select dataset to load
 # related directory must exists inside ./manifests/
@@ -17,7 +17,6 @@ else
     TAG="$GIT_HASH"
 fi
 
-BASE_IMAGE="python:3.9.0-alpine3.12"
 # Image version created by build procedure
 INGEST_IMAGE="qserv/ingest:$TAG"
 INGEST_DEPS_IMAGE="qserv/ingest-deps:latest"

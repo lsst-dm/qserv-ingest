@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Ask Qserv replication system to register a Qserv database, prior to data ingestion
 set -euxo pipefail

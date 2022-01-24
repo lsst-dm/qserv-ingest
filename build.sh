@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Create docker image containing qserv-ingest 
+# Create docker image containing qserv-ingest
 
 # @author  Fabrice Jammes
 
@@ -10,4 +10,4 @@ DIR=$(cd "$(dirname "$0")"; pwd -P)
 . ./env.build.sh
 
 # Build ingest image
-docker image build --build-arg BASE_IMAGE="$BASE_IMAGE" --tag "$INGEST_IMAGE" "$DIR"
+docker image build --tag "$INGEST_IMAGE" "$DIR"

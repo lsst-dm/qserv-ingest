@@ -124,21 +124,19 @@ class Validator():
 
     def _initSqlEngine(self):
         database = self.chunk_meta.database
-
-        qserv_db_url = make_url(self.query_url)
-        if not qserv_db_url.database:
-            qserv_db_url.database = database
+        qserv_url = make_url(self.query_url)
+        if not qserv_url.database and qserv_url.drivername=="mysql":
+            qserv_db_url = qserv_url.set(drivername = "mariadb+mariadbconnector", database = database)
         else:
-            raise ValueError("Database field in Qserv url must be empty: %s", qserv_db_url)
+            raise ValueError("Database field in Qserv url must be empty and driver must be mysql: %s", qserv_url)
         self.engine = sqlalchemy.create_engine(qserv_db_url)
         _LOG.debug("Qserv URL: %s", qserv_db_url)
 
-        db_meta = MetaData(bind=self.engine)
-        self.tables = []
-        table_names = self.chunk_meta.get_tables_names()
-        _LOG.info("Database: %s, tables: %s", database, self.chunk_meta.get_tables_names())
-        for table_name in table_names:
-            self.tables.append(Table(table_name, db_meta, autoload=True))
+        db_meta = MetaData()
+        db_meta.reflect(bind=self.engine)
+        self.tables = db_meta.sorted_tables
+        _LOG.info("Database: %s, tables: %s", database, self.tables)
+
 
     def query(self):
         """

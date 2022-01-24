@@ -1,33 +1,34 @@
-ARG BASE_IMAGE
-FROM golang:1.16-alpine AS dbbench
-RUN apk update && apk upgrade && \
-    apk add --no-cache bash curl git mysql-client openssh
+FROM golang:1.17.6-bullseye AS dbbench
+RUN apt-get update && apt-get upgrade -y && \
+    apt-get install -y bash curl git mariadb-client openssh-server && \
+    rm -rf /var/lib/apt/lists/*
 RUN go get github.com/lsst-dm/dbbench@163e978def488c6600c22fffe3ea80c4713f9642
-RUN wget $(curl -s https://api.github.com/repos/mikefarah/yq/releases/latest | grep browser_download_url | grep linux_amd64 | cut -d '"' -f 4) -O /usr/bin/yq &&  chmod +x /usr/bin/yq
 
-FROM $BASE_IMAGE as ingest-deps
-MAINTAINER Fabrice Jammes <fabrice.jammes@in2p3.fr>
+FROM python:3.10.2-bullseye as ingest-deps
+LABEL org.opencontainers.image.authors="fabrice.jammes@in2p3.fr"
 
-RUN apk update \
-    && apk add --virtual build-deps gcc musl-dev \
-    && apk add --no-cache mariadb-dev mariadb-connector-c \
-    && pip install mysqlclient==2.0.1 \
-    && apk del build-deps mariadb-dev \
-    && apk add ca-certificates \
-    && rm -rf /var/cache/apk/*
+RUN pip3 install --upgrade pip==21.3.1
+
+
+# libmariadb3 and mariadb-python are required for SQLalchemy to work with mysql-proxy+mariadb:1:10.6.5
+# see https://lsstc.slack.com/archives/C996604NR/p1643105168095900 for additional informations
+RUN apt-get update && \
+    apt-get install -y ca-certificates libmariadb3 \
+    python3-dev default-libmysqlclient-dev build-essential && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY rootfs/usr/local/share/ca-certificates /usr/local/share/ca-certificates
 RUN update-ca-certificates
 
-RUN pip3 install --upgrade pip==21.1.2
-
-RUN pip3 install PyYAML==5.3.1 jsonpath-ng==1.5.2 \
-    requests==2.25.1 SQLAlchemy==1.3.20
-
 COPY --from=dbbench /go/bin/dbbench /usr/local/bin
-COPY --from=dbbench /usr/bin/yq /usr/bin
+
+RUN pip3 install jsonpath-ng==1.5.2 \
+    mariadb==1.0.9 \
+    mysqlclient==2.1.0 PyYAML==5.3.1  \
+    requests==2.25.1 SQLAlchemy==1.4.31
 
 #USER qserv
+
 # FIXME use a secret below:
 RUN mkdir /root/.lsst && touch /root/.lsst/qserv
 ENV PYTHONPATH=/ingest/python

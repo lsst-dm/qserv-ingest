@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Run a set of queries against an ingested dataset
 
 # @author  Fabrice Jammes, IN2P3

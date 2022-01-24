@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # Check if all ingest super-transactions have ran successfully.
 
 # @author  Fabrice Jammes, IN2P3
