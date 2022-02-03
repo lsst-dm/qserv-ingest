@@ -113,29 +113,10 @@ class Validator():
        - lauch SQL query against currently ingested database
     """
 
-    def __init__(self, chunk_metadata: metadata.ChunkMetadata,  query_url: str, sqlEngine: bool=False):
+    def __init__(self, chunk_metadata: metadata.ChunkMetadata,  query_url: str):
         self.chunk_meta = chunk_metadata
 
         self.query_url = util.trailing_slash(query_url)
-
-        if sqlEngine:
-            self._initSqlEngine()
-
-
-    def _initSqlEngine(self):
-        database = self.chunk_meta.database
-        qserv_url = make_url(self.query_url)
-        if not qserv_url.database and qserv_url.drivername=="mysql":
-            qserv_db_url = qserv_url.set(drivername = "mariadb+mariadbconnector", database = database)
-        else:
-            raise ValueError("Database field in Qserv url must be empty and driver must be mysql: %s", qserv_url)
-        self.engine = sqlalchemy.create_engine(qserv_db_url)
-        _LOG.debug("Qserv URL: %s", qserv_db_url)
-
-        db_meta = MetaData()
-        db_meta.reflect(bind=self.engine)
-        self.tables = db_meta.sorted_tables
-        _LOG.info("Database: %s, tables: %s", database, self.tables)
 
 
     def query(self):
@@ -143,8 +124,17 @@ class Validator():
         Lauch simple queries against Qserv database
         using sqlalchemy
         """
-        for table in self.tables:
-            query = select([func.count()]).select_from(table)
+        for table in self.chunk_meta.get_tables_names:
+            query = f"SELECT COUNT(*) FROM %s {table}"
+            # TODO write mysql query
+            cmd = ['dbbench', '--url', self.query_url, '--database', self.chunk_meta.database, dbbench_config]
+        _LOG.info("Run command: %s", ' '.join(cmd))
+        with open(dbbench_log, 'wb') as f:
+            process = subprocess.Popen(cmd, shell=False,
+                           stdout=subprocess.PIPE,
+                           stderr=subprocess.STDOUT)
+            for c in iter(process.stdout.readline, b''):
+                f.write(c)
             result = self.engine.execute(query)
             row_count = next(result)[0]
             _LOG.info("Query result: %s", row_count)

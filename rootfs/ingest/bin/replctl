@@ -130,7 +130,7 @@ if __name__ == "__main__":
         ingester = Ingester(chunk_metadata, args.config.replication_url)
         ingester.index(args.secondary)
     elif args.task == Task.VALIDATE:
-        validator = Validator(chunk_metadata, args.config.query_url, True)
+        validator = Validator(chunk_metadata, args.config.query_url)
         validator.query()
     elif args.task == Task.BENCHMARK:
         validator = Validator(chunk_metadata, args.config.query_url)

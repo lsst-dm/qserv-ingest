@@ -9,12 +9,8 @@ LABEL org.opencontainers.image.authors="fabrice.jammes@in2p3.fr"
 
 RUN pip3 install --upgrade pip==21.3.1
 
-
-# libmariadb3 and mariadb-python are required for SQLalchemy to work with mysql-proxy+mariadb:1:10.6.5
-# see https://lsstc.slack.com/archives/C996604NR/p1643105168095900 for additional informations
 RUN apt-get update && \
-    apt-get install -y ca-certificates libmariadb3 \
-    python3-dev default-libmysqlclient-dev build-essential && \
+    apt-get install -y ca-certificates mariadb-client && \
     rm -rf /var/lib/apt/lists/*
 
 COPY rootfs/usr/local/share/ca-certificates /usr/local/share/ca-certificates
@@ -23,9 +19,8 @@ RUN update-ca-certificates
 COPY --from=dbbench /go/bin/dbbench /usr/local/bin
 
 RUN pip3 install jsonpath-ng==1.5.2 \
-    mariadb==1.0.9 \
     mysqlclient==2.1.0 PyYAML==5.3.1  \
-    requests==2.25.1 SQLAlchemy==1.4.31
+    requests==2.25.1
 
 #USER qserv
 
