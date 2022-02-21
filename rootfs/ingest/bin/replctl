@@ -38,7 +38,7 @@ import sys
 # ----------------------------
 from qserv.ingest import Ingester
 from qserv.jsonparser import DatabaseStatus
-from qserv.metadata import ChunkMetadata
+from qserv.metadata import ContributionMetadata
 from qserv.queue import QueueManager
 import qserv.util as util
 from qserv.validator import Validator
@@ -100,7 +100,7 @@ if __name__ == "__main__":
     logger.debug("Task: %s", args.task)
 
 
-    chunk_metadata = ChunkMetadata(args.config.path, args.config.servers)
+    chunk_metadata = ContributionMetadata(args.config.path, args.config.servers)
 
     if args.task == Task.QUEUE:
         logger.debug("Queue")

@@ -21,35 +21,19 @@
 # see <http://www.lsstcorp.org/LegalNotices/>.
 
 """
-Tools used by ingest algorithm
+Manage custom error
 
 @author  Fabrice Jammes, IN2P3
 """
 
-# -------------------------------
-#  Imports of standard modules --
-# -------------------------------
 
-# ----------------------------
-# Imports for other modules --
-# ----------------------------
-from rootfs.ingest.python.qserv import contribution
-from . import metadata
-import logging
-import os
-
-# ---------------------------------
-# Local non-exported definitions --
-# ---------------------------------
-
-_CWD = os.path.dirname(os.path.abspath(__file__))
-_LOG = logging.getLogger(__name__)
+class IngestError(Exception):
+    """Error related to ingest client
+    """
+    pass
 
 
-def test_get_ordered_tables_json():
-    data_url = os.path.join(_CWD, "testdata", "dp01_dc2_catalogs")
-    contribution_metadata = metadata.ContributionMetadata(data_url)
-    tables_json_data = contribution_metadata.get_ordered_tables_json()
-    _LOG.info("Ordered list of tables")
-    for json_data in tables_json_data:
-        _LOG.info(" %s", json_data['table'])
+class ReplicationControllerError(Exception):
+    """Error related to replication controller response
+    """
+    pass
