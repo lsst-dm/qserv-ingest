@@ -1,4 +1,9 @@
-## Validate ticket/DM-29567 on kind/CI
+##
+
+Get chunk location once!
+
+
+## kind/CI
 
 - put sql+result on github release
 - Improve error management for job see https://stackoverflow.com/questions/69266116/do-not-delete-pods-even-if-job-fails and argoWorkflow 'withItems' parameter
@@ -18,8 +23,6 @@ argo submit arguments-parameters.yaml --parameter-file params.yaml
   Query result: 0
 
   Result with regular mysql client is 37??
-
-
 
 ## two-mode:
   * crash on error, as before

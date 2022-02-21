@@ -25,8 +25,8 @@ spec:
       parameters:
       - name: script
     container:
-      command:
-        - "{{inputs.parameters.script}}"
+      command: ["/bin/sh"]
+      args: ["-c", "{{inputs.parameters.script}}"]
       image: "{{workflow.parameters.image}}"
       imagePullPolicy: IfNotPresent
       volumeMounts:
@@ -82,6 +82,13 @@ spec:
         template: ingest-step
         arguments:
           parameters: [{name: script, value: benchmark.sh}]
+  # Allow to run interactively some ingest workflow steps
+  - name: interactive
+    steps:
+    - - name: interactive
+        template: ingest-step
+        arguments:
+          parameters: [{name: script, value: "sleep infinity"}]
   - name: main
     dag:
       tasks:

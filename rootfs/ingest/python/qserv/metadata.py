@@ -29,15 +29,16 @@ Manage metadata related to input data
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
-import json
 import logging
 from typing import List
 import urllib.parse
+
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
 from .http import json_get
+from .loadbalancerurl import LoadBalancedURL
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -50,48 +51,52 @@ _FILE_TYPES = [_CHUNK, _OVERLAP]
 
 _LOG = logging.getLogger(__name__)
 
+
 def _get_name(table):
     return table['json']['table']
 
-class ChunkMetadata():
-    """Manage metadata related to data to ingest (database, tables and chunk files)
+
+class ContributionMetadata():
+    """Manage metadata related to data to ingest:
+       database, tables and contribution files
     """
 
-    def __init__(self, path: str, servers: List[str] = []):
-        """Download metadata located at 'data_url' and describing database, tables
-           and chunks files, and then load it in a dictionnary.
+    def __init__(self, path: str, loadbalancers: List[str] = []):
+        """Retrieve and store metadata located at 'path' and describing:
+             - database
+             - tables
+             - contribution files
 
-           If servers is an empty list, then use local files for 'data_url'
+           Support for file:// and http(s):// protocols
+
+        Args:
+            path (str): Path to metadata
+            loadbalancers (List[str], optional): List of http(s) load balancer urls providing access to metadata. Defaults to [].
         """
-        if len(servers) != 0:
-            self.data_url = urllib.parse.urljoin(servers[0], path)
-        else:
-            self.data_url = path
 
-        self.metadata = json_get(self.data_url, _METADATA_FILENAME)
+        # Get scheme configuration
+        self.load_balanced_url = LoadBalancedURL(path, loadbalancers)
+
+        self.metadata_url = self.load_balanced_url.direct_url
+        self.metadata = json_get(self.metadata_url, _METADATA_FILENAME)
         _LOG.debug("Metadata: %s", self.metadata)
 
-        # Get HTTP configuration
-        url = urllib.parse.urlsplit(self.data_url, scheme="file")
-        self.url_path = url.path
-        self.http_servers = []
-        if url.scheme in ["http", "https"]:
-            self.http_servers = servers
-
         filename = self.metadata['database']
-        self.json_db = json_get(self.data_url, filename)
+        self.json_db = json_get(self.metadata_url, filename)
         self.database = self.json_db['database']
-        self.family = "layout_{}_{}".format(self.json_db['num_stripes'], self.json_db['num_sub_stripes'])
+        self.family = "layout_{}_{}".format(self.json_db['num_stripes'],
+                                            self.json_db['num_sub_stripes'])
         self._init_tables()
 
-    def get_chunk_files_info(self):
+    def get_contribution_files_info(self):
         """
-        Retrieve information about input chunk files (CSV formatted)
-        in order to insert them inside the chunk contribution queue
+        Retrieve information about input contribution files (CSV formatted)
+        in order to insert them inside the contribution files queue
 
         Returns a list of informations which will allow to retrieve these file
         each entry of the list is a tuple: (<path>, [chunk_ids], <is_overlap>, <table>)
-        where [chunk_ids] is the list of the chunks (XOR overlap) files available at a given path for a given table
+        where [chunk_ids] is the list of the contribution files (XOR overlap) available
+        at a given path for a given table and a given chunk
         """
         files_info = []
         for table in self.tables:
@@ -113,15 +118,7 @@ class ChunkMetadata():
         """
         Return the url of a file located on the input data server
         """
-        return urllib.parse.urljoin(self.data_url, path)
-
-    def get_loadbalancer_url(self, i):
-        http_servers_count = len(self.http_servers)
-        if http_servers_count == 0:
-            url = self.data_url
-        else:
-            url = urllib.parse.urljoin(self.http_servers[i%http_servers_count],self.url_path)
-        return url
+        return urllib.parse.urljoin(self.metadata_url, path)
 
     def get_tables_names(self):
         table_names = []
@@ -161,19 +158,19 @@ class ChunkMetadata():
             table = dict()
             table['data'] = t['data']
 
-            # True if overlap files are different from chunk files,
-            # this might occurs if some chunk or overlap files are empty
+            # True if overlap files are different from contribution files,
+            # this might occurs if some contribution or overlap files does not exists
             if self._has_extra_overlaps == False:
                 for data in table['data']:
                     if data.get(_OVERLAP):
                         self._has_extra_overlaps = True
             _LOG.debug("Table metadata: %s", t)
             schema_file = t['schema']
-            table['json'] = json_get(self.data_url, schema_file)
+            table['json'] = json_get(self.metadata_url, schema_file)
             idx_files = t['indexes']
             table['indexes'] = []
             for f in idx_files:
-                table['indexes'].append(json_get(self.data_url, f))
+                table['indexes'].append(json_get(self.metadata_url, f))
             if _is_director(table):
                 self.tables.insert(0, table)
             else:

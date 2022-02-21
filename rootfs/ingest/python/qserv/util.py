@@ -70,23 +70,24 @@ def get_default_logger(verbose):
     return logger
 
 
-
 def trailing_slash(url):
     if not url.endswith('/'):
         url += '/'
     return url
 
+
 class IngestConfig:
     """
     Configuration parameter for ingest client
     """
-    def __init__(self, yaml: str):
+    def __init__(self, yaml: dict):
         self.servers = yaml['ingest']['input']['servers']
         self.path = yaml['ingest']['input']['path']
         self.data_url = yaml['ingest']['qserv']['queue_url']
         self.query_url = yaml['ingest']['qserv']['query_url']
         self.queue_url = yaml['ingest']['qserv']['queue_url']
         self.replication_url = yaml['ingest']['qserv']['replication_url']
+
 
 class IngestConfigAction(argparse.Action):
     """

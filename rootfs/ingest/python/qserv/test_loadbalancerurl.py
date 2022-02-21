@@ -21,36 +21,50 @@
 # see <http://www.lsstcorp.org/LegalNotices/>.
 
 """
-Index table columns using replication service to Qserv
-
 @author  Fabrice Jammes, IN2P3
 """
 
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
-import argparse
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-from qserv.ingest import Ingester
-from qserv.metadata import ContributionMetadata
-import qserv.util as util
+from .loadbalancerurl import LoadBalancedURL
+import logging
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Create Qserv indexes (tables or secondary) "
-                                     "using Qserv replication service")
-    util.add_default_arguments(parser)
 
-    parser.add_argument("--secondary", "-s", action="store_true",
-                        help="Create secondary index, and do not index tables")
+# ---------------------------------
+# Local non-exported definitions --
+# ---------------------------------
 
-    args = parser.parse_args()
+_LOG = logging.getLogger(__name__)
 
-    logger = util.get_default_logger(args.verbose)
 
-    chunk_metadata = ContributionMetadata(args.config.path, args.config.servers)
-    ingester = Ingester(chunk_metadata, args.config.replication_url)
-    ingester.index(args.secondary)
+def test_get_loadbalancer_url():
+    path = "/lsst-dm/qserv-ingest/master/tests/data/cosmoDC2/"
+    servers = [
+        "https://server1",
+        "https://server2",
+        "https://server3"
+    ]
+    lb_url = LoadBalancedURL(path, servers)
+    url = lb_url.get()
+    assert (url == "https://server1/lsst-dm/qserv-ingest/master/tests/data/cosmoDC2/")
+    url = lb_url.get()
+    assert (url == "https://server2/lsst-dm/qserv-ingest/master/tests/data/cosmoDC2/")
 
+
+def test_join_loadbalancer_url():
+    path = "/lsst/data/"
+    filename = "file.txt"
+    servers = [
+        "https://server1",
+        "https://server2",
+        "https://server3"
+    ]
+    lb_url = LoadBalancedURL(path, servers)
+    lb_url.join(filename)
+    url = lb_url.get()
+    assert (url == f"https://server1{path}{filename}")

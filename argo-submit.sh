@@ -10,7 +10,11 @@ Usage: `basename $0` [options] path host [host ...]
   Available options:
     -h          this message
     -i          only create tables indexes
-    -b          only run query benchmark (override -i)
+    -b          only run query benchmark, take precedence over -i
+    -s          allow to run interactively some ingest workflow steps
+                take precedence over -i, -b
+                use 'kubectl exec -it <podname> -c main -- bash' to open a bash
+                in the worklow pod
 
   Launch ingest workflow
 
@@ -22,11 +26,12 @@ user=''
 entrypoint='main'
 
 # get the options
-while getopts hib c ; do
+while getopts hibs c ; do
     case $c in
 	    h) usage ; exit 0 ;;
 	    i) entrypoint="index-tables" ;;
 	    b) entrypoint="benchmark" ;;
+	    s) entrypoint="interactive" ;;
 	    \?) usage ; exit 2 ;;
     esac
 done
