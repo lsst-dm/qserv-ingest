@@ -26,11 +26,11 @@
 
 set -euxo pipefail
 
-
+ARGOPROJ_SRC=$(mktemp -d /tmp/argoproj-helper.XXXXXX)
 curl -sL https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 | bash -s -- --version v3.5.4
 
 ARGOPROJ_HELPER_VERSION="v1.0.1"
-git clone --depth 1 -b "$ARGOPROJ_HELPER_VERSION" --single-branch https://github.com/k8s-school/argoproj-helper.git /tmp/argoproj-helper
+git clone --depth 1 -b "$ARGOPROJ_HELPER_VERSION" --single-branch https://github.com/k8s-school/argoproj-helper.git "$ARGOPROJ_SRC"
 
-/tmp/argoproj-helper/workflow/install.sh -j
-/tmp/argoproj-helper/argo-client-install.sh
+"$ARGOPROJ_SRC"/workflow/install.sh -j
+"$ARGOPROJ_SRC"/argo-client-install.sh
