@@ -32,8 +32,6 @@ User-friendly client library for Qserv replication service.
 # -------------------------------
 from enum import Enum, auto
 import logging
-import sys
-from telnetlib import NOP
 import time
 from typing import List
 
@@ -137,8 +135,7 @@ class Ingester():
             self.repl_client.index_all_tables(json_indexes)
 
     def _ingest_transaction(self):
-        """
-        Get contributions from a queue server for a given database
+        """Get contributions from a queue server for a given database
         then ingest it inside Qserv,
         during a super-transation
 

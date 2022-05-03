@@ -7,7 +7,7 @@ ingest:
             - http://dataserver
             - http://dataserver
         # Path on server where input data is available
-        path: datasets/DC2/
+        path: datasets/case01/
     qserv:
         # TODO add support for secondary index generation method
         # Override the default value stored in input metadata

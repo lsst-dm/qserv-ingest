@@ -25,15 +25,14 @@
 
 set -euxo pipefail
 
+DIR=$(cd "$(dirname "$0")"; pwd -P)
+
 INGEST_DIR="."
 
 INSTANCE=$(kubectl get qservs.qserv.lsst.org -o=jsonpath='{.items[0].metadata.name}')
 
 echo "Run integration tests for Qserv"
-kubectl apply -f "$INGEST_DIR"/tests/dataserver.yaml
-POD=$(kubectl get pods -l app=dataserver -o jsonpath='{.items[0].metadata.name}')
-kubectl wait --for=condition=available --timeout=600s deployment dataserver
-kubectl cp ""$INGEST_DIR"/tests/data" "$POD":/www
+$DIR/start-dataserver.sh
 
 # Use qserv-ingest development version
 cp "$INGEST_DIR"/env.example.sh "$INGEST_DIR"/env.sh

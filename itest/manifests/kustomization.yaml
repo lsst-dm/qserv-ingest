@@ -1,0 +1,14 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+commonLabels:
+  app: qserv
+  org: lsst
+  tier: dataserver 
+
+resources:
+- dataserver.yaml
+
+images:
+- name: nginxinc/nginx-unprivileged
+  newTag: "1.20"

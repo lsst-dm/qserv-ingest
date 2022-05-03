@@ -41,7 +41,7 @@ import sqlalchemy
 from sqlalchemy import MetaData, Table
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.pool import StaticPool
-from sqlalchemy.sql import asc, select, delete, func
+from sqlalchemy.sql import select, func
 from .util import increase_wait_time
 
 # ---------------------------------
@@ -125,16 +125,13 @@ class QueueManager():
             _LOG.warn("Skip contributions queue load, because it is not empty")
             return
 
-        for (path, chunk_ids, is_overlap, table) in self.contribution_metadata.get_contribution_files_info():
-            for chunk_id in chunk_ids:
-                _LOG.debug("Add contribution (%s, %s, %s) to queue", chunk_id, table, is_overlap)
+        for table_contrib_spec in self.contribution_metadata.get_contribution_specs():
+            for contrib_spec in table_contrib_spec.get_contrib():
+                contrib_spec['database'] = self.contribution_metadata.database
+                _LOG.debug("Add contribution (%s) to queue", contrib_spec)
                 self.engine.execute(
                     self.queue.insert(),
-                    {"database": self.contribution_metadata.database,
-                     "chunk_id": chunk_id,
-                     "chunk_file_path": path,
-                     "is_overlap": is_overlap,
-                     "table": table})
+                    contrib_spec)
 
     def lock_contributions(self) -> list:
         """If some contributions are already locked in queue for current pod,
