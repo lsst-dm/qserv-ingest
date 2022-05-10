@@ -101,7 +101,7 @@ class Contribution():
         self.retry_attempts = 0
         self.retry_attempts_post = 0
         self.worker_url = f"http://{worker_host}:{worker_port}"
-        self.ingested = False
+        self.finished = False
 
     def __str__(self):
         return f"Contribution({self.__dict__})"
@@ -151,15 +151,17 @@ class Contribution():
 
         Returns:
             bool: True if contribution has been successfully ingested
+                  False if contribution is being ingested
         """
         status_url = urllib.parse.urljoin(self.worker_url,
                                           f"ingest/file-async/{self.request_id}")
         responseJson = Http().get(status_url)
 
         contrib_status = get_contribution_status(responseJson)
+        finished = False
         match contrib_status:
             case ContributionState.FINISHED:
-                self.ingested = True
+                finished = True
             case ContributionState.IN_PROGRESS:
                 _LOG.debug("_ingest_chunk: request %s in progress", self.request_id)
             case ContributionState.CANCELLED:
@@ -176,6 +178,6 @@ class Contribution():
                     self.retry_attempts += 1
                     self.request_id = None
                 else:
-                    raise ReplicationControllerError(f"Contribution {self}s should be in an error" +
+                    raise ReplicationControllerError(f"Contribution {self} should be in an error" +
                                                      f" state instead of {contrib_status}")
-        return self.ingested
+        return finished

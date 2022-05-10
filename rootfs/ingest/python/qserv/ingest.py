@@ -33,6 +33,7 @@ User-friendly client library for Qserv replication service.
 from enum import Enum, auto
 import logging
 import sys
+from telnetlib import NOP
 import time
 from typing import List
 
@@ -144,7 +145,7 @@ class Ingester():
         Returns:
         --------
         Integer number: 0 if no more contribution to load,
-                        1 if at least a contribution was loaded successfully
+                        1 if at least one contribution was loaded successfully
         """
 
         _LOG.info("Start ingest transaction")
@@ -187,42 +188,38 @@ class Ingester():
         Returns:
             bool: True if ingest has ran successfully
         """
-        finished = False
-        contrib_ingested_count = len(contributions)
-        while not finished:
-            idx_contribs_in_progress = []
-            for i, c in enumerate(contributions):
+        loop = True
+        contributions_total = len(contributions)
+        _LOG.debug('%s contributions to ingest during transaction %s',
+                   contributions_total, transaction_id)
+        while loop:
+            contribs_unfinished_count = 0
+            for _, c in enumerate(contributions):
                 # Ingest to start
-                if c.request_id is None:
+                current_time = time.strftime("%H:%M:%S", time.localtime())
+                if c.finished:
+                    pass
+                elif c.request_id is None:
                     # Ingest to start
-                    startedAt = time.strftime("%H:%M:%S", time.localtime())
-                    _LOG.debug('Contribution %s ingest started at %s', c, startedAt)
+                    _LOG.debug('Contribution %s ingest started at %s', c, current_time)
                     c.start_async(transaction_id)
-                    idx_contribs_in_progress.append(i)
+                    contribs_unfinished_count += 1
                 else:
-                    startedAt = time.strftime("%H:%M:%S", time.localtime())
-                    _LOG.debug('Contribution %s ingest monitored at %s', c, startedAt)
-                    if c.monitor():
+                    _LOG.debug('Contribution %s ingest monitored at %s', c, current_time)
+                    c.finished = c.monitor()
+                    if c.finished:
                         # Ingest successful
                         _LOG.debug('Contribution %s ingested', c)
                     else:
-                        # Ingest in progress
-                        idx_contribs_in_progress.append(i)
-            contribs_in_progress = []
-            for i in idx_contribs_in_progress:
-                contribs_in_progress.append(contributions[i])
-            contributions = contribs_in_progress
+                        contribs_unfinished_count += 1
 
-            contribs_in_progress_count = len(contributions)
-            if contribs_in_progress_count == 0:
-                finished = True
-            if not finished:
+            if contribs_unfinished_count == 0:
+                loop = False
+            else:
                 _LOG.debug('Processing %s contributions for transaction %s',
-                           contribs_in_progress_count, transaction_id)
+                           contribs_unfinished_count, transaction_id)
                 time.sleep(5)
 
-        _LOG.debug('%s contributions ingested during transaction %s',
-                   contrib_ingested_count, transaction_id)
         return True
 
     def transaction_helper(self, action: TransactionAction, trans_id: List[int] = None):
