@@ -1,10 +1,10 @@
-#!/usr/bin/env python
-
-# LSST Data Management System
-# Copyright 2014-2015 AURA/LSST.
+# This file is part of qserv.
 #
-# This product includes software developed by the
-# LSST Project (http://www.lsst.org/).
+# Developed for the LSST Data Management System.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,9 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-# You should have received a copy of the LSST License Statement and
-# the GNU General Public License along with this program.  If not,
-# see <http://www.lsstcorp.org/LegalNotices/>.
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 
 """
 Parse JSON responses from replication service
@@ -118,12 +118,12 @@ def get_indexes(responseJson, existing_indexes: typing.Dict[str, set] = dict()):
     return existing_indexes
 
 
-def get_location(responseJson: dict):
+def get_location(responseJson: dict) -> typing.Tuple[str, int]:
     """ Retrieve chunk location (worker host and port)
         inside json response issued by replication service
     """
     host = responseJson["location"]["http_host"]
-    port = responseJson["location"]["http_port"]
+    port = int(responseJson["location"]["http_port"])
     return (host, port)
 
 
@@ -145,15 +145,19 @@ def parse_database_status(responseJson, database, family):
 def raise_error(responseJson: dict, retry_attempts: int = -1, max_retry_attempts: int = 0) -> bool:
     """Check JSON response for error
 
-    Args:
+    Parameters
+    ----------
         responseJson (dict): response of a replication controller query, in json format
         retry_attempts (int, optional): number of current retry attempts. Defaults to -1.
         max_retry_attempts (int, optional): number of maximum retry attempts. Defaults to 0.
 
-    Raises:
-        Exception: in case of error in JSON response for a non-retriable request
+    Raises
+    ------
+        ReplicationControllerError
+            Raised in case of error in JSON response for a non-retriable request
 
-    Returns:
+    Returns
+    -------
         bool: True if retry_attempts < max_retry_attempts and if error allows retrying request
               False if no error in JSON response
     """

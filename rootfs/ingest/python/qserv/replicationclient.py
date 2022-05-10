@@ -1,10 +1,10 @@
-#!/usr/bin/env python
-
-# LSST Data Management System
-# Copyright 2014-2015 AURA/LSST.
+# This file is part of qserv.
 #
-# This product includes software developed by the
-# LSST Project (http://www.lsst.org/).
+# Developed for the LSST Data Management System.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,8 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-# You should have received a copy of the LSST License Statement and
-# the GNU General Public License along with this program.  If not,
-# see <http://www.lsstcorp.org/LegalNotices/>.
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """
 Client library for Qserv replication service.
@@ -33,8 +32,7 @@ from functools import lru_cache
 import logging
 import posixpath
 import socket
-import time
-from typing import Any
+from typing import Any, Tuple
 import urllib.parse
 
 # ----------------------------
@@ -55,12 +53,11 @@ _VERSION = 8
 class ReplicationClient():
     """
     Client for the Qserv ingest/replication service
+
+    Use chunk metadata and connection to concurrent queue manager
     """
 
     def __init__(self, repl_url):
-        """
-        Retrieve chunk metadata and connection to concurrent queue manager
-        """
 
         self.repl_url = trailing_slash(repl_url)
 
@@ -176,7 +173,7 @@ class ReplicationClient():
             responseJson = self.http.post(url, json_data, timeout=self.timeout_long)
             jsonparser.raise_error(responseJson)
 
-    def get_database_status(self, database, family):
+    def get_database_status(self, database: str, family: str) -> jsonparser.DatabaseStatus:
         url = urllib.parse.urljoin(self.repl_url, "replication/config")
         responseJson = self.http.get(url, timeout=self.timeout_short)
         jsonparser.raise_error(responseJson)
@@ -185,7 +182,24 @@ class ReplicationClient():
         return status
 
     @lru_cache(maxsize=None)
-    def get_chunk_location(self, chunk, database):
+    def get_chunk_location(self, chunk: str, database: str) -> Tuple[str, int]:
+        """Get the location of a chunk for a given database
+
+        Parameters
+        ----------
+        chunk : `str`
+            Chunk id.
+        database : `str`
+            Database name.
+
+        Returns
+        -------
+        x : `str`
+            Hostname of the qserv worker which store the chunk
+        y : `int`
+            Port number of the of replication service on
+            the qserv worker which store the chunk
+        """
         url = urllib.parse.urljoin(self.repl_url, "ingest/chunk")
         payload = {"chunk": chunk,
                    "database": database}

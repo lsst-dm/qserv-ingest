@@ -1,10 +1,10 @@
-#!/usr/bin/env python
-
-# LSST Data Management System
-# Copyright 2014-2015 AURA/LSST.
+# This file is part of qserv.
 #
-# This product includes software developed by the
-# LSST Project (http://www.lsst.org/).
+# Developed for the LSST Data Management System.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,8 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-# You should have received a copy of the LSST License Statement and
-# the GNU General Public License along with this program.  If not,
-# see <http://www.lsstcorp.org/LegalNotices/>.
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """
 Tools used by validation algorithms
@@ -29,14 +28,12 @@ Tools used by validation algorithms
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
-import sys
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
 from . import validator
 import os
-import pytest
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -44,18 +41,19 @@ import pytest
 
 _CWD = os.path.dirname(os.path.abspath(__file__))
 
+
 def test_dircmp():
     """ Check the function which compare files in two directories
     """
     dir1 = os.path.join(_CWD, "testdata", "dbbench-difffiles")
     dir2 = os.path.join(_CWD, "testdata", "dbbench-expected")
     result = validator._dircmp(dir1, dir2)
-    assert (result == False)
+    assert result == False
 
     dir1 = os.path.join(_CWD, "testdata", "dbbench-diffdata")
     result = validator._dircmp(dir1, dir2)
-    assert (result == False)
+    assert result == False
 
     dir1 = os.path.join(_CWD, "testdata", "dbbench-ok")
     result = validator._dircmp(dir1, dir2)
-    assert (result == True)
+    assert result == True

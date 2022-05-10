@@ -1,5 +1,6 @@
+/argo-linux-amd64
 /env.sh
-telepresence.log
+/install_kustomize.sh
+/telepresence.log
 /test-all.sh
 /.vscode
-/argo-linux-amd64

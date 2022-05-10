@@ -1,10 +1,10 @@
-#!/usr/bin/env python
-
-# LSST Data Management System
-# Copyright 2014-2015 AURA/LSST.
+# This file is part of qserv.
 #
-# This product includes software developed by the
-# LSST Project (http://www.lsst.org/).
+# Developed for the LSST Data Management System.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,8 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-# You should have received a copy of the LSST License Statement and
-# the GNU General Public License along with this program.  If not,
-# see <http://www.lsstcorp.org/LegalNotices/>.
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """
 @author  Fabrice Jammes, IN2P3
@@ -51,12 +50,13 @@ def test_get_loadbalancer_url():
     ]
     lb_url = LoadBalancedURL(path, servers)
     url = lb_url.get()
-    assert (url == "https://server1/lsst-dm/qserv-ingest/master/tests/data/cosmoDC2/")
+    assert url == "https://server1/lsst-dm/qserv-ingest/master/tests/data/cosmoDC2/"
     url = lb_url.get()
-    assert (url == "https://server2/lsst-dm/qserv-ingest/master/tests/data/cosmoDC2/")
+    assert url == "https://server2/lsst-dm/qserv-ingest/master/tests/data/cosmoDC2/"
 
 
 def test_join_loadbalancer_url():
+    base_path = ""
     path = "/lsst/data/"
     filename = "file.txt"
     servers = [
@@ -64,7 +64,6 @@ def test_join_loadbalancer_url():
         "https://server2",
         "https://server3"
     ]
-    lb_url = LoadBalancedURL(path, servers)
-    lb_url.join(filename)
-    url = lb_url.get()
-    assert (url == f"https://server1{path}{filename}")
+    lb_url = LoadBalancedURL(base_path, servers)
+    new_url = lb_url.join(path, filename)
+    assert new_url.get() == f"https://server1{path}{filename}"

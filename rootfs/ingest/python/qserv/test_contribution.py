@@ -1,10 +1,10 @@
-#!/usr/bin/env python
-
-# LSST Data Management System
-# Copyright 2014-2015 AURA/LSST.
+# This file is part of qserv.
 #
-# This product includes software developed by the
-# LSST Project (http://www.lsst.org/).
+# Developed for the LSST Data Management System.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,8 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-# You should have received a copy of the LSST License Statement and
-# the GNU General Public License along with this program.  If not,
-# see <http://www.lsstcorp.org/LegalNotices/>.
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """
 Test Contribution class
@@ -42,32 +41,31 @@ from .loadbalancerurl import LoadBalancedURL
 # ---------------------------------
 _LOG = logging.getLogger(__name__)
 
-PATH = "/lsst/data/"
-SERVERS = [
+_PATH = "/lsst/data/"
+_SERVERS = [
     "https://server1",
     "https://server2",
     "https://server3"
 ]
-LB_URL = LoadBalancedURL(PATH, SERVERS)
+_LB_URL = LoadBalancedURL(_PATH, _SERVERS)
 
-_PARAMS = {"host": "host",
-           "port": 8080,
+_PARAMS = {"worker_host": "host",
+           "worker_port": 8080,
            "chunk_id": 1,
            "path": "step1_1",
            "table": "mytable",
            "is_overlap": True,
-           "load_balanced_base_url": LB_URL}
+           "load_balanced_base_url": _LB_URL}
 
 
 def test_init():
-    params = _PARAMS
-    contribution = Contribution(**params)
+    contribution = Contribution(**_PARAMS)
 
     url = "https://server{}/lsst/data/step1_1/chunk_1_overlap.txt"
-    assert(contribution.load_balanced_url.get() == url.format(1))
-    assert(contribution.load_balanced_url.get() == url.format(2))
-    assert(contribution.load_balanced_url.get() == url.format(3))
-    assert(contribution.load_balanced_url.get() == url.format(1))
+    assert contribution.load_balanced_url.get() == url.format(1)
+    assert contribution.load_balanced_url.get() == url.format(2)
+    assert contribution.load_balanced_url.get() == url.format(3)
+    assert contribution.load_balanced_url.get() == url.format(1)
 
 
 def test_print():
@@ -78,12 +76,14 @@ def test_print():
 
     params = _PARAMS
 
-    params.pop('load_balanced_base_url')
-    params['load_balanced_url'] = c.load_balanced_url
-    params['request_id'] = None
-    params['retry_attempts'] = 0
-    params['retry_attempts_post'] = 0
-    params['worker_url'] = 'http://host:8080'
-    params['ingested'] = False
+    params.pop("worker_host")
+    params.pop("worker_port")
+    params.pop("load_balanced_base_url")
+    params["load_balanced_url"] = c.load_balanced_url
+    params["request_id"] = None
+    params["retry_attempts"] = 0
+    params["retry_attempts_post"] = 0
+    params["worker_url"] = "http://host:8080"
+    params["finished"] = False
     expected_string = f"Contribution({params})"
-    assert(expected_string == str(c))
+    assert expected_string == str(c)

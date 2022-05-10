@@ -1,10 +1,10 @@
-#!/usr/bin/env python
-
-# LSST Data Management System
-# Copyright 2014-2015 AURA/LSST.
+# This file is part of qserv.
 #
-# This product includes software developed by the
-# LSST Project (http://www.lsst.org/).
+# Developed for the LSST Data Management System.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,8 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-# You should have received a copy of the LSST License Statement and
-# the GNU General Public License along with this program.  If not,
-# see <http://www.lsstcorp.org/LegalNotices/>.
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """
 Tools used by ingest algorithm
@@ -68,16 +67,16 @@ def test_parse_not_finished_transaction():
         '"error": "", "error_ext": {}, "success": 1}')
     jsondata = json.loads(jsonstring)
     transactions = jsonparser.filter_transactions(jsondata, _DATABASE, [jsonparser.TransactionState.FINISHED])
-    assert (len(transactions) == 5)
+    assert len(transactions) == 5
 
     transactions = jsonparser.filter_transactions(jsondata, _DATABASE, [jsonparser.TransactionState.STARTED])
-    assert (len(transactions) == 1)
+    assert len(transactions) == 1
 
     transactions = jsonparser.filter_transactions(jsondata, _DATABASE, [jsonparser.TransactionState.ABORTED])
-    assert (len(transactions) == 2)
+    assert len(transactions) == 2
 
 
 def test_parse_database_status():
     responseJson = http.json_get(_CWD, "replicationconfig.json")
     status = jsonparser.parse_database_status(responseJson, _DATABASE, _FAMILY)
-    assert(status == jsonparser.DatabaseStatus.REGISTERED_NOT_PUBLISHED)
+    assert status == jsonparser.DatabaseStatus.REGISTERED_NOT_PUBLISHED

@@ -1,10 +1,10 @@
-#!/usr/bin/env python
-
-# LSST Data Management System
-# Copyright 2014-2015 AURA/LSST.
+# This file is part of qserv.
 #
-# This product includes software developed by the
-# LSST Project (http://www.lsst.org/).
+# Developed for the LSST Data Management System.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,9 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-# You should have received a copy of the LSST License Statement and
-# the GNU General Public License along with this program.  If not,
-# see <http://www.lsstcorp.org/LegalNotices/>.
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 
 """
 Helper for ingest contribution management
@@ -55,12 +55,14 @@ def build_contributions(contributions_locked: list,
                         load_balanced_base_url: LoadBalancedURL) -> list:
     """Build list of contributions to be ingested
 
-    Args:
+    Parameters
+    ----------
         contributions_locked (_type_): _description_
         repl_client (_type_): _description_
         load_balanced_url (list): _description_
 
-    Returns:
+    Returns
+    -------
         list: contributions to be ingested
 
     """
@@ -81,13 +83,14 @@ def build_contributions(contributions_locked: list,
 
 class Contribution():
     """Represent an ingest contribution
+
+    Store input parameters for replication REST api located at
+    http://<worker_host:worker_port>/ingest/file-async
+
     """
 
-    def __init__(self, worker_host, worker_port, chunk_id, path, table, is_overlap,
-                 load_balanced_base_url):
-        """Store input parameters for replication REST api located at
-           http://<worker_host:worker_port>/ingest/file-async
-        """
+    def __init__(self, worker_host: str, worker_port: int, chunk_id: int, path: str,
+                 table: str, is_overlap: bool, load_balanced_base_url: str):
         self.chunk_id = chunk_id
         self.path = path
         self.table = table
@@ -111,10 +114,12 @@ class Contribution():
            Raise an exception if the query fails after a fixed number of attempts
            (see MAX_RETRY_ATTEMPTS constant)
 
-        Args:
+        Parameters
+        ----------
             transaction_id (int): id of the transaction in which the contribution will be ingested
 
-        Returns:
+        Returns
+        -------
             None request id, returned by the replication controller
         """
         url = urllib.parse.urljoin(self.worker_url, "ingest/file-async")
@@ -146,10 +151,16 @@ class Contribution():
            https://confluence.lsstcorp.org/display/DM/Ingest%3A+9.5.3.+Asynchronous+Protocol
            Propagate an exception if the query fails after a fixed number of attempts
 
-        Raises:
-            Exception: in case of error during contribution ingest
+        Raises
+        ------
+            IngestError
+                Raised in case of error during contribution ingest
+            ReplicationControllerError
+                Raised for unmanaged contribution state or non-retriable errors from R-I system
 
-        Returns:
+
+        Returns
+        -------
             bool: True if contribution has been successfully ingested
                   False if contribution is being ingested
         """

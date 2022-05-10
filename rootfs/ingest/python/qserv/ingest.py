@@ -1,10 +1,10 @@
-#!/usr/bin/env python
-
-# LSST Data Management System
-# Copyright 2014-2015 AURA/LSST.
+# This file is part of qserv.
 #
-# This product includes software developed by the
-# LSST Project (http://www.lsst.org/).
+# Developed for the LSST Data Management System.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,9 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-# You should have received a copy of the LSST License Statement and
-# the GNU General Public License along with this program.  If not,
-# see <http://www.lsstcorp.org/LegalNotices/>.
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 
 """
 User-friendly client library for Qserv replication service.
@@ -189,13 +189,11 @@ class Ingester():
             bool: True if ingest has ran successfully
         """
         loop = True
-        contributions_total = len(contributions)
         _LOG.debug('%s contributions to ingest during transaction %s',
-                   contributions_total, transaction_id)
+                   len(contributions), transaction_id)
         while loop:
             contribs_unfinished_count = 0
             for _, c in enumerate(contributions):
-                # Ingest to start
                 current_time = time.strftime("%H:%M:%S", time.localtime())
                 if c.finished:
                     pass
@@ -208,8 +206,8 @@ class Ingester():
                     _LOG.debug('Contribution %s ingest monitored at %s', c, current_time)
                     c.finished = c.monitor()
                     if c.finished:
-                        # Ingest successful
-                        _LOG.debug('Contribution %s ingested', c)
+                        # Ingest successfully loaded (i.e. in FINISHED state)
+                        _LOG.debug('Contribution %s successfully loaded', c)
                     else:
                         contribs_unfinished_count += 1
 
