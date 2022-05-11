@@ -62,7 +62,7 @@ Get the project
 
 .. code:: sh
 
-    RELEASE="2021.05.02"
+    RELEASE="2022.1.1-rc1"
     git clone --single-branch -b "$RELEASE" --depth 1 https://github.com/lsst-dm/qserv-ingest
     cd qserv-ingest
 
@@ -97,8 +97,23 @@ Launch the workflow using `Argo <https://argoproj.github.io/argo/>`__
 Then adapt `example/query.sh` to launch a few queries against freshly ingested data.
 
 
-Deleting an existing database
-=============================
+Delete an existing database
+===========================
 
 Please refer to `Qserv Replication Service documentation <https://confluence.lsstcorp.org/display/DM/Ingest%3A+11.1.2.3.+Delete+a+database+or+a+table>`__,
 and then adapt example script `example/delete_database.sh`.
+
+
+Run interactively a workflow step
+=================================
+
+
+.. code:: sh
+
+    ./argo-submit.sh -s
+    # Retrive the pod name for the 'interactive' step
+    argo get @latest
+    # Open a shell inside it
+    kubectl exec -it qserv-ingest-2hrcf-595146013 -c main bash
+    # All benchmark step are available here:
+    ls /ingest/bin/

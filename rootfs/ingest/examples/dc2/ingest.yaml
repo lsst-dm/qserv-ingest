@@ -6,7 +6,7 @@ ingest:
         # Use file:// as first element in list when using local data
         servers:
             - http://dataserver
-            - http://dataserver
+            - http://dataserver.default
         path: DC2/
     qserv:
         # Override the default value stored in input metadata

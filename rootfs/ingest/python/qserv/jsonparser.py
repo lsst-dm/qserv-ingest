@@ -1,10 +1,10 @@
-#!/usr/bin/env python
-
-# LSST Data Management System
-# Copyright 2014-2015 AURA/LSST.
+# This file is part of qserv.
 #
-# This product includes software developed by the
-# LSST Project (http://www.lsst.org/).
+# Developed for the LSST Data Management System.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,9 @@
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
 #
-# You should have received a copy of the LSST License Statement and
-# the GNU General Public License along with this program.  If not,
-# see <http://www.lsstcorp.org/LegalNotices/>.
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 
 """
 Parse JSON responses from replication service
@@ -36,23 +36,37 @@ import typing
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-from jsonpath_ng import jsonpath
 from jsonpath_ng.ext import parse
+
 
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
+from .exception import ReplicationControllerError
 _LOG = logging.getLogger(__name__)
+
+
+class ContributionState(Enum):
+    CANCELLED = "CANCELLED"
+    FINISHED = "FINISHED"
+    IN_PROGRESS = "IN_PROGRESS"
+    CREATE_FAILED = "CREATE_FAILED"
+    START_FAILED = "START_FAILED"
+    READ_FAILED = "READ_FAILED"
+    LOAD_FAILED = "LOAD_FAILED"
+
 
 class DatabaseStatus(Enum):
     NOT_REGISTERED = -1
     REGISTERED_NOT_PUBLISHED = 0
     PUBLISHED = 1
 
+
 class TransactionState(Enum):
     ABORTED = "ABORTED"
     STARTED = "STARTED"
     FINISHED = "FINISHED"
+
 
 def filter_transactions(responseJson, database, states):
     """Filter transactions by state inside json response issued by replication service
@@ -64,13 +78,36 @@ def filter_transactions(responseJson, database, states):
         _LOG.debug(f"Transactions for database {database}")
         for trans in transactions:
             _LOG.debug("  id: %s state: %s",
-                        trans['id'], trans['state'])
+                       trans['id'], trans['state'])
             state = TransactionState(trans['state'])
             if state in states:
                 transaction_ids.append(trans['id'])
     return transaction_ids
 
-def get_indexes(responseJson, existing_indexes: typing.Dict[str, set]=dict()):
+
+def get_contribution_status(responseJson: dict) -> ContributionState:
+    """ Retrieve contribution status
+    """
+    if responseJson['contrib']['status'] == ContributionState.FINISHED.value:
+        return ContributionState.FINISHED
+    elif responseJson['contrib']['status'] == ContributionState.IN_PROGRESS.value:
+        return ContributionState.IN_PROGRESS
+    elif responseJson['contrib']['status'] == ContributionState.CANCELLED.value:
+        return ContributionState.CANCELLED
+    elif responseJson['contrib']['status'] == ContributionState.CREATE_FAILED.value:
+        return ContributionState.CREATE_FAILED
+    elif responseJson['contrib']['status'] == ContributionState.START_FAILED.value:
+        return ContributionState.START_FAILED
+    elif responseJson['contrib']['status'] == ContributionState.READ_FAILED.value:
+        return ContributionState.READ_FAILED
+    elif responseJson['contrib']['status'] == ContributionState.LOAD_FAILED.value:
+        return ContributionState.LOAD_FAILED
+    else:
+        raise ReplicationControllerError("Unknown contribution status:" +
+                                         f"{responseJson['contrib']['status']}")
+
+
+def get_indexes(responseJson, existing_indexes: typing.Dict[str, set] = dict()):
     for worker, data in responseJson['workers'].items():
         table = list(data.keys())[0]
         for idx_data in data[table]:
@@ -80,12 +117,15 @@ def get_indexes(responseJson, existing_indexes: typing.Dict[str, set]=dict()):
                 existing_indexes[table] = set(idx_data)
     return existing_indexes
 
-def get_location(responseJson):
-    """ Retrieve chunk location (host and port) inside json response issued by replication service
+
+def get_location(responseJson: dict) -> typing.Tuple[str, int]:
+    """ Retrieve chunk location (worker host and port)
+        inside json response issued by replication service
     """
     host = responseJson["location"]["http_host"]
-    port = responseJson["location"]["http_port"]
+    port = int(responseJson["location"]["http_port"])
     return (host, port)
+
 
 def parse_database_status(responseJson, database, family):
     jsonpath_expr = parse('$.config.databases[?(database="{}" & family_name="{}")].is_published'.format(database, family))
@@ -101,13 +141,31 @@ def parse_database_status(responseJson, database, family):
         raise ValueError("Unexpected answer from replication service", responseJson)
     return status
 
-def raise_error(responseJson, check_retry = False):
+
+def raise_error(responseJson: dict, retry_attempts: int = -1, max_retry_attempts: int = 0) -> bool:
     """Check JSON response for error
-       return True if check_retry = True and if error allows retrying request
-       return False if no error in JSON response
-       raise exception in case of error in JSON response for a non-retriable request
+
+    Parameters
+    ----------
+        responseJson (dict): response of a replication controller query, in json format
+        retry_attempts (int, optional): number of current retry attempts. Defaults to -1.
+        max_retry_attempts (int, optional): number of maximum retry attempts. Defaults to 0.
+
+    Raises
+    ------
+        ReplicationControllerError
+            Raised in case of error in JSON response for a non-retriable request
+
+    Returns
+    -------
+        bool: True if retry_attempts < max_retry_attempts and if error allows retrying request
+              False if no error in JSON response
     """
-    retry = False
+    if retry_attempts < max_retry_attempts:
+        check_retry = True
+    else:
+        check_retry = False
+    is_error_retryable = False
     if not responseJson["success"]:
         _LOG.critical(responseJson["error"])
         error_ext = ''
@@ -115,12 +173,12 @@ def raise_error(responseJson, check_retry = False):
             _LOG.critical(responseJson["error_ext"])
             error_ext = responseJson["error_ext"]
             if check_retry:
-                retry = _check_retry(error_ext)
-        if not retry:
-            raise Exception(
-            'Error in JSON response',
-            responseJson["error"], error_ext)
-    return retry
+                is_error_retryable = _check_retry(error_ext)
+        if not is_error_retryable:
+            raise ReplicationControllerError('Error in JSON response',
+                                             responseJson["error"], error_ext)
+    return is_error_retryable
+
 
 def _check_retry(error_ext):
     if "retry_allowed" in error_ext and error_ext["retry_allowed"] != 0:
@@ -128,4 +186,3 @@ def _check_retry(error_ext):
     else:
         retry = False
     return retry
-

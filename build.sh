@@ -4,7 +4,7 @@
 
 # @author  Fabrice Jammes
 
-set -euxo pipefail
+set -euo pipefail
 
 DIR=$(cd "$(dirname "$0")"; pwd -P)
 . ./env.build.sh

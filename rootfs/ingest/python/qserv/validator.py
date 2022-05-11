@@ -29,14 +29,12 @@ Send SQL queries in order to validate successful ingest for a dataset
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
-from contextlib import redirect_stdout
 import difflib
 import filecmp
 import logging
 import os
 from pathlib import Path
 import shutil
-import socket
 import subprocess
 import time
 
@@ -44,10 +42,10 @@ import time
 # Imports for other modules --
 # ----------------------------
 import sqlalchemy
-from sqlalchemy import event, MetaData, Table
+from sqlalchemy import event, MetaData
 from sqlalchemy.engine import Engine
 from sqlalchemy.engine.url import make_url
-from sqlalchemy.sql import select, delete, func
+from sqlalchemy.sql import select, func
 
 # ----------------------------
 # Imports for other modules --
@@ -68,15 +66,16 @@ _LOG = logging.getLogger(__name__)
 
 @event.listens_for(Engine, "before_cursor_execute")
 def before_cursor_execute(conn, cursor, statement,
-                        parameters, context, executemany):
+                          parameters, context, executemany):
     conn.info.setdefault('query_start_time', []).append(time.time())
     _LOG.debug("Query: %s", statement)
 
 @event.listens_for(Engine, "after_cursor_execute")
 def after_cursor_execute(conn, cursor, statement,
-                        parameters, context, executemany):
+                         parameters, context, executemany):
     total = time.time() - conn.info['query_start_time'].pop(-1)
     _LOG.debug("Query total time: %f", total)
+
 
 def _dircmp(dir1: str, dir2: str) -> bool:
     """
@@ -98,10 +97,10 @@ def _dircmp(dir1: str, dir2: str) -> bool:
         expected_result = open(query_expected_result, "r")
         delta = difflib.unified_diff(result.readlines(), expected_result.readlines())
         _LOG.info("Analyze query %s results", f)
-        i=0
-        for l in delta:
-            i+=1
-            _LOG.warning(l)
+        i = 0
+        for line in delta:
+            i += 1
+            _LOG.warning(line)
         if i != 0:
             has_same_files = False
     return has_same_files
@@ -113,22 +112,26 @@ class Validator():
        - lauch SQL query against currently ingested database
     """
 
-    def __init__(self, chunk_metadata: metadata.ChunkMetadata,  query_url: str, sqlEngine: bool=False):
-        self.chunk_meta = chunk_metadata
+    def __init__(self, contribution_metadata: metadata.ContributionMetadata,
+                 query_url: str,
+                 sqlEngine: bool = False):
+        self.contribution_metadata = contribution_metadata
 
         self.query_url = util.trailing_slash(query_url)
 
         if sqlEngine:
             self._initSqlEngine()
 
-
     def _initSqlEngine(self):
-        database = self.chunk_meta.database
+        database = self.contribution_metadata.database
         qserv_url = make_url(self.query_url)
-        if not qserv_url.database and qserv_url.drivername=="mysql":
-            qserv_db_url = qserv_url.set(drivername = "mariadb+mariadbconnector", database = database)
+        if not qserv_url.database and qserv_url.drivername == "mysql":
+            qserv_db_url = qserv_url.set(drivername="mariadb+mariadbconnector",
+                                         database=database)
         else:
-            raise ValueError("Database field in Qserv url must be empty and driver must be mysql: %s", qserv_url)
+            raise ValueError("Database field in Qserv url must be empty" +
+                             " and driver must be mysql: %s",
+                             qserv_url)
         self.engine = sqlalchemy.create_engine(qserv_db_url)
         _LOG.debug("Qserv URL: %s", qserv_db_url)
 
@@ -136,7 +139,6 @@ class Validator():
         db_meta.reflect(bind=self.engine)
         self.tables = db_meta.sorted_tables
         _LOG.info("Database: %s, tables: %s", database, self.tables)
-
 
     def query(self):
         """
@@ -150,14 +152,13 @@ class Validator():
             _LOG.info("Query result: %s", row_count)
 
     def _download_to_workdir(self, file: str) -> str:
-        url = self.chunk_meta.get_file_url(file)
+        url = self.contribution_metadata.get_file_url(file)
         if not http.file_exists(url):
             raise FileNotFoundError("File %s does not exist", url)
 
         local_file_path = os.path.join(_WORKDIR, file)
         http.download_file(url, local_file_path)
         return local_file_path
-
 
     def benchmark(self) -> bool:
         """
@@ -170,12 +171,13 @@ class Validator():
         Path(dbbench_results_path).mkdir(parents=True, exist_ok=True)
         dbbench_log = os.path.join(_WORKDIR, "dbbench.log")
 
-        cmd = ['dbbench', '--url', self.query_url, '--database', self.chunk_meta.database, dbbench_config]
+        cmd = ['dbbench', '--url', self.query_url,
+               '--database', self.contribution_metadata.database, dbbench_config]
         _LOG.info("Run command: %s", ' '.join(cmd))
         with open(dbbench_log, 'wb') as f:
             process = subprocess.Popen(cmd, shell=False,
-                           stdout=subprocess.PIPE,
-                           stderr=subprocess.STDOUT)
+                                       stdout=subprocess.PIPE,
+                                       stderr=subprocess.STDOUT)
             for c in iter(process.stdout.readline, b''):
                 f.write(c)
 
@@ -188,11 +190,6 @@ class Validator():
         dbbench_expected_results_tgz = self._download_to_workdir(_TESTBENCH_EXPECTED_RESULTS)
         shutil.unpack_archive(dbbench_expected_results_tgz, _WORKDIR)
 
-
         dbbench_expected_results_path = os.path.join(_WORKDIR, "dbbench-expected")
 
         return _dircmp(dbbench_results_path, dbbench_expected_results_path)
-
-
-
-

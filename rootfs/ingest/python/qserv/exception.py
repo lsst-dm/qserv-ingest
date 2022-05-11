@@ -19,41 +19,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+
 """
-Tools used by validation algorithms
+Manage custom error
 
 @author  Fabrice Jammes, IN2P3
 """
 
-# -------------------------------
-#  Imports of standard modules --
-# -------------------------------
 
-# ----------------------------
-# Imports for other modules --
-# ----------------------------
-from . import validator
-import os
-
-# ---------------------------------
-# Local non-exported definitions --
-# ---------------------------------
-
-_CWD = os.path.dirname(os.path.abspath(__file__))
-
-
-def test_dircmp():
-    """ Check the function which compare files in two directories
+class IngestError(Exception):
+    """Error related to ingest client
     """
-    dir1 = os.path.join(_CWD, "testdata", "dbbench-difffiles")
-    dir2 = os.path.join(_CWD, "testdata", "dbbench-expected")
-    result = validator._dircmp(dir1, dir2)
-    assert result == False
+    pass
 
-    dir1 = os.path.join(_CWD, "testdata", "dbbench-diffdata")
-    result = validator._dircmp(dir1, dir2)
-    assert result == False
 
-    dir1 = os.path.join(_CWD, "testdata", "dbbench-ok")
-    result = validator._dircmp(dir1, dir2)
-    assert result == True
+class ReplicationControllerError(Exception):
+    """Error related to replication controller response
+    """
+    pass

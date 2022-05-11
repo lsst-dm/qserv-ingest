@@ -7,7 +7,7 @@ RUN go get github.com/lsst-dm/dbbench@163e978def488c6600c22fffe3ea80c4713f9642
 FROM python:3.10.2-bullseye as ingest-deps
 LABEL org.opencontainers.image.authors="fabrice.jammes@in2p3.fr"
 
-RUN pip3 install --upgrade pip==21.3.1
+RUN pip3 install --upgrade pip==22.0.4
 
 
 # libmariadb3 and mariadb-python are required for SQLalchemy to work with mysql-proxy+mariadb:1:10.6.5
@@ -22,7 +22,7 @@ RUN update-ca-certificates
 
 COPY --from=dbbench /go/bin/dbbench /usr/local/bin
 
-RUN pip3 install jsonpath-ng==1.5.2 \
+RUN python3 -m pip install jsonpath-ng==1.5.2 \
     mariadb==1.0.9 \
     mysqlclient==2.1.0 PyYAML==5.3.1  \
     requests==2.25.1 SQLAlchemy==1.4.31
@@ -36,3 +36,7 @@ ENV PATH="/ingest/bin:${PATH}"
 
 FROM ingest-deps
 COPY rootfs/ingest /ingest
+
+# TODO build an image with static analysis tools
+# RUN python3 -m pip install mypy==0.950
+

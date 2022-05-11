@@ -20,23 +20,19 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """
-Tools used by ingest algorithm
-
 @author  Fabrice Jammes, IN2P3
 """
 
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
-import logging
-import os
-import pytest
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-import requests
-from . import http
+from .loadbalancerurl import LoadBalancedURL
+import logging
+
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -44,28 +40,30 @@ from . import http
 
 _LOG = logging.getLogger(__name__)
 
-_CWD = os.path.dirname(os.path.abspath(__file__))
+
+def test_get_loadbalancer_url():
+    path = "/lsst-dm/qserv-ingest/master/tests/data/cosmoDC2/"
+    servers = [
+        "https://server1",
+        "https://server2",
+        "https://server3"
+    ]
+    lb_url = LoadBalancedURL(path, servers)
+    url = lb_url.get()
+    assert url == "https://server1/lsst-dm/qserv-ingest/master/tests/data/cosmoDC2/"
+    url = lb_url.get()
+    assert url == "https://server2/lsst-dm/qserv-ingest/master/tests/data/cosmoDC2/"
 
 
-def test_file_exists():
-    """Check if a file exists on a remote HTTP server
-    """
-    assert http.file_exists("https://www.k8s-school.fr/team/index.html")
-    assert not http.file_exists("https://www.k8s-school.fr/team/false.html")
-
-
-def test_json_get():
-    data = http.json_get(_CWD, "servers.json")
-    assert data['http_servers'][0] == "https://server1"
-    assert data['http_servers'][2] == "https://server3"
-
-
-def test_retry():
-    """Check if a retry occurs for a non-existing DNS entry
-    This might occurs if k8s DNS fails intermittently
-    """
-    _http = http.Http()
-    with pytest.raises(requests.ConnectionError) as e:
-        _http.get(url="http://server.not-exists",
-                  payload=None,
-                  auth=False)
+def test_join_loadbalancer_url():
+    base_path = ""
+    path = "/lsst/data/"
+    filename = "file.txt"
+    servers = [
+        "https://server1",
+        "https://server2",
+        "https://server3"
+    ]
+    lb_url = LoadBalancedURL(base_path, servers)
+    new_url = lb_url.join(path, filename)
+    assert new_url.get() == f"https://server1{path}{filename}"
