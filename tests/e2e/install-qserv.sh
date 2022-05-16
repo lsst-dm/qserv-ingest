@@ -6,7 +6,7 @@
 
 set -euxo pipefail
 
-OPERATOR_VERSION="2022.1.1-rc1-17-g1c624a8"
+OPERATOR_VERSION="2022.5.1-rc1"
 OPERATOR_DIR="/tmp/qserv-operator"
 if [ -d "$OPERATOR_DIR" ]; then
   rm -rf "$OPERATOR_DIR"
