@@ -43,8 +43,7 @@ _CWD = os.path.dirname(os.path.abspath(__file__))
 
 
 def test_dircmp():
-    """ Check the function which compare files in two directories
-    """
+    """Check the function which compare files in two directories"""
     dir1 = os.path.join(_CWD, "testdata", "dbbench-difffiles")
     dir2 = os.path.join(_CWD, "testdata", "dbbench-expected")
     result = validator._dircmp(dir1, dir2)

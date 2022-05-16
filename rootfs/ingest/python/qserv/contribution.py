@@ -35,7 +35,7 @@ import urllib.parse
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-from .exception import IngestError,  ReplicationControllerError
+from .exception import IngestError, ReplicationControllerError
 from .http import Http
 from .jsonparser import ContributionState, get_contribution_status, raise_error
 from .metadata import LoadBalancedURL
@@ -50,9 +50,11 @@ _LOG = logging.getLogger(__name__)
 MAX_RETRY_ATTEMPTS = 3
 
 
-def build_contributions(contributions_locked: list,
-                        repl_client: ReplicationClient,
-                        load_balanced_base_url: LoadBalancedURL) -> list:
+def build_contributions(
+    contributions_locked: list,
+    repl_client: ReplicationClient,
+    load_balanced_base_url: LoadBalancedURL,
+) -> list:
     """Build list of contributions to be ingested
 
     Parameters
@@ -71,17 +73,14 @@ def build_contributions(contributions_locked: list,
         (database, chunk_id, path, is_overlap, table) = contribution
 
         (host, port) = repl_client.get_chunk_location(chunk_id, database)
-        contribution = Contribution(host, port,
-                                    chunk_id,
-                                    path,
-                                    table,
-                                    is_overlap,
-                                    load_balanced_base_url)
+        contribution = Contribution(
+            host, port, chunk_id, path, table, is_overlap, load_balanced_base_url
+        )
         contributions.append(contribution)
     return contributions
 
 
-class Contribution():
+class Contribution:
     """Represent an ingest contribution
 
     Store input parameters for replication REST api located at
@@ -89,8 +88,16 @@ class Contribution():
 
     """
 
-    def __init__(self, worker_host: str, worker_port: int, chunk_id: int, path: str,
-                 table: str, is_overlap: bool, load_balanced_base_url: str):
+    def __init__(
+        self,
+        worker_host: str,
+        worker_port: int,
+        chunk_id: int,
+        path: str,
+        table: str,
+        is_overlap: bool,
+        load_balanced_base_url: str,
+    ):
         self.chunk_id = chunk_id
         self.path = path
         self.table = table
@@ -124,26 +131,34 @@ class Contribution():
         """
         url = urllib.parse.urljoin(self.worker_url, "ingest/file-async")
         _LOG.debug("start_async(): url: %s", url)
-        payload = {"transaction_id": transaction_id,
-                   "table": self.table,
-                   "column_separator": ",",
-                   "chunk": self.chunk_id,
-                   "overlap": int(self.is_overlap),
-                   "url": self.load_balanced_url.get()}
+        payload = {
+            "transaction_id": transaction_id,
+            "table": self.table,
+            "column_separator": ",",
+            "chunk": self.chunk_id,
+            "overlap": int(self.is_overlap),
+            "url": self.load_balanced_url.get(),
+        }
         _LOG.debug("start_async(): payload: %s", payload)
 
         while not self.request_id:
             # Start ASYNC file ingest request using the POST method.
             # See https://lsstc.slack.com/archives/D2Y1TQY5S/p1645556026791089
-            _LOG.debug("_ingest_chunk: url %s, retry attempts: %s, payload: %s",
-                       url, self.retry_attempts_post, payload)
+            _LOG.debug(
+                "_ingest_chunk: url %s, retry attempts: %s, payload: %s",
+                url,
+                self.retry_attempts_post,
+                payload,
+            )
             responseJson = Http().post(url, payload)
 
-            retry = raise_error(responseJson, self.retry_attempts_post, MAX_RETRY_ATTEMPTS)
+            retry = raise_error(
+                responseJson, self.retry_attempts_post, MAX_RETRY_ATTEMPTS
+            )
             if retry:
                 self.retry_attempts_post += 1
             else:
-                self.request_id = responseJson['contrib']['id']
+                self.request_id = responseJson["contrib"]["id"]
 
     def monitor(self) -> bool:
         """Monitor an asynchronous ingest query for a chunk contribution
@@ -164,8 +179,9 @@ class Contribution():
             bool: True if contribution has been successfully ingested
                   False if contribution is being ingested
         """
-        status_url = urllib.parse.urljoin(self.worker_url,
-                                          f"ingest/file-async/{self.request_id}")
+        status_url = urllib.parse.urljoin(
+            self.worker_url, f"ingest/file-async/{self.request_id}"
+        )
         responseJson = Http().get(status_url)
 
         contrib_status = get_contribution_status(responseJson)
@@ -176,19 +192,27 @@ class Contribution():
             case ContributionState.IN_PROGRESS:
                 _LOG.debug("_ingest_chunk: request %s in progress", self.request_id)
             case ContributionState.CANCELLED:
-                raise IngestError(f'Contribution {self} ingest has been cancelled by a third-party')
+                raise IngestError(
+                    f"Contribution {self} ingest has been cancelled by a third-party"
+                )
             case ContributionState.READ_FAILED:
                 if self.retry_attempts >= MAX_RETRY_ATTEMPTS:
-                    raise IngestError("Exceeding maximum number of attempts for " +
-                                      f"Contribution {self}")
+                    raise IngestError(
+                        "Exceeding maximum number of attempts for "
+                        + f"Contribution {self}"
+                    )
                 self.retry_attempts += 1
                 self.request_id = None
             case _:
-                retry = raise_error(responseJson, self.retry_attempts, MAX_RETRY_ATTEMPTS)
+                retry = raise_error(
+                    responseJson, self.retry_attempts, MAX_RETRY_ATTEMPTS
+                )
                 if retry:
                     self.retry_attempts += 1
                     self.request_id = None
                 else:
-                    raise ReplicationControllerError(f"Contribution {self} should be in an error" +
-                                                     f" state instead of {contrib_status}")
+                    raise ReplicationControllerError(
+                        f"Contribution {self} should be in an error"
+                        + f" state instead of {contrib_status}"
+                    )
         return finished

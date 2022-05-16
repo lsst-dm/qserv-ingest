@@ -46,21 +46,21 @@ from .loadbalancerurl import LoadBalancedURL
 _METADATA_FILENAME = "metadata.json"
 _DIRECTOR = "director"
 _CHUNK = "chunks"
-_OVERLAP = 'overlaps'
+_OVERLAP = "overlaps"
 _FILE_TYPES = [_OVERLAP, _CHUNK]
 
 _LOG = logging.getLogger(__name__)
 
 
 @dataclass
-class TableContributionsSpec():
+class TableContributionsSpec:
     """Contain contribution specification for a given table
-       and available at a given path
+    and available at a given path
 
-        Store informations which will allow to retrieve contributions file
-        each entry of the list is a tuple: (<path>, [chunk_ids], <is_overlap>, <table>)
-        where [chunk_ids] is the list of the contribution files (XOR overlap) available
-        at a given path for a given table and a given chunk
+     Store informations which will allow to retrieve contributions file
+     each entry of the list is a tuple: (<path>, [chunk_ids], <is_overlap>, <table>)
+     where [chunk_ids] is the list of the contribution files (XOR overlap) available
+     at a given path for a given table and a given chunk
     """
 
     path: str
@@ -76,23 +76,26 @@ class TableContributionsSpec():
             Iterator[List[dict()]]: Iterator on each contribution specifications for a table
         """
         for id in self.chunks:
-            data = {"chunk_id": id,
-                    "chunk_file_path": self.path,
-                    "is_overlap": False,
-                    "table": self.table}
+            data = {
+                "chunk_id": id,
+                "chunk_file_path": self.path,
+                "is_overlap": False,
+                "table": self.table,
+            }
             yield data
 
         for id in self.chunks_overlap:
-            data = {"chunk_id": id,
-                    "chunk_file_path": self.path,
-                    "is_overlap": True,
-                    "table": self.table}
+            data = {
+                "chunk_id": id,
+                "chunk_file_path": self.path,
+                "is_overlap": True,
+                "table": self.table,
+            }
             yield data
 
 
-class TableSpec():
-    """Contain table specifications for a given database
-    """
+class TableSpec:
+    """Contain table specifications for a given database"""
 
     contrib_specs: List[TableContributionsSpec]
     data: dict()
@@ -103,21 +106,23 @@ class TableSpec():
     _name: str
 
     def __init__(self, metadata_url: str, table_meta: str):
-        self.data = table_meta['data']
-        schema_file = table_meta['schema']
+        self.data = table_meta["data"]
+        schema_file = table_meta["schema"]
         self.json_schema = json_get(metadata_url, schema_file)
-        self._name = self.json_schema['table']
-        self.is_partitioned = (self.json_schema['is_partitioned'] == 1)
-        self.is_director = ('director_table' in self.json_schema and
-                            len(self.json_schema['director_table']) == 0)
-        idx_files = table_meta['indexes']
+        self._name = self.json_schema["table"]
+        self.is_partitioned = self.json_schema["is_partitioned"] == 1
+        self.is_director = (
+            "director_table" in self.json_schema
+            and len(self.json_schema["director_table"]) == 0
+        )
+        idx_files = table_meta["indexes"]
         self.json_indexes = []
         for f in idx_files:
             self.json_indexes.append(json_get(metadata_url, f))
 
         self.contrib_specs = []
         for d in self.data:
-            path = d['directory']
+            path = d["directory"]
             chunks = d[_CHUNK]
             chunks_overlap = []
             # Only director tables can have (extra) overlaps
@@ -127,13 +132,14 @@ class TableSpec():
                     chunks_overlap = d[_OVERLAP]
                 else:
                     chunks_overlap = d[_CHUNK]
-            self.contrib_specs.append(TableContributionsSpec(path, chunks, chunks_overlap,
-                                                             self._name))
+            self.contrib_specs.append(
+                TableContributionsSpec(path, chunks, chunks_overlap, self._name)
+            )
 
 
-class ContributionMetadata():
+class ContributionMetadata:
     """Manage metadata related to data to ingest:
-       database, tables and contribution files
+    database, tables and contribution files
     """
 
     tables: List[TableSpec]
@@ -159,11 +165,12 @@ class ContributionMetadata():
         self.metadata_url = self.load_balanced_url.direct_url
         self.metadata = json_get(self.metadata_url, _METADATA_FILENAME)
 
-        filename = self.metadata['database']
+        filename = self.metadata["database"]
         self.json_db = json_get(self.metadata_url, filename)
-        self.database = self.json_db['database']
-        self.family = "layout_{}_{}".format(self.json_db['num_stripes'],
-                                            self.json_db['num_sub_stripes'])
+        self.database = self.json_db["database"]
+        self.family = "layout_{}_{}".format(
+            self.json_db["num_stripes"], self.json_db["num_sub_stripes"]
+        )
         self._init_tables()
 
     def get_contribution_specs(self):
@@ -189,14 +196,14 @@ class ContributionMetadata():
     def get_tables_names(self):
         table_names = []
         for t in self.tables:
-            table_name = t['json_schema']['table']
+            table_name = t["json_schema"]["table"]
             table_names.append(table_name)
         return table_names
 
     def get_json_indexes(self):
         json_indexes = []
         for t in self.tables:
-            for json_idx in t['indexes']:
+            for json_idx in t["indexes"]:
                 json_indexes.append(json_idx)
         return json_indexes
 
@@ -218,10 +225,9 @@ class ContributionMetadata():
     def _init_tables(self):
         self.tables = []
         self._has_extra_overlaps = False
-        for table_meta in self.metadata['tables']:
+        for table_meta in self.metadata["tables"]:
             table = TableSpec(self.metadata_url, table_meta)
             if table.is_director:
                 self.tables.insert(0, table)
             else:
                 self.tables.append(table)
-

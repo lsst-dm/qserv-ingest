@@ -43,6 +43,7 @@ from jsonpath_ng.ext import parse
 # Local non-exported definitions --
 # ---------------------------------
 from .exception import ReplicationControllerError
+
 _LOG = logging.getLogger(__name__)
 
 
@@ -69,46 +70,44 @@ class TransactionState(Enum):
 
 
 def filter_transactions(responseJson, database, states):
-    """Filter transactions by state inside json response issued by replication service
-    """
+    """Filter transactions by state inside json response issued by replication service"""
     transaction_ids = []
-    transactions = responseJson["databases"][database]['transactions']
+    transactions = responseJson["databases"][database]["transactions"]
     _LOG.debug(states)
     if len(transactions) != 0:
         _LOG.debug(f"Transactions for database {database}")
         for trans in transactions:
-            _LOG.debug("  id: %s state: %s",
-                       trans['id'], trans['state'])
-            state = TransactionState(trans['state'])
+            _LOG.debug("  id: %s state: %s", trans["id"], trans["state"])
+            state = TransactionState(trans["state"])
             if state in states:
-                transaction_ids.append(trans['id'])
+                transaction_ids.append(trans["id"])
     return transaction_ids
 
 
 def get_contribution_status(responseJson: dict) -> ContributionState:
-    """ Retrieve contribution status
-    """
-    if responseJson['contrib']['status'] == ContributionState.FINISHED.value:
+    """Retrieve contribution status"""
+    if responseJson["contrib"]["status"] == ContributionState.FINISHED.value:
         return ContributionState.FINISHED
-    elif responseJson['contrib']['status'] == ContributionState.IN_PROGRESS.value:
+    elif responseJson["contrib"]["status"] == ContributionState.IN_PROGRESS.value:
         return ContributionState.IN_PROGRESS
-    elif responseJson['contrib']['status'] == ContributionState.CANCELLED.value:
+    elif responseJson["contrib"]["status"] == ContributionState.CANCELLED.value:
         return ContributionState.CANCELLED
-    elif responseJson['contrib']['status'] == ContributionState.CREATE_FAILED.value:
+    elif responseJson["contrib"]["status"] == ContributionState.CREATE_FAILED.value:
         return ContributionState.CREATE_FAILED
-    elif responseJson['contrib']['status'] == ContributionState.START_FAILED.value:
+    elif responseJson["contrib"]["status"] == ContributionState.START_FAILED.value:
         return ContributionState.START_FAILED
-    elif responseJson['contrib']['status'] == ContributionState.READ_FAILED.value:
+    elif responseJson["contrib"]["status"] == ContributionState.READ_FAILED.value:
         return ContributionState.READ_FAILED
-    elif responseJson['contrib']['status'] == ContributionState.LOAD_FAILED.value:
+    elif responseJson["contrib"]["status"] == ContributionState.LOAD_FAILED.value:
         return ContributionState.LOAD_FAILED
     else:
-        raise ReplicationControllerError("Unknown contribution status:" +
-                                         f"{responseJson['contrib']['status']}")
+        raise ReplicationControllerError(
+            "Unknown contribution status:" + f"{responseJson['contrib']['status']}"
+        )
 
 
 def get_indexes(responseJson, existing_indexes: typing.Dict[str, set] = dict()):
-    for worker, data in responseJson['workers'].items():
+    for worker, data in responseJson["workers"].items():
         table = list(data.keys())[0]
         for idx_data in data[table]:
             try:
@@ -119,8 +118,8 @@ def get_indexes(responseJson, existing_indexes: typing.Dict[str, set] = dict()):
 
 
 def get_location(responseJson: dict) -> typing.Tuple[str, int]:
-    """ Retrieve chunk location (worker host and port)
-        inside json response issued by replication service
+    """Retrieve chunk location (worker host and port)
+    inside json response issued by replication service
     """
     host = responseJson["location"]["http_host"]
     port = int(responseJson["location"]["http_port"])
@@ -128,7 +127,11 @@ def get_location(responseJson: dict) -> typing.Tuple[str, int]:
 
 
 def parse_database_status(responseJson, database, family):
-    jsonpath_expr = parse('$.config.databases[?(database="{}" & family_name="{}")].is_published'.format(database, family))
+    jsonpath_expr = parse(
+        '$.config.databases[?(database="{}" & family_name="{}")].is_published'.format(
+            database, family
+        )
+    )
     result = jsonpath_expr.find(responseJson)
     if len(result) == 0:
         status = DatabaseStatus.NOT_REGISTERED
@@ -142,7 +145,9 @@ def parse_database_status(responseJson, database, family):
     return status
 
 
-def raise_error(responseJson: dict, retry_attempts: int = -1, max_retry_attempts: int = 0) -> bool:
+def raise_error(
+    responseJson: dict, retry_attempts: int = -1, max_retry_attempts: int = 0
+) -> bool:
     """Check JSON response for error
 
     Parameters
@@ -168,15 +173,16 @@ def raise_error(responseJson: dict, retry_attempts: int = -1, max_retry_attempts
     is_error_retryable = False
     if not responseJson["success"]:
         _LOG.critical(responseJson["error"])
-        error_ext = ''
+        error_ext = ""
         if "error_ext" in responseJson:
             _LOG.critical(responseJson["error_ext"])
             error_ext = responseJson["error_ext"]
             if check_retry:
                 is_error_retryable = _check_retry(error_ext)
         if not is_error_retryable:
-            raise ReplicationControllerError('Error in JSON response',
-                                             responseJson["error"], error_ext)
+            raise ReplicationControllerError(
+                "Error in JSON response", responseJson["error"], error_ext
+            )
     return is_error_retryable
 
 

@@ -57,7 +57,7 @@ _LOG = logging.getLogger(__name__)
 
 def authorize():
     try:
-        with open(os.path.expanduser(AUTH_PATH), 'r') as f:
+        with open(os.path.expanduser(AUTH_PATH), "r") as f:
             authKey = f.read().strip()
     except IOError:
         _LOG.debug("Cannot find %s", AUTH_PATH)
@@ -78,7 +78,7 @@ def file_exists(url: str) -> bool:
     Check if a file exists on a remote HTTP server
     """
     response = requests.head(url)
-    return (response.status_code == 200)
+    return response.status_code == 200
 
 
 def json_get(base_url, filename):
@@ -115,13 +115,11 @@ def _get_retry_object(retries=5, backoff_factor=0.2) -> Retry:
     )
 
 
-class Http():
-    """Manage http connections
-    """
+class Http:
+    """Manage http connections"""
 
     def __init__(self):
-        """ Set http connections retry/timeout errors
-        """
+        """Set http connections retry/timeout errors"""
         adapter = HTTPAdapter(max_retries=_get_retry_object())
         # Session is only used for the GET method
         self.http = requests.Session()
@@ -133,14 +131,16 @@ class Http():
             authKey = authorize()
             payload["auth_key"] = authKey
         r = self.http.get(url, json=payload, timeout=timeout)
-        if (r.status_code != 200):
-            raise HTTPError('HTTP %s Error for url (GET): %s' % (r.status_code, url), response=r)
+        if r.status_code != 200:
+            raise HTTPError(
+                "HTTP %s Error for url (GET): %s" % (r.status_code, url), response=r
+            )
         responseJson = r.json()
-        if not responseJson['success']:
-            _LOG.critical("%s %s", url, responseJson['error'])
+        if not responseJson["success"]:
+            _LOG.critical("%s %s", url, responseJson["error"])
             raise ReplicationControllerError(
-                'Error in JSON response (GET)', url,
-                responseJson["error"])
+                "Error in JSON response (GET)", url, responseJson["error"]
+            )
         _LOG.info("GET: success")
         return responseJson
 
@@ -152,10 +152,15 @@ class Http():
             r = requests.post(url, json=payload, timeout=timeout)
         except (requests.exceptions.RequestException, ConnectionResetError) as e:
             _LOG.critical("Error when sending POST request to url %s", url)
-            e.args = (f"POST request to url {url} with payload {payload} failed", *e.args)
+            e.args = (
+                f"POST request to url {url} with payload {payload} failed",
+                *e.args,
+            )
             raise e
-        if (r.status_code != 200):
-            raise HTTPError('HTTP %s Error for url (POST): %s' % (r.status_code, url), response=r)
+        if r.status_code != 200:
+            raise HTTPError(
+                "HTTP %s Error for url (POST): %s" % (r.status_code, url), response=r
+            )
         responseJson = r.json()
         _LOG.debug("POST %s: success", url)
         return responseJson
@@ -166,27 +171,31 @@ class Http():
             payload = {}
         payload["auth_key"] = authKey
         r = requests.put(url, json=payload, timeout=timeout)
-        if (r.status_code != 200):
-            raise HTTPError('HTTP %s Error for url (PUT): %s' % (r.status_code, url), response=r)
+        if r.status_code != 200:
+            raise HTTPError(
+                "HTTP %s Error for url (PUT): %s" % (r.status_code, url), response=r
+            )
         responseJson = r.json()
-        if not responseJson['success']:
-            _LOG.critical("%s %s", url, responseJson['error'])
+        if not responseJson["success"]:
+            _LOG.critical("%s %s", url, responseJson["error"])
             raise ReplicationControllerError(
-                'Error in JSON response (PUT)', url,
-                responseJson["error"])
+                "Error in JSON response (PUT)", url, responseJson["error"]
+            )
         _LOG.info("PUT: success")
         return responseJson
 
     def delete(self, url, timeout=None):
         authKey = authorize()
         r = requests.delete(url, json={"auth_key": authKey}, timeout=timeout)
-        if (r.status_code != 200):
-            raise HTTPError('HTTP %s Error for url (DELETE): %s' % (r.status_code, url), response=r)
+        if r.status_code != 200:
+            raise HTTPError(
+                "HTTP %s Error for url (DELETE): %s" % (r.status_code, url), response=r
+            )
         responseJson = r.json()
-        if not responseJson['success']:
-            _LOG.critical("%s %s", url, responseJson['error'])
+        if not responseJson["success"]:
+            _LOG.critical("%s %s", url, responseJson["error"])
             raise ReplicationControllerError(
-                'Error in JSON response (DELETE)', url,
-                responseJson["error"])
+                "Error in JSON response (DELETE)", url, responseJson["error"]
+            )
         _LOG.info("DELETE: success")
         return responseJson

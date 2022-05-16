@@ -47,12 +47,17 @@ _LOG = logging.getLogger(__name__)
 
 
 def add_default_arguments(parser: argparse.ArgumentParser):
-    parser.add_argument('--config', help="Configuration file for ingest client",
-                        type=argparse.FileType('r'),
-                        action=IngestConfigAction,
-                        metavar="FILE")
-    parser.add_argument("--verbose", "-v", action="store_true",
-                        help="Use debug logging")
+    parser.add_argument(
+        "--config",
+        help="Configuration file for ingest client",
+        type=argparse.FileType("r"),
+        action=IngestConfigAction,
+        metavar="FILE",
+    )
+    parser.add_argument(
+        "--verbose", "-v", action="store_true", help="Use debug logging"
+    )
+
 
 def get_default_logger(verbose):
     """
@@ -64,15 +69,17 @@ def get_default_logger(verbose):
     else:
         logger.setLevel(logging.INFO)
     streamHandler = logging.StreamHandler()
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
     streamHandler.setFormatter(formatter)
     logger.addHandler(streamHandler)
     return logger
 
 
 def trailing_slash(url):
-    if not url.endswith('/'):
-        url += '/'
+    if not url.endswith("/"):
+        url += "/"
     return url
 
 
@@ -80,19 +87,21 @@ class IngestConfig:
     """
     Configuration parameter for ingest client
     """
+
     def __init__(self, yaml: dict):
-        self.servers = yaml['ingest']['input']['servers']
-        self.path = yaml['ingest']['input']['path']
-        self.data_url = yaml['ingest']['qserv']['queue_url']
-        self.query_url = yaml['ingest']['qserv']['query_url']
-        self.queue_url = yaml['ingest']['qserv']['queue_url']
-        self.replication_url = yaml['ingest']['qserv']['replication_url']
+        self.servers = yaml["ingest"]["input"]["servers"]
+        self.path = yaml["ingest"]["input"]["path"]
+        self.data_url = yaml["ingest"]["qserv"]["queue_url"]
+        self.query_url = yaml["ingest"]["qserv"]["query_url"]
+        self.queue_url = yaml["ingest"]["qserv"]["queue_url"]
+        self.replication_url = yaml["ingest"]["qserv"]["replication_url"]
 
 
 class IngestConfigAction(argparse.Action):
     """
     Argparse action to read an ingest client configuration file
     """
+
     def __call__(self, parser, namespace, values: io.TextIOWrapper, option_string):
         try:
             yaml_data = yaml.safe_load(values)
@@ -101,18 +110,22 @@ class IngestConfigAction(argparse.Action):
             values.close()
         setattr(namespace, self.dest, config)
 
+
 class BaseUrlAction(argparse.Action):
     """
     Add trailing slash to url
     """
+
     def __call__(self, parser, namespace, values, option_string):
         x = trailing_slash(values)
         setattr(namespace, self.dest, x)
+
 
 class DictAction(argparse.Action):
     """
     Argparse action to attempt casting the values to floats and put into a dict
     """
+
     def __call__(self, parser, namespace, values, option_string):
         d = dict()
         for item in values:
@@ -128,7 +141,7 @@ class DictAction(argparse.Action):
 
 class JsonAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string):
-        with open(values, 'r') as f:
+        with open(values, "r") as f:
             x = json.load(f)
         setattr(namespace, self.dest, x)
 
@@ -137,6 +150,7 @@ class FelisAction(argparse.Action):
     """
     Argparse action to read a felis file into namespace
     """
+
     def __call__(self, parser, namespace, values, option_string):
         with open(values, "r") as f:
             tables = yaml.safe_load(f)["tables"]
@@ -149,12 +163,15 @@ class FelisAction(argparse.Action):
                 nullable = column["nullable"] if "nullable" in column else True
                 nullstring = " DEFAULT NULL" if nullable else " NOT NULL"
                 schemas[tableName].append(
-                    {"name": column["name"],
-                     "type": column["mysql:datatype"] + nullstring})
+                    {
+                        "name": column["name"],
+                        "type": column["mysql:datatype"] + nullstring,
+                    }
+                )
         setattr(namespace, self.dest, schemas)
+
 
 def increase_wait_time(wait_sec):
     if wait_sec < 10:
         wait_sec *= 2
     return wait_sec
-

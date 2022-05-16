@@ -51,7 +51,7 @@ from .util import increase_wait_time
 _LOG = logging.getLogger(__name__)
 
 
-class QueueManager():
+class QueueManager:
     """
     Class implementing contributions queue manager for Qserv ingest process
     """
@@ -59,11 +59,13 @@ class QueueManager():
     def __init__(self, connection, contribution_metadata: ContributionMetadata):
 
         db_url = make_url(connection)
-        self.engine = sqlalchemy.create_engine(db_url, poolclass=StaticPool, pool_pre_ping=True)
+        self.engine = sqlalchemy.create_engine(
+            db_url, poolclass=StaticPool, pool_pre_ping=True
+        )
         self.pod = socket.gethostname()
 
         db_meta = MetaData(bind=self.engine)
-        self.queue = Table('chunkfile_queue', db_meta, autoload=True)
+        self.queue = Table("chunkfile_queue", db_meta, autoload=True)
         self.contribution_metadata = contribution_metadata
         self.ordered_tables_to_load = self.contribution_metadata.get_tables_names()
         _LOG.debug("Ordered tables to load: %s", self.ordered_tables_to_load)
@@ -75,7 +77,9 @@ class QueueManager():
         """
         contributions_count = self._count_contribution_files_per_database()
         _LOG.debug("Contributions queue size: %s", contributions_count)
-        self._contributions_to_lock_number = int(contributions_count / contributions_queue_fraction) + 1
+        self._contributions_to_lock_number = (
+            int(contributions_count / contributions_queue_fraction) + 1
+        )
 
     def _count_contribution_files_per_database(self):
         """
@@ -83,8 +87,10 @@ class QueueManager():
            if loaded is 'True' count contributions which are not ingested
            else count all contributions.
         """
-        query = select([func.count('*')]).select_from(self.queue)
-        query = query.where(self.queue.c.database == self.contribution_metadata.database)
+        query = select([func.count("*")]).select_from(self.queue)
+        query = query.where(
+            self.queue.c.database == self.contribution_metadata.database
+        )
         result = self.engine.execute(query)
         contributions_count = next(result)[0]
         result.close()
@@ -98,14 +104,20 @@ class QueueManager():
             self.current_table = None
 
     def _select_locked_contributions(self):
-        query = select([self.queue.c.database,
-                        self.queue.c.chunk_id,
-                        self.queue.c.chunk_file_path,
-                        self.queue.c.is_overlap,
-                        self.queue.c.table])
+        query = select(
+            [
+                self.queue.c.database,
+                self.queue.c.chunk_id,
+                self.queue.c.chunk_file_path,
+                self.queue.c.is_overlap,
+                self.queue.c.table,
+            ]
+        )
         query = query.where(self.queue.c.locking_pod == self.pod)
         query = query.where(self.queue.c.succeed.is_(None))
-        query = query.where(self.queue.c.database == self.contribution_metadata.database)
+        query = query.where(
+            self.queue.c.database == self.contribution_metadata.database
+        )
         result = self.engine.execute(query)
         contributions = result.fetchall()
         result.close()
@@ -127,11 +139,9 @@ class QueueManager():
 
         for table_contrib_spec in self.contribution_metadata.get_contribution_specs():
             for contrib_spec in table_contrib_spec.get_contrib():
-                contrib_spec['database'] = self.contribution_metadata.database
+                contrib_spec["database"] = self.contribution_metadata.database
                 _LOG.debug("Add contribution (%s) to queue", contrib_spec)
-                self.engine.execute(
-                    self.queue.insert(),
-                    contrib_spec)
+                self.engine.execute(self.queue.insert(), contrib_spec)
 
     def lock_contributions(self) -> list:
         """If some contributions are already locked in queue for current pod,
@@ -148,12 +158,13 @@ class QueueManager():
         contributions_locked = self._select_locked_contributions()
         contributions_locked_count = len(contributions_locked)
         if contributions_locked_count != 0:
-            _LOG.debug("Contributions already locked for pod: %s",
-                       contributions_locked)
+            _LOG.debug("Contributions already locked for pod: %s", contributions_locked)
         else:
             _LOG.debug("Current table: %s", self.current_table)
-            while (not self._is_queue_empty()
-                   and contributions_locked_count < self._contributions_to_lock_number):
+            while (
+                not self._is_queue_empty()
+                and contributions_locked_count < self._contributions_to_lock_number
+            ):
 
                 # SqlAlchemy has only limited support for MariaDB SQL extension
                 # See https://docs.sqlalchemy.org/en/14/dialects/mysql.html?highlight=mysql_limit#mysql-mariadb-sql-extensions
@@ -166,11 +177,16 @@ class QueueManager():
                 #                    self.chunk_meta.database,
                 #                    self._chunks_to_lock_number-chunks_locked_count)
 
-                contributions_to_lock_count = (self._contributions_to_lock_number -
-                                               contributions_locked_count)
-                query = self.queue.update(mysql_limit=contributions_to_lock_count).values(locking_pod=self.pod)
+                contributions_to_lock_count = (
+                    self._contributions_to_lock_number - contributions_locked_count
+                )
+                query = self.queue.update(
+                    mysql_limit=contributions_to_lock_count
+                ).values(locking_pod=self.pod)
                 query = query.where(self.queue.c.locking_pod.is_(None))
-                query = query.where(self.queue.c.database == self.contribution_metadata.database)
+                query = query.where(
+                    self.queue.c.database == self.contribution_metadata.database
+                )
                 query = query.where(self.queue.c.table == self.current_table)
 
                 _LOG.debug("Query: %s", query)
@@ -181,17 +197,18 @@ class QueueManager():
                 contributions_locked_count = len(contributions_locked)
                 _LOG.debug("contributions_locked_count: %s", contributions_locked_count)
                 if contributions_locked_count < self._contributions_to_lock_number:
-                    logging.info("No more contribution to lock for table %s",
-                                 self.current_table)
+                    logging.info(
+                        "No more contribution to lock for table %s", self.current_table
+                    )
                     self.next_current_table()
 
-        logging.debug("Contributions locked by pod %s: %s",
-                      self.pod,
-                      contributions_locked)
+        logging.debug(
+            "Contributions locked by pod %s: %s", self.pod, contributions_locked
+        )
         return contributions_locked
 
     def release_locked_contributions(self, ingest_success):
-        """ Mark contributions as "succeed" in contribution queue if super-transaction
+        """Mark contributions as "succeed" in contribution queue if super-transaction
             has been successfully commited
             Release contributions in queue when the super-transaction has been aborted
 
@@ -225,18 +242,23 @@ class QueueManager():
                 wait_sec = increase_wait_time(wait_sec)
 
     def _is_queue_empty(self):
-        return (self.current_table == None)
+        return self.current_table == None
 
     def get_noningested_contributions(self):
-        """Return all contribution in queue not successfully loaded for current database
-        """
-        query = select([self.queue.c.database,
-                        self.queue.c.chunk_id,
-                        self.queue.c.chunk_file_path,
-                        self.queue.c.is_overlap,
-                        self.queue.c.table])
+        """Return all contribution in queue not successfully loaded for current database"""
+        query = select(
+            [
+                self.queue.c.database,
+                self.queue.c.chunk_id,
+                self.queue.c.chunk_file_path,
+                self.queue.c.is_overlap,
+                self.queue.c.table,
+            ]
+        )
         query = query.where(self.queue.c.succeed.is_(None))
-        query = query.where(self.queue.c.database == self.contribution_metadata.database)
+        query = query.where(
+            self.queue.c.database == self.contribution_metadata.database
+        )
         result = self.engine.execute(query)
         contributions = result.fetchall()
         return contributions

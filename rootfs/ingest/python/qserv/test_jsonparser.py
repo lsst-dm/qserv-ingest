@@ -42,7 +42,7 @@ import os
 # ---------------------------------
 
 _CWD = os.path.dirname(os.path.abspath(__file__))
-_DATABASE = 'cosmoDC2_v1_1_4_image'
+_DATABASE = "cosmoDC2_v1_1_4_image"
 _FAMILY = "layout_340_3"
 
 
@@ -55,7 +55,8 @@ def test_get_indexes():
 
 def test_parse_not_finished_transaction():
 
-    jsonstring = ('{"databases": {"cosmoDC2_v1_1_4_image": {"num_chunks": 5, "transactions": ['
+    jsonstring = (
+        '{"databases": {"cosmoDC2_v1_1_4_image": {"num_chunks": 5, "transactions": ['
         '{"begin_time": 1611956328241, "database": "cosmoDC2_v1_1_4_image", "end_time": 1611956328693, "id": 8, "state": "FINISHED"}, '
         '{"begin_time": 1611956328068, "database": "cosmoDC2_v1_1_4_image", "end_time": 1611956330782, "id": 7, "state": "FINISHED"}, '
         '{"begin_time": 1611956328039, "database": "cosmoDC2_v1_1_4_image", "end_time": 1611956328477, "id": 6, "state": "ABORTED"}, '
@@ -64,15 +65,22 @@ def test_parse_not_finished_transaction():
         '{"begin_time": 1611956327057, "database": "cosmoDC2_v1_1_4_image", "end_time": 1611956327652, "id": 3, "state": "FINISHED"}, '
         '{"begin_time": 1611956326857, "database": "cosmoDC2_v1_1_4_image", "end_time": 0, "id": 2, "state": "STARTED"}, '
         '{"begin_time": 1611956326351, "database": "cosmoDC2_v1_1_4_image", "end_time": 1611956326806, "id": 1, "state": "ABORTED"}]}},'
-        '"error": "", "error_ext": {}, "success": 1}')
+        '"error": "", "error_ext": {}, "success": 1}'
+    )
     jsondata = json.loads(jsonstring)
-    transactions = jsonparser.filter_transactions(jsondata, _DATABASE, [jsonparser.TransactionState.FINISHED])
+    transactions = jsonparser.filter_transactions(
+        jsondata, _DATABASE, [jsonparser.TransactionState.FINISHED]
+    )
     assert len(transactions) == 5
 
-    transactions = jsonparser.filter_transactions(jsondata, _DATABASE, [jsonparser.TransactionState.STARTED])
+    transactions = jsonparser.filter_transactions(
+        jsondata, _DATABASE, [jsonparser.TransactionState.STARTED]
+    )
     assert len(transactions) == 1
 
-    transactions = jsonparser.filter_transactions(jsondata, _DATABASE, [jsonparser.TransactionState.ABORTED])
+    transactions = jsonparser.filter_transactions(
+        jsondata, _DATABASE, [jsonparser.TransactionState.ABORTED]
+    )
     assert len(transactions) == 2
 
 

@@ -63,32 +63,39 @@ class TransactionAction(Enum):
     START = auto()
 
 
-class Ingester():
+class Ingester:
     """
     Manage contribution ingestion tasks
     """
 
-    def __init__(self, contribution_metadata: ContributionMetadata,
-                 replication_url: str,
-                 queue_manager: QueueManager = None):
-        """Retrieve contribution metadata and connection to concurrent queue manager
-        """
+    def __init__(
+        self,
+        contribution_metadata: ContributionMetadata,
+        replication_url: str,
+        queue_manager: QueueManager = None,
+    ):
+        """Retrieve contribution metadata and connection to concurrent queue manager"""
         self.contribution_metadata = contribution_metadata
         self.queue_manager = queue_manager
         self.repl_client = ReplicationClient(replication_url)
 
     def check_supertransactions_success(self):
-        """ Check all super-transactions have ran successfully
-        """
-        trans = self.repl_client.get_transactions_started(self.contribution_metadata.database)
+        """Check all super-transactions have ran successfully"""
+        trans = self.repl_client.get_transactions_started(
+            self.contribution_metadata.database
+        )
         _LOG.debug(f"IDs of transactions in STARTED state: {trans}")
         if len(trans) > 0:
-            raise IngestError(f"Database publication prevented by started transactions: {trans}")
+            raise IngestError(
+                f"Database publication prevented by started transactions: {trans}"
+            )
         contributions = self.queue_manager.get_noningested_contributions()
         if len(contributions) > 0:
             _LOG.error(f"Non ingested contributions: {contributions}")
-            raise IngestError("Database publication forbidden: " +
-                              f"non-ingested contributions: {len(contributions)}")
+            raise IngestError(
+                "Database publication forbidden: "
+                + f"non-ingested contributions: {len(contributions)}"
+            )
         _LOG.info("All contributions in queue successfully ingested")
 
     def database_publish(self):
@@ -104,14 +111,18 @@ class Ingester():
         using data_url/<database_name>.json as input data
         """
         self.repl_client.database_register(self.contribution_metadata.json_db)
-        self.repl_client.database_register_tables(self.contribution_metadata.get_ordered_tables_json(), felis)
+        self.repl_client.database_register_tables(
+            self.contribution_metadata.get_ordered_tables_json(), felis
+        )
         self.repl_client.database_config(self.contribution_metadata.database)
 
     def get_database_status(self):
         """
         Return the status of a Qserv catalog database
         """
-        return self.repl_client.get_database_status(self.contribution_metadata.database, self.contribution_metadata.family)
+        return self.repl_client.get_database_status(
+            self.contribution_metadata.database, self.contribution_metadata.family
+        )
 
     def ingest(self, contribution_queue_fraction):
         """
@@ -153,27 +164,35 @@ class Ingester():
 
         transaction_id = None
         try:
-            transaction_id = self.repl_client.start_transaction(self.contribution_metadata.database)
+            transaction_id = self.repl_client.start_transaction(
+                self.contribution_metadata.database
+            )
 
-            contributions = build_contributions(contributions_locked,
-                                                self.repl_client,
-                                                self.contribution_metadata.load_balanced_url)
-            ingest_success = self._ingest_all_contributions(transaction_id, contributions)
+            contributions = build_contributions(
+                contributions_locked,
+                self.repl_client,
+                self.contribution_metadata.load_balanced_url,
+            )
+            ingest_success = self._ingest_all_contributions(
+                transaction_id, contributions
+            )
         except Exception as e:
-            _LOG.critical('Ingest failed during transaction: %s, %s', transaction_id, e)
+            _LOG.critical("Ingest failed during transaction: %s, %s", transaction_id, e)
             ingest_success = False
             # Stop process when any transaction abort
-            raise(e)
+            raise (e)
         finally:
             if transaction_id:
-                self.repl_client.close_transaction(self.contribution_metadata.database,
-                                                   transaction_id,
-                                                   ingest_success)
+                self.repl_client.close_transaction(
+                    self.contribution_metadata.database, transaction_id, ingest_success
+                )
                 self.queue_manager.release_locked_contributions(ingest_success)
 
         return True
 
-    def _ingest_all_contributions(self, transaction_id: int, contributions: list) -> bool:
+    def _ingest_all_contributions(
+        self, transaction_id: int, contributions: list
+    ) -> bool:
         """Ingest all contribution for a given transaction
            Throw exception if ingest fail
            This method always returns True, or raise an exception
@@ -186,8 +205,11 @@ class Ingester():
             bool: True if ingest has ran successfully
         """
         loop = True
-        _LOG.debug('%s contributions to ingest during transaction %s',
-                   len(contributions), transaction_id)
+        _LOG.debug(
+            "%s contributions to ingest during transaction %s",
+            len(contributions),
+            transaction_id,
+        )
         while loop:
             contribs_unfinished_count = 0
             for _, c in enumerate(contributions):
@@ -196,23 +218,28 @@ class Ingester():
                     pass
                 elif c.request_id is None:
                     # Ingest to start
-                    _LOG.debug('Contribution %s ingest started at %s', c, current_time)
+                    _LOG.debug("Contribution %s ingest started at %s", c, current_time)
                     c.start_async(transaction_id)
                     contribs_unfinished_count += 1
                 else:
-                    _LOG.debug('Contribution %s ingest monitored at %s', c, current_time)
+                    _LOG.debug(
+                        "Contribution %s ingest monitored at %s", c, current_time
+                    )
                     c.finished = c.monitor()
                     if c.finished:
                         # Ingest successfully loaded (i.e. in FINISHED state)
-                        _LOG.debug('Contribution %s successfully loaded', c)
+                        _LOG.debug("Contribution %s successfully loaded", c)
                     else:
                         contribs_unfinished_count += 1
 
             if contribs_unfinished_count == 0:
                 loop = False
             else:
-                _LOG.debug('Processing %s contributions for transaction %s',
-                           contribs_unfinished_count, transaction_id)
+                _LOG.debug(
+                    "Processing %s contributions for transaction %s",
+                    contribs_unfinished_count,
+                    transaction_id,
+                )
                 time.sleep(5)
 
         return True

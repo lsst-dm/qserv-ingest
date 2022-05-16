@@ -43,11 +43,7 @@ _LOG = logging.getLogger(__name__)
 
 def test_get_loadbalancer_url():
     path = "/lsst-dm/qserv-ingest/master/tests/data/cosmoDC2/"
-    servers = [
-        "https://server1",
-        "https://server2",
-        "https://server3"
-    ]
+    servers = ["https://server1", "https://server2", "https://server3"]
     lb_url = LoadBalancedURL(path, servers)
     url = lb_url.get()
     assert url == "https://server1/lsst-dm/qserv-ingest/master/tests/data/cosmoDC2/"
@@ -59,11 +55,7 @@ def test_join_loadbalancer_url():
     base_path = ""
     path = "/lsst/data/"
     filename = "file.txt"
-    servers = [
-        "https://server1",
-        "https://server2",
-        "https://server3"
-    ]
+    servers = ["https://server1", "https://server2", "https://server3"]
     lb_url = LoadBalancedURL(base_path, servers)
     new_url = lb_url.join(path, filename)
     assert new_url.get() == f"https://server1{path}{filename}"

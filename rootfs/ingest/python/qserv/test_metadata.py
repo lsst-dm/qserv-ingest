@@ -50,10 +50,16 @@ def test_get_ordered_tables_json():
     tables_json_data = contribution_metadata.get_ordered_tables_json()
     tables = []
     for json_data in tables_json_data:
-        tables.append(json_data['table'])
+        tables.append(json_data["table"])
     _LOG.info("Ordered list of tables %s", tables)
 
-    assert tables == ['object', 'position', 'forced_photometry', 'reference', 'truth_match']
+    assert tables == [
+        "object",
+        "position",
+        "forced_photometry",
+        "reference",
+        "truth_match",
+    ]
 
 
 def test_get_contribution_file_specs():
@@ -66,10 +72,10 @@ def test_get_contribution_file_specs():
     for table_contrib_spec in contribution_metadata.get_contribution_specs():
         for contrib_spec in table_contrib_spec.get_contrib():
             contrib_count += 1
-            contrib_spec['database'] = contribution_metadata.database
-            if contrib_spec['table'] == 'object':
+            contrib_spec["database"] = contribution_metadata.database
+            if contrib_spec["table"] == "object":
                 contrib_director_count += 1
-                if contrib_spec['is_overlap']:
+                if contrib_spec["is_overlap"]:
                     contrib_director_overlap_count += 1
                 else:
                     contrib_director_chunk_count += 1

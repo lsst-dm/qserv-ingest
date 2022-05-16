@@ -42,20 +42,18 @@ from .loadbalancerurl import LoadBalancedURL
 _LOG = logging.getLogger(__name__)
 
 _PATH = "/lsst/data/"
-_SERVERS = [
-    "https://server1",
-    "https://server2",
-    "https://server3"
-]
+_SERVERS = ["https://server1", "https://server2", "https://server3"]
 _LB_URL = LoadBalancedURL(_PATH, _SERVERS)
 
-_PARAMS = {"worker_host": "host",
-           "worker_port": 8080,
-           "chunk_id": 1,
-           "path": "step1_1",
-           "table": "mytable",
-           "is_overlap": True,
-           "load_balanced_base_url": _LB_URL}
+_PARAMS = {
+    "worker_host": "host",
+    "worker_port": 8080,
+    "chunk_id": 1,
+    "path": "step1_1",
+    "table": "mytable",
+    "is_overlap": True,
+    "load_balanced_base_url": _LB_URL,
+}
 
 
 def test_init():

@@ -48,16 +48,15 @@ _CWD = os.path.dirname(os.path.abspath(__file__))
 
 
 def test_file_exists():
-    """Check if a file exists on a remote HTTP server
-    """
+    """Check if a file exists on a remote HTTP server"""
     assert http.file_exists("https://www.k8s-school.fr/team/index.html")
     assert not http.file_exists("https://www.k8s-school.fr/team/false.html")
 
 
 def test_json_get():
     data = http.json_get(_CWD, "servers.json")
-    assert data['http_servers'][0] == "https://server1"
-    assert data['http_servers'][2] == "https://server3"
+    assert data["http_servers"][0] == "https://server1"
+    assert data["http_servers"][2] == "https://server3"
 
 
 def test_retry():
@@ -66,6 +65,4 @@ def test_retry():
     """
     _http = http.Http()
     with pytest.raises(requests.ConnectionError) as e:
-        _http.get(url="http://server.not-exists",
-                  payload=None,
-                  auth=False)
+        _http.get(url="http://server.not-exists", payload=None, auth=False)
