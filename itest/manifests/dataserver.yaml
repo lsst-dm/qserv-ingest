@@ -14,10 +14,6 @@ spec:
         volumeMounts:
           - name: www
             mountPath: /usr/share/nginx/html
-        resources:
-          limits:
-            cpu: "1000m"
-            memory: "256Mi"
       volumes:
       - name: testdata
         configMap:

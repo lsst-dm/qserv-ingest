@@ -31,7 +31,7 @@ Parse JSON responses from replication service
 # -------------------------------
 from enum import Enum
 import logging
-import typing
+from typing import Dict, List, Tuple
 
 # ----------------------------
 # Imports for other modules --
@@ -69,7 +69,7 @@ class TransactionState(Enum):
     FINISHED = "FINISHED"
 
 
-def filter_transactions(responseJson, database, states):
+def filter_transactions(responseJson: Dict, database: str, states: List[TransactionState]) -> List[int]:
     """Filter transactions by state inside json response issued by replication service"""
     transaction_ids = []
     transactions = responseJson["databases"][database]["transactions"]
@@ -80,7 +80,7 @@ def filter_transactions(responseJson, database, states):
             _LOG.debug("  id: %s state: %s", trans["id"], trans["state"])
             state = TransactionState(trans["state"])
             if state in states:
-                transaction_ids.append(trans["id"])
+                transaction_ids.append(int(trans["id"]))
     return transaction_ids
 
 
@@ -106,7 +106,7 @@ def get_contribution_status(responseJson: dict) -> ContributionState:
         )
 
 
-def get_indexes(responseJson, existing_indexes: typing.Dict[str, set] = dict()):
+def get_indexes(responseJson, existing_indexes: Dict[str, set] = dict()):
     for worker, data in responseJson["workers"].items():
         table = list(data.keys())[0]
         for idx_data in data[table]:
@@ -117,13 +117,37 @@ def get_indexes(responseJson, existing_indexes: typing.Dict[str, set] = dict()):
     return existing_indexes
 
 
-def get_location(responseJson: dict) -> typing.Tuple[str, int]:
+def get_chunk_location(responseJson: dict) -> Tuple[str, int]:
     """Retrieve chunk location (worker host and port)
     inside json response issued by replication service
     """
     host = responseJson["location"]["http_host"]
     port = int(responseJson["location"]["http_port"])
     return (host, port)
+
+
+def get_regular_table_locations(responseJson: dict) -> List[Tuple[str, int]]:
+    """Retrieve locations (workers host and port) for regular tables
+    inside json response issued by replication service
+
+    Parameters
+    ----------
+    responseJson `dict`:
+                Response for replication service for the regular table locations API
+                see https://confluence.lsstcorp.org/pages/viewpage.action?pageId=133333850#UserguidefortheQservIngestsystem(APIversion8)-Locateregulartables
+
+    Returns
+    -------
+    locations `typing.List[typing.Tuple[str, int]]`:
+                List of connection parameters , for Data ingest Service REST API i.e. http,
+                of workers which are available for ingesting regular (fully replicated) tables
+    """
+    locations = []
+    for entry in responseJson["locations"]:
+        host = entry["http_host"]
+        port = entry["http_port"]
+        locations.append((host, port))
+    return locations
 
 
 def parse_database_status(responseJson, database, family):

@@ -43,11 +43,10 @@ from .loadbalancerurl import LoadBalancedURL
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
+_CHUNKS = "chunks"
+_FILES = "files"
 _METADATA_FILENAME = "metadata.json"
-_DIRECTOR = "director"
-_CHUNK = "chunks"
-_OVERLAP = "overlaps"
-_FILE_TYPES = [_OVERLAP, _CHUNK]
+_OVERLAPS = "overlaps"
 
 _LOG = logging.getLogger(__name__)
 
@@ -55,7 +54,7 @@ _LOG = logging.getLogger(__name__)
 @dataclass
 class TableContributionsSpec:
     """Contain contribution specification for a given table
-    and available at a given path
+    and for a given path
 
      Store informations which will allow to retrieve contributions file
      each entry of the list is a tuple: (<path>, [chunk_ids], <is_overlap>, <table>)
@@ -63,10 +62,20 @@ class TableContributionsSpec:
      at a given path for a given table and a given chunk
     """
 
-    path: str
-    chunks: List[int]
-    chunks_overlap: List[int]
+    base_path: str
+    """ Base path """
+
     table: str
+    """ Table name """
+
+    files: List[str]
+    """ Files for regular tables, empty for partitioned tables """
+
+    chunks: List[int]
+    """ Chunks ids for files for partitioned tables, empty for non-partitioned tables """
+
+    chunks_overlap: List[int]
+    """ Chunks ids for overlap files for partioned tables, empty for non-partitioned tables """
 
     def get_contrib(self):
         """Generator for contribution specifications for a given table and a given path
@@ -75,10 +84,19 @@ class TableContributionsSpec:
         ------
             Iterator[List[dict()]]: Iterator on each contribution specifications for a table
         """
+        for file in self.files:
+            data = {
+                "chunk_id": None,
+                "filepath": self._filepath(file),
+                "is_overlap": None,
+                "table": self.table,
+            }
+            yield data
+
         for id in self.chunks:
             data = {
                 "chunk_id": id,
-                "chunk_file_path": self.path,
+                "filepath": self._filepath(f"chunk_{id}.txt"),
                 "is_overlap": False,
                 "table": self.table,
             }
@@ -87,11 +105,17 @@ class TableContributionsSpec:
         for id in self.chunks_overlap:
             data = {
                 "chunk_id": id,
-                "chunk_file_path": self.path,
+                "filepath": self._filepath(f"chunk_{id}_overlap.txt"),
                 "is_overlap": True,
                 "table": self.table,
             }
             yield data
+
+    def _filepath(self, filename: str) -> str:
+        filepath = (self.base_path.strip("/")
+                    + "/"
+                    + filename.strip("/"))
+        return filepath
 
 
 class TableSpec:
@@ -103,13 +127,13 @@ class TableSpec:
     is_partitioned: bool
     json_indexes: List[str]
     json_schema: dict()
-    _name: str
+    name: str
 
     def __init__(self, metadata_url: str, table_meta: str):
         self.data = table_meta["data"]
         schema_file = table_meta["schema"]
         self.json_schema = json_get(metadata_url, schema_file)
-        self._name = self.json_schema["table"]
+        self.name = self.json_schema["table"]
         self.is_partitioned = self.json_schema["is_partitioned"] == 1
         self.is_director = (
             "director_table" in self.json_schema
@@ -123,17 +147,22 @@ class TableSpec:
         self.contrib_specs = []
         for d in self.data:
             path = d["directory"]
-            chunks = d[_CHUNK]
+            chunks = []
             chunks_overlap = []
-            # Only director tables can have (extra) overlaps
-            if self.is_director:
-                # chunk ids for overlaps migh be different of regular chunk ids
-                if d.get(_OVERLAP):
-                    chunks_overlap = d[_OVERLAP]
-                else:
-                    chunks_overlap = d[_CHUNK]
+            files = []
+            if self.is_partitioned:
+                chunks = d[_CHUNKS]
+                # Only director tables can have (extra) overlaps
+                if self.is_director:
+                    # chunk ids for overlaps migh be different of regular chunk ids
+                    if d.get(_OVERLAPS):
+                        chunks_overlap = d[_OVERLAPS]
+                    else:
+                        chunks_overlap = d[_CHUNKS]
+            else:
+                files = d[_FILES]
             self.contrib_specs.append(
-                TableContributionsSpec(path, chunks, chunks_overlap, self._name)
+                TableContributionsSpec(path, self.name, files, chunks, chunks_overlap)
             )
 
 
@@ -160,9 +189,9 @@ class ContributionMetadata:
         """
 
         # Get scheme configuration
-        self.load_balanced_url = LoadBalancedURL(path, loadbalancers)
+        self.lb_url = LoadBalancedURL(path, loadbalancers)
 
-        self.metadata_url = self.load_balanced_url.direct_url
+        self.metadata_url = self.lb_url.direct_url
         self.metadata = json_get(self.metadata_url, _METADATA_FILENAME)
 
         filename = self.metadata["database"]
@@ -173,7 +202,7 @@ class ContributionMetadata:
         )
         self._init_tables()
 
-    def get_contribution_specs(self):
+    def get_table_contribs_spec(self):
         """Generator for contribution specifications for the whole database
 
         Retrieve information about input contribution files
@@ -196,8 +225,7 @@ class ContributionMetadata:
     def get_tables_names(self):
         table_names = []
         for t in self.tables:
-            table_name = t["json_schema"]["table"]
-            table_names.append(table_name)
+            table_names.append(t.name)
         return table_names
 
     def get_json_indexes(self):

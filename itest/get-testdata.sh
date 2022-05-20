@@ -20,6 +20,15 @@ Usage: `basename $0` [options] path
 EOD
 }
 
+# get the options
+while getopts h c ; do
+    case $c in
+	    h) usage ; exit 0 ;;
+	    \?) usage ; exit 2 ;;
+    esac
+done
+shift `expr $OPTIND - 1`
+
 if [ $# -ne 1 ] ; then
     usage
     exit 2
@@ -51,7 +60,7 @@ qserv build-images --pull-image --group docker_outer
 USER_ID=$(id -u)
 USER_OPT=""
 if [ "$USER_ID" -eq 1000 ]; then
- $USER_OPT="--user=qserv"
+  USER_OPT="--user=qserv"
 fi
 qserv build -j8 $USER_OPT --unit-test
 qserv itest --no-load --no-run-tests --no-compare-results --prep

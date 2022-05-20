@@ -102,7 +102,7 @@ class IngestConfigAction(argparse.Action):
     Argparse action to read an ingest client configuration file
     """
 
-    def __call__(self, parser, namespace, values: io.TextIOWrapper, option_string):
+    def __call__(self, parser, namespace, values: io.TextIOWrapper, option_string=None):
         try:
             yaml_data = yaml.safe_load(values)
             config = IngestConfig(yaml_data)

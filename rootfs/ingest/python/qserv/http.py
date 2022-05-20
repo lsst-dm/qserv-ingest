@@ -34,6 +34,7 @@ import getpass
 import json
 import logging
 import os
+from typing import Dict
 from urllib.error import HTTPError
 import urllib.parse
 
@@ -132,9 +133,9 @@ class Http:
             payload["auth_key"] = authKey
         r = self.http.get(url, json=payload, timeout=timeout)
         if r.status_code != 200:
-            raise HTTPError(
-                "HTTP %s Error for url (GET): %s" % (r.status_code, url), response=r
-            )
+            raise HTTPError(url, r.status_code,
+                            "HTTP %s Error for url (GET): %s" % (r.status_code, url),
+                            r, None)
         responseJson = r.json()
         if not responseJson["success"]:
             _LOG.critical("%s %s", url, responseJson["error"])
@@ -144,7 +145,7 @@ class Http:
         _LOG.info("GET: success")
         return responseJson
 
-    def post(self, url, payload, auth=True, timeout=None) -> dict():
+    def post(self, url, payload, auth=True, timeout=None) -> Dict:
         if auth is True:
             authKey = authorize()
             payload["auth_key"] = authKey
@@ -158,14 +159,14 @@ class Http:
             )
             raise e
         if r.status_code != 200:
-            raise HTTPError(
-                "HTTP %s Error for url (POST): %s" % (r.status_code, url), response=r
-            )
+            raise HTTPError(url, r.status_code,
+                            "HTTP %s Error for url (POST): %s" % (r.status_code, url),
+                            r, None)
         responseJson = r.json()
         _LOG.debug("POST %s: success", url)
         return responseJson
 
-    def put(self, url, payload=None, timeout=None) -> dict():
+    def put(self, url, payload=None, timeout=None) -> Dict:
         authKey = authorize()
         if not payload:
             payload = {}

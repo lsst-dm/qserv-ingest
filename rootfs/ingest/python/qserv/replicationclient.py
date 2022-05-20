@@ -32,7 +32,7 @@ from functools import lru_cache
 import logging
 import posixpath
 import socket
-from typing import Any, Tuple
+from typing import Any, List, Tuple
 import urllib.parse
 
 # ----------------------------
@@ -76,7 +76,7 @@ class ReplicationClient:
         """
         for transaction_id in self.get_transactions_started(database):
             success = False
-            self._close_transaction(transaction_id, success)
+            self.close_transaction(database, transaction_id, success)
             _LOG.info("Abort transaction: %s", transaction_id)
 
     def build_secondary_index(self, database):
@@ -91,7 +91,7 @@ class ReplicationClient:
         r = self.http.post(url, payload)
         jsonparser.raise_error(r)
 
-    def close_transaction(self, database, transaction_id, success):
+    def close_transaction(self, database: str, transaction_id: int, success: bool) -> None:
         """
         Close or abort a transaction
         """
@@ -196,7 +196,7 @@ class ReplicationClient:
         return status
 
     @lru_cache(maxsize=None)
-    def get_chunk_location(self, chunk: str, database: str) -> Tuple[str, int]:
+    def get_chunk_location(self, chunk_id: int, database: str) -> Tuple[str, int]:
         """Get the location of a chunk for a given database
 
         Parameters
@@ -215,14 +215,42 @@ class ReplicationClient:
             the qserv worker which store the chunk
         """
         url = urllib.parse.urljoin(self.repl_url, "ingest/chunk")
-        payload = {"chunk": chunk, "database": database}
+        payload = {"chunk": chunk_id, "database": database}
         responseJson = Http().post(url, payload, timeout=self.timeout_short)
         jsonparser.raise_error(responseJson)
 
-        host, port = jsonparser.get_location(responseJson)
-        _LOG.info("Location for chunk %d: %s %d", chunk, host, port)
+        host, port = jsonparser.get_chunk_location(responseJson)
+        _LOG.info("Location for chunk %d: %s %d", chunk_id, host, port)
 
         return (host, port)
+
+    @lru_cache(maxsize=None)
+    def get_regular_tables_locations(self, database: str) -> List[Tuple[str, int]]:
+        """Returns connection parameters of the Data Ingest Service of workers
+           which are available for ingesting regular (fully replicated) tables:
+
+        Parameters
+        ----------
+        database : `str`
+            Database name.
+
+        Returns
+        -------
+        x : `str`
+            Hostname of the qserv worker which store the chunk
+        y : `int`
+            Port number of the of replication service on
+            the qserv worker which store the chunk
+        """
+        url = urllib.parse.urljoin(self.repl_url, "ingest/regular")
+        payload = {"database": database}
+        responseJson = Http().post(url, payload, timeout=self.timeout_short)
+        jsonparser.raise_error(responseJson)
+
+        locations = jsonparser.get_regular_table_locations(responseJson)
+        _LOG.info("Locations for regular tables for database %d: %d", database, locations)
+
+        return locations
 
     def get_current_indexes(self, database, tables: list):
         for t in tables:

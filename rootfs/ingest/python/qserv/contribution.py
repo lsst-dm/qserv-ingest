@@ -50,36 +50,6 @@ _LOG = logging.getLogger(__name__)
 MAX_RETRY_ATTEMPTS = 3
 
 
-def build_contributions(
-    contributions_locked: list,
-    repl_client: ReplicationClient,
-    load_balanced_base_url: LoadBalancedURL,
-) -> list:
-    """Build list of contributions to be ingested
-
-    Parameters
-    ----------
-        contributions_locked (_type_): _description_
-        repl_client (_type_): _description_
-        load_balanced_url (list): _description_
-
-    Returns
-    -------
-        list: contributions to be ingested
-
-    """
-    contributions = []
-    for i, contribution in enumerate(contributions_locked):
-        (database, chunk_id, path, is_overlap, table) = contribution
-
-        (host, port) = repl_client.get_chunk_location(chunk_id, database)
-        contribution = Contribution(
-            host, port, chunk_id, path, table, is_overlap, load_balanced_base_url
-        )
-        contributions.append(contribution)
-    return contributions
-
-
 class Contribution:
     """Represent an ingest contribution
 
@@ -93,20 +63,15 @@ class Contribution:
         worker_host: str,
         worker_port: int,
         chunk_id: int,
-        path: str,
+        filepath: str,
         table: str,
         is_overlap: bool,
-        load_balanced_base_url: str,
+        load_balanced_base_url: LoadBalancedURL,
     ):
         self.chunk_id = chunk_id
-        self.path = path
         self.table = table
         self.is_overlap = is_overlap
-        if self.is_overlap:
-            filename = f"chunk_{self.chunk_id}_overlap.txt"
-        else:
-            filename = f"chunk_{self.chunk_id}.txt"
-        self.load_balanced_url = load_balanced_base_url.join(path, filename)
+        self.load_balanced_url = load_balanced_base_url.join(filepath)
         self.request_id = None
         self.retry_attempts = 0
         self.retry_attempts_post = 0
@@ -216,3 +181,33 @@ class Contribution:
                         + f" state instead of {contrib_status}"
                     )
         return finished
+
+
+def build_contributions(
+    contribdata_locked: list,
+    repl_client: ReplicationClient,
+    load_balanced_base_url: LoadBalancedURL,
+) -> list[Contribution]:
+    """Build list of contributions to be ingested
+
+    Parameters
+    ----------
+        contributions_locked (_type_): _description_
+        repl_client (_type_): _description_
+        load_balanced_url (list): _description_
+
+    Returns
+    -------
+        list: contributions to be ingested
+
+    """
+    contributions = []
+    for i, contribution in enumerate(contribdata_locked):
+        (database, chunk_id, filepath, is_overlap, table) = contribution
+
+        (host, port) = repl_client.get_chunk_location(chunk_id, database)
+        contribution = Contribution(
+            host, port, chunk_id, filepath, table, is_overlap, load_balanced_base_url
+        )
+        contributions.append(contribution)
+    return contributions

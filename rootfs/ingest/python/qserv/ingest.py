@@ -33,13 +33,13 @@ User-friendly client library for Qserv replication service.
 from enum import Enum, auto
 import logging
 import time
-from typing import List
+from typing import List, Tuple
 
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-from .contribution import build_contributions
+from .contribution import Contribution
 from .exception import IngestError
 from .metadata import ContributionMetadata
 from .queue import QueueManager
@@ -68,6 +68,9 @@ class Ingester:
     Manage contribution ingestion tasks
     """
 
+    contrib_meta: ContributionMetadata
+    """ Contribution metadata, loaded from input data repository """
+
     def __init__(
         self,
         contribution_metadata: ContributionMetadata,
@@ -75,21 +78,21 @@ class Ingester:
         queue_manager: QueueManager = None,
     ):
         """Retrieve contribution metadata and connection to concurrent queue manager"""
-        self.contribution_metadata = contribution_metadata
+        self.contrib_meta = contribution_metadata
         self.queue_manager = queue_manager
         self.repl_client = ReplicationClient(replication_url)
 
     def check_supertransactions_success(self):
         """Check all super-transactions have ran successfully"""
         trans = self.repl_client.get_transactions_started(
-            self.contribution_metadata.database
+            self.contrib_meta.database
         )
         _LOG.debug(f"IDs of transactions in STARTED state: {trans}")
         if len(trans) > 0:
             raise IngestError(
                 f"Database publication prevented by started transactions: {trans}"
             )
-        contributions = self.queue_manager.get_noningested_contributions()
+        contributions = self.queue_manager.select_noningested_contributions()
         if len(contributions) > 0:
             _LOG.error(f"Non ingested contributions: {contributions}")
             raise IngestError(
@@ -102,7 +105,7 @@ class Ingester:
         """
         Publish a Qserv database inside replication system
         """
-        database = self.contribution_metadata.database
+        database = self.contrib_meta.database
         self.repl_client.database_publish(database)
 
     def database_register_and_config(self, felis=None):
@@ -110,18 +113,18 @@ class Ingester:
         Register a database, its tables and its configuration inside replication system
         using data_url/<database_name>.json as input data
         """
-        self.repl_client.database_register(self.contribution_metadata.json_db)
+        self.repl_client.database_register(self.contrib_meta.json_db)
         self.repl_client.database_register_tables(
-            self.contribution_metadata.get_ordered_tables_json(), felis
+            self.contrib_meta.get_ordered_tables_json(), felis
         )
-        self.repl_client.database_config(self.contribution_metadata.database)
+        self.repl_client.database_config(self.contrib_meta.database)
 
     def get_database_status(self):
         """
         Return the status of a Qserv catalog database
         """
         return self.repl_client.get_database_status(
-            self.contribution_metadata.database, self.contribution_metadata.family
+            self.contrib_meta.database, self.contrib_meta.family
         )
 
     def ingest(self, contribution_queue_fraction):
@@ -139,11 +142,46 @@ class Ingester:
         or create secondary index
         """
         if secondary:
-            database = self.contribution_metadata.database
+            database = self.contrib_meta.database
             self.repl_client.build_secondary_index(database)
         else:
-            json_indexes = self.contribution_metadata.get_json_indexes()
+            json_indexes = self.contrib_meta.get_json_indexes()
             self.repl_client.index_all_tables(json_indexes)
+
+    def _build_contributions(self,
+                             contribfiles_locked: List[Tuple[str, int, str, bool, str]]) -> List[Contribution]:
+        """Build contribution specification using information from:
+          - ingest queue for file to be ingested
+          - Data Ingest service
+
+        Parameters
+        ----------
+            contribfiles_locked (List[Tuple[str, int, str, bool, str]]): _description_
+
+        Returns
+        -------
+            List[Contribution]: List of contributions to be ingested
+        """
+        contributions = []
+        for contrib_file in contribfiles_locked:
+            (database, chunk_id, filepath, is_overlap, table) = contrib_file
+            lb_base_url = self.contrib_meta.lb_url
+            if chunk_id is not None:
+                # Partitioned tables
+                (host, port) = self.repl_client.get_chunk_location(chunk_id, database)
+                contribution = Contribution(host, port, chunk_id,
+                                            filepath, table, is_overlap,
+                                            lb_base_url)
+                contributions.append(contribution)
+            else:
+                # Regular tables
+                locations = self.repl_client.get_regular_tables_locations(database)
+                for (host, port) in locations:
+                    contribution = Contribution(host, port, chunk_id,
+                                                filepath, table, is_overlap,
+                                                lb_base_url)
+                    contributions.append(contribution)
+        return contributions
 
     def _ingest_transaction(self):
         """Get contributions from a queue server for a given database
@@ -158,21 +196,19 @@ class Ingester:
 
         _LOG.info("Start ingest transaction")
 
-        contributions_locked = self.queue_manager.lock_contributions()
-        if len(contributions_locked) == 0:
+        contribfiles_locked = self.queue_manager.lock_contribfiles()
+        if len(contribfiles_locked) == 0:
             return False
 
         transaction_id = None
+        ingest_success = False
         try:
             transaction_id = self.repl_client.start_transaction(
-                self.contribution_metadata.database
+                self.contrib_meta.database
             )
 
-            contributions = build_contributions(
-                contributions_locked,
-                self.repl_client,
-                self.contribution_metadata.load_balanced_url,
-            )
+            contributions = self._build_contributions(contribfiles_locked)
+
             ingest_success = self._ingest_all_contributions(
                 transaction_id, contributions
             )
@@ -184,14 +220,14 @@ class Ingester:
         finally:
             if transaction_id:
                 self.repl_client.close_transaction(
-                    self.contribution_metadata.database, transaction_id, ingest_success
+                    self.contrib_meta.database, transaction_id, ingest_success
                 )
                 self.queue_manager.release_locked_contributions(ingest_success)
 
         return True
 
     def _ingest_all_contributions(
-        self, transaction_id: int, contributions: list
+        self, transaction_id: int, contributions: list[Contribution]
     ) -> bool:
         """Ingest all contribution for a given transaction
            Throw exception if ingest fail
@@ -248,7 +284,7 @@ class Ingester:
         """
         High-level method which help in managing transaction(s)
         """
-        database = self.contribution_metadata.database
+        database = self.contrib_meta.database
         if TransactionAction.ABORT_ALL:
             self.repl_client.abort_transactions(database)
         elif TransactionAction.START:
