@@ -51,6 +51,11 @@ from .util import increase_wait_time
 
 _LOG = logging.getLogger(__name__)
 
+# remove pylint message for sqlalchemy.Table().insert() method
+# see https://github.com/sqlalchemy/sqlalchemy/issues/4656
+# noqa pylint: disable=E1120
+# noqa pylint: disable=no-value-for-parameter
+
 
 class QueueManager:
     """
@@ -66,7 +71,7 @@ class QueueManager:
         self.pod = socket.gethostname()
 
         db_meta = MetaData(bind=self.engine)
-        self.queue = Table("chunkfile_queue", db_meta, autoload=True)
+        self.queue_table = Table("chunkfile_queue", db_meta, autoload=True)
         self.contribution_metadata = contribution_metadata
         self.ordered_tables_to_load = self.contribution_metadata.get_tables_names()
         _LOG.debug("Ordered tables to load: %s", self.ordered_tables_to_load)
@@ -88,9 +93,9 @@ class QueueManager:
            if loaded is 'True' count contributions which are not ingested
            else count all contributions.
         """
-        query = select([func.count("*")]).select_from(self.queue)
+        query = select([func.count("*")]).select_from(self.queue_table)
         query = query.where(
-            self.queue.c.database == self.contribution_metadata.database
+            self.queue_table.c.database == self.contribution_metadata.database
         )
         result = self.engine.execute(query)
         contributions_count = next(result)[0]
@@ -107,17 +112,17 @@ class QueueManager:
     def _select_locked_contribfiles(self) -> list[typing.Tuple[str, int, str, bool, str]]:
         query = select(
             [
-                self.queue.c.database,
-                self.queue.c.chunk_id,
-                self.queue.c.filepath,
-                self.queue.c.is_overlap,
-                self.queue.c.table,
+                self.queue_table.c.database,
+                self.queue_table.c.chunk_id,
+                self.queue_table.c.filepath,
+                self.queue_table.c.is_overlap,
+                self.queue_table.c.table,
             ]
         )
-        query = query.where(self.queue.c.locking_pod == self.pod)
-        query = query.where(self.queue.c.succeed.is_(None))
+        query = query.where(self.queue_table.c.locking_pod == self.pod)
+        query = query.where(self.queue_table.c.succeed.is_(None))
         query = query.where(
-            self.queue.c.database == self.contribution_metadata.database
+            self.queue_table.c.database == self.contribution_metadata.database
         )
         result = self.engine.execute(query)
         contributions = result.fetchall()
@@ -142,7 +147,7 @@ class QueueManager:
             for contrib_spec in table_contribs_spec.get_contrib():
                 contrib_spec["database"] = self.contribution_metadata.database
                 _LOG.debug("Add contribution (%s) to queue", contrib_spec)
-                self.engine.execute(self.queue.insert(), contrib_spec)
+                self.engine.execute(self.queue_table.insert(), contrib_spec)
 
     def lock_contribfiles(self) -> list[typing.Tuple[str, int, str, bool, str]]:
         """If some contributions are already locked in queue for current pod,
@@ -182,14 +187,14 @@ class QueueManager:
                 contribfiles_to_lock_count = (
                     self._contribfiles_to_lock_number - contribfiles_locked_count
                 )
-                query = self.queue.update(
+                query = self.queue_table.update(
                     mysql_limit=contribfiles_to_lock_count
                 ).values(locking_pod=self.pod)
-                query = query.where(self.queue.c.locking_pod.is_(None))
+                query = query.where(self.queue_table.c.locking_pod.is_(None))
                 query = query.where(
-                    self.queue.c.database == self.contribution_metadata.database
+                    self.queue_table.c.database == self.contribution_metadata.database
                 )
-                query = query.where(self.queue.c.table == self.current_table)
+                query = query.where(self.queue_table.c.table == self.current_table)
 
                 _LOG.debug("Query: %s", query)
 
@@ -224,15 +229,15 @@ class QueueManager:
         Integer number, String
         """
         if ingest_success:
-            query = self.queue.update().values(succeed=1)
+            query = self.queue_table.update().values(succeed=1)
             logging.debug("Mark contributions as 'succeed' in queue")
-            query = self.queue.update().values(succeed=1)
+            query = self.queue_table.update().values(succeed=1)
         else:
             logging.debug("Unlock contributions in queue")
-            query = self.queue.update().values(locking_pod=None)
+            query = self.queue_table.update().values(locking_pod=None)
 
-        query = query.where(self.queue.c.locking_pod == self.pod)
-        query = query.where(self.queue.c.succeed.is_(None))
+        query = query.where(self.queue_table.c.locking_pod == self.pod)
+        query = query.where(self.queue_table.c.succeed.is_(None))
 
         wait_sec = 1
         while True:
@@ -256,16 +261,16 @@ class QueueManager:
         """Return all contribution in queue not successfully loaded for current database"""
         query = select(
             [
-                self.queue.c.database,
-                self.queue.c.chunk_id,
-                self.queue.c.filepath,
-                self.queue.c.is_overlap,
-                self.queue.c.table,
+                self.queue_table.c.database,
+                self.queue_table.c.chunk_id,
+                self.queue_table.c.filepath,
+                self.queue_table.c.is_overlap,
+                self.queue_table.c.table,
             ]
         )
-        query = query.where(self.queue.c.succeed.is_(None))
+        query = query.where(self.queue_table.c.succeed.is_(None))
         query = query.where(
-            self.queue.c.database == self.contribution_metadata.database
+            self.queue_table.c.database == self.contribution_metadata.database
         )
         result = self.engine.execute(query)
         contributions = result.fetchall()
