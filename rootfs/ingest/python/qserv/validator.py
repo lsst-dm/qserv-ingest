@@ -36,14 +36,12 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
-import time
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
 import sqlalchemy
-from sqlalchemy import event, MetaData
-from sqlalchemy.engine import Engine
+from sqlalchemy import MetaData
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.sql import select, func
 
@@ -63,18 +61,6 @@ _TESTBENCH_PATH = "e2e"
 _WORKDIR = "/tmp"
 
 _LOG = logging.getLogger(__name__)
-
-
-@event.listens_for(Engine, "before_cursor_execute")
-def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
-    conn.info.setdefault("query_start_time", []).append(time.time())
-    _LOG.debug("Query: %s", statement)
-
-
-@event.listens_for(Engine, "after_cursor_execute")
-def after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
-    total = time.time() - conn.info["query_start_time"].pop(-1)
-    _LOG.debug("Query total time: %f", total)
 
 
 def _dircmp(dir1: str, dir2: str) -> bool:

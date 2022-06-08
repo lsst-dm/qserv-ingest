@@ -34,16 +34,29 @@ import io
 import json
 import logging
 import yaml
+import time
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-import requests
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
 
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
 _LOG = logging.getLogger(__name__)
+
+@event.listens_for(Engine, "before_cursor_execute")
+def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+    conn.info.setdefault("query_start_time", []).append(time.time())
+    _LOG.debug("Query: %s", statement)
+
+
+@event.listens_for(Engine, "after_cursor_execute")
+def after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+    total = time.time() - conn.info["query_start_time"].pop(-1)
+    _LOG.debug("Query total time: %f", total)
 
 
 def add_default_arguments(parser: argparse.ArgumentParser):
