@@ -71,7 +71,7 @@ class Contribution:
         self.chunk_id = chunk_id
         self.table = table
         self.is_overlap = is_overlap
-        self.load_balanced_url = load_balanced_base_url.join(filepath)
+        self.load_balanced_url = LoadBalancedURL.new(load_balanced_base_url, filepath)
         self.request_id = None
         self.retry_attempts = 0
         self.retry_attempts_post = 0
@@ -181,33 +181,3 @@ class Contribution:
                         + f" state instead of {contrib_status}"
                     )
         return finished
-
-
-def build_contributions(
-    contribdata_locked: list,
-    repl_client: ReplicationClient,
-    load_balanced_base_url: LoadBalancedURL,
-) -> list[Contribution]:
-    """Build list of contributions to be ingested
-
-    Parameters
-    ----------
-        contributions_locked (_type_): _description_
-        repl_client (_type_): _description_
-        load_balanced_url (list): _description_
-
-    Returns
-    -------
-        list: contributions to be ingested
-
-    """
-    contributions = []
-    for i, contribution in enumerate(contribdata_locked):
-        (database, chunk_id, filepath, is_overlap, table) = contribution
-
-        (host, port) = repl_client.get_chunk_location(chunk_id, database)
-        contribution = Contribution(
-            host, port, chunk_id, filepath, table, is_overlap, load_balanced_base_url
-        )
-        contributions.append(contribution)
-    return contributions

@@ -173,9 +173,9 @@ class Http:
         payload["auth_key"] = authKey
         r = requests.put(url, json=payload, timeout=timeout)
         if r.status_code != 200:
-            raise HTTPError(
-                "HTTP %s Error for url (PUT): %s" % (r.status_code, url), response=r
-            )
+            raise HTTPError(url, r.status_code,
+                            "HTTP %s Error for url (PUT): %s" % (r.status_code, url),
+                            r, None)
         responseJson = r.json()
         if not responseJson["success"]:
             _LOG.critical("%s %s", url, responseJson["error"])
@@ -189,9 +189,9 @@ class Http:
         authKey = authorize()
         r = requests.delete(url, json={"auth_key": authKey}, timeout=timeout)
         if r.status_code != 200:
-            raise HTTPError(
-                "HTTP %s Error for url (DELETE): %s" % (r.status_code, url), response=r
-            )
+            raise HTTPError(url, r.status_code,
+                            "HTTP %s Error for url (DELETE): %s" % (r.status_code, url),
+                            r, None)
         responseJson = r.json()
         if not responseJson["success"]:
             _LOG.critical("%s %s", url, responseJson["error"])

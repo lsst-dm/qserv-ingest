@@ -88,12 +88,11 @@ class LoadBalancedURL:
             self.count += 1
         return url
 
-    def join(self, path: str, filename: str) -> LoadBalancedURL:
+    @classmethod
+    def new(cls, lb_url: LoadBalancedURL, filepath: str) -> LoadBalancedURL:
         url_path = (
-            self.url_path.rstrip("/")
+            lb_url.url_path.rstrip("/")
             + "/"
-            + path.strip("/")
-            + "/"
-            + filename.strip("/")
+            + filepath.strip("/")
         )
-        return LoadBalancedURL(url_path, self.loadbalancers)
+        return cls(url_path, lb_url.loadbalancers)
