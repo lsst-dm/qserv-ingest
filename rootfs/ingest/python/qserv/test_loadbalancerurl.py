@@ -51,11 +51,10 @@ def test_get_loadbalancer_url():
     assert url == "https://server2/lsst-dm/qserv-ingest/master/tests/data/cosmoDC2/"
 
 
-def test_join_loadbalancer_url():
+def test_new_loadbalancer_url():
     base_path = ""
-    path = "/lsst/data/"
-    filename = "file.txt"
+    filepath = "/lsst/data/file.txt"
     servers = ["https://server1", "https://server2", "https://server3"]
     lb_url = LoadBalancedURL(base_path, servers)
-    new_url = lb_url.join(path, filename)
-    assert new_url.get() == f"https://server1{path}{filename}"
+    new_url = LoadBalancedURL.new(lb_url, filepath)
+    assert new_url.get() == f"https://server1{filepath}"
