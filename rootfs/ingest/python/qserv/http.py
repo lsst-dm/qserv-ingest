@@ -136,14 +136,14 @@ class Http:
             raise HTTPError(url, r.status_code,
                             "HTTP %s Error for url (GET): %s" % (r.status_code, url),
                             r, None)
-        responseJson = r.json()
-        if not responseJson["success"]:
-            _LOG.critical("%s %s", url, responseJson["error"])
+        response_json = r.json()
+        if not response_json["success"]:
+            _LOG.critical("%s %s", url, response_json["error"])
             raise ReplicationControllerError(
-                "Error in JSON response (GET)", url, responseJson["error"]
+                "Error in JSON response (GET)", url, response_json["error"]
             )
         _LOG.info("GET: success")
-        return responseJson
+        return response_json
 
     def post(self, url, payload, auth=True, timeout=None) -> Dict:
         if auth is True:
@@ -159,12 +159,10 @@ class Http:
             )
             raise e
         if r.status_code != 200:
-            raise HTTPError(url, r.status_code,
-                            "HTTP %s Error for url (POST): %s" % (r.status_code, url),
-                            r, None)
-        responseJson = r.json()
+            raise HTTPError(url, r.status_code, f"HTTP {r.status_code} Error for url (POST): {url}", r, None)
+        response_json = r.json()
         _LOG.debug("POST %s: success", url)
-        return responseJson
+        return response_json
 
     def put(self, url, payload=None, timeout=None) -> Dict:
         authKey = authorize()
@@ -174,29 +172,29 @@ class Http:
         r = requests.put(url, json=payload, timeout=timeout)
         if r.status_code != 200:
             raise HTTPError(url, r.status_code,
-                            "HTTP %s Error for url (PUT): %s" % (r.status_code, url),
+                            f"HTTP {r.status_code} Error for url (PUT): {url}",
                             r, None)
-        responseJson = r.json()
-        if not responseJson["success"]:
-            _LOG.critical("%s %s", url, responseJson["error"])
+        response_json = r.json()
+        if not response_json["success"]:
+            _LOG.critical("%s %s", url, response_json["error"])
             raise ReplicationControllerError(
-                "Error in JSON response (PUT)", url, responseJson["error"]
+                "Error in JSON response (PUT)", url, response_json["error"]
             )
         _LOG.info("PUT: success")
-        return responseJson
+        return response_json
 
     def delete(self, url, timeout=None):
         authKey = authorize()
         r = requests.delete(url, json={"auth_key": authKey}, timeout=timeout)
         if r.status_code != 200:
             raise HTTPError(url, r.status_code,
-                            "HTTP %s Error for url (DELETE): %s" % (r.status_code, url),
+                            f"HTTP {r.status_code} Error for url (DELETE): {url}",
                             r, None)
-        responseJson = r.json()
-        if not responseJson["success"]:
-            _LOG.critical("%s %s", url, responseJson["error"])
+        response_json = r.json()
+        if not response_json["success"]:
+            _LOG.critical("%s %s", url, response_json["error"])
             raise ReplicationControllerError(
-                "Error in JSON response (DELETE)", url, responseJson["error"]
+                "Error in JSON response (DELETE)", url, response_json["error"]
             )
         _LOG.info("DELETE: success")
-        return responseJson
+        return response_json

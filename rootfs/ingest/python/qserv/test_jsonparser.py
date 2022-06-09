@@ -45,12 +45,26 @@ _CWD = os.path.dirname(os.path.abspath(__file__))
 _DATABASE = "cosmoDC2_v1_1_4_image"
 _FAMILY = "layout_340_3"
 
+_DATADIR = os.path.join(_CWD, "testdata")
+
 
 def test_get_indexes():
 
-    responseJson = http.json_get(_CWD, "indexes.json")
-    indexes = jsonparser.get_indexes(responseJson)
+    response_json = http.json_get(_DATADIR, "indexes.json")
+    indexes = jsonparser.get_indexes(response_json)
     print(indexes)
+
+
+def test_contribution_monitor():
+
+    response_json = http.json_get(_DATADIR, "response_file_async.json")
+    contrib_monitor = jsonparser.ContributionMonitor(response_json)
+
+    assert contrib_monitor.status == jsonparser.ContributionState.LOAD_FAILED
+    assert contrib_monitor.error == "Connection[119]::execute(_inTransaction=1)  mysql_real_query failed, query: 'LOAD DATA INFILE '/qserv/data/ingest/qservTest_case01_qserv-Logs-4294967295-24-9ad6-c5a6-c537-1086.csv' INTO TABLE `qservTest_case01_qserv`.`Logs`FIELDS TERMINATED BY ',' ESCAPED BY '\\\\' LINES TERMINATED BY '\\n'', error: Data truncated for column 'id' at row 1, errno: 1265"
+    assert contrib_monitor.system_error == 11
+    assert contrib_monitor.http_error == 0
+    assert contrib_monitor.retry_allowed is False
 
 
 def test_parse_not_finished_transaction():
@@ -85,6 +99,6 @@ def test_parse_not_finished_transaction():
 
 
 def test_parse_database_status():
-    responseJson = http.json_get(_CWD, "replicationconfig.json")
-    status = jsonparser.parse_database_status(responseJson, _DATABASE, _FAMILY)
+    response_json = http.json_get(_CWD, "replicationconfig.json")
+    status = jsonparser.parse_database_status(response_json, _DATABASE, _FAMILY)
     assert status == jsonparser.DatabaseStatus.REGISTERED_NOT_PUBLISHED

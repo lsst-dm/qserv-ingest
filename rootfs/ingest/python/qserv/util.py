@@ -172,7 +172,6 @@ class FelisAction(argparse.Action):
             tableName = table["name"]
             schemas[tableName] = list()
             for column in table["columns"]:
-                datatype = column["mysql:datatype"]
                 nullable = column["nullable"] if "nullable" in column else True
                 nullstring = " DEFAULT NULL" if nullable else " NOT NULL"
                 schemas[tableName].append(

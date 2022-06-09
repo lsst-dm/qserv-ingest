@@ -1,0 +1,38 @@
+{"contrib":{
+    "async":1,
+    "chunk":4294967295,
+    "create_time":1654719502165,
+    "database":"qservTest_case01_qserv",
+    "dialect_input":{
+       "fields_enclosed_by":"\\0",
+       "fields_escaped_by":"\\\\",
+       "fields_terminated_by":",",
+       "lines_terminated_by":"\\n"
+    },
+    "error":"Connection[119]::execute(_inTransaction=1)  mysql_real_query failed, query: 'LOAD DATA INFILE '/qserv/data/ingest/qservTest_case01_qserv-Logs-4294967295-24-9ad6-c5a6-c537-1086.csv' INTO TABLE `qservTest_case01_qserv`.`Logs`FIELDS TERMINATED BY ',' ESCAPED BY '\\\\' LINES TERMINATED BY '\\n'', error: Data truncated for column 'id' at row 1, errno: 1265",
+    "http_data":"",
+    "http_error":0,
+    "http_headers":[
+
+    ],
+    "http_method":"GET",
+    "id":3,
+    "load_time":1654719502212,
+    "num_bytes":303244,
+    "num_rows":1000,
+    "overlap":1,
+    "read_time":1654719502176,
+    "retry_allowed":0,
+    "start_time":1654719502168,
+    "status":"LOAD_FAILED",
+    "system_error":11,
+    "table":"Logs",
+    "tmp_file":"/qserv/data/ingest/qservTest_case01_qserv-Logs-4294967295-24-9ad6-c5a6-c537-1086.csv",
+    "transaction_id":24,
+    "url":"http://dataserver/datasets/case01/Logs.tsv",
+    "worker":"qserv-worker-0"
+ },
+ "error":"",
+ "error_ext":{
+ },
+ "success":1}

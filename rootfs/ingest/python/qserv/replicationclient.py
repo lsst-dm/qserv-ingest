@@ -244,7 +244,7 @@ class ReplicationClient:
         """
         url = urllib.parse.urljoin(self.repl_url, "ingest/regular")
         payload = {"database": database}
-        responseJson = Http().post(url, payload, timeout=self.timeout_short)
+        responseJson = Http().get(url, payload, timeout=self.timeout_short)
         jsonparser.raise_error(responseJson)
 
         locations = jsonparser.get_regular_table_locations(responseJson)

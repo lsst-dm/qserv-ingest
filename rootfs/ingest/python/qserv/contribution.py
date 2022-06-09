@@ -30,16 +30,16 @@ Helper for ingest contribution management
 #  Imports of standard modules --
 # -------------------------------
 import logging
+import time
 import urllib.parse
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-from .exception import IngestError, ReplicationControllerError
+from .exception import IngestError
 from .http import Http
-from .jsonparser import ContributionState, get_contribution_status, raise_error
+from .jsonparser import ContributionState, ContributionMonitor, raise_error
 from .metadata import LoadBalancedURL
-from .replicationclient import ReplicationClient
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -57,6 +57,7 @@ class Contribution:
     http://<worker_host:worker_port>/ingest/file-async
 
     """
+    is_overlap: bool
 
     def __init__(
         self,
@@ -69,8 +70,23 @@ class Contribution:
         load_balanced_base_url: LoadBalancedURL,
     ):
         self.chunk_id = chunk_id
+        if chunk_id is None:
+            # regular tables
+            self.chunk_id = -1
         self.table = table
-        self.is_overlap = is_overlap
+        if is_overlap is None:
+            # regular tables
+            self.is_overlap = -1
+        else:
+            # partitioned tables
+            self.is_overlap = int(is_overlap)
+        if filepath.endswith(".tsv"):
+            self.column_separator = "\\t"
+        elif filepath.endswith(".csv"):
+            self.column_separator = ","
+        else:
+            raise IngestError("Unsupported data format for regular table"
+                              "only *.csv and .tsv are supported")
         self.load_balanced_url = LoadBalancedURL.new(load_balanced_base_url, filepath)
         self.request_id = None
         self.retry_attempts = 0
@@ -96,12 +112,13 @@ class Contribution:
         """
         url = urllib.parse.urljoin(self.worker_url, "ingest/file-async")
         _LOG.debug("start_async(): url: %s", url)
+
         payload = {
             "transaction_id": transaction_id,
             "table": self.table,
-            "column_separator": ",",
+            "column_separator": "\\t",
             "chunk": self.chunk_id,
-            "overlap": int(self.is_overlap),
+            "overlap": self.is_overlap,
             "url": self.load_balanced_url.get(),
         }
         _LOG.debug("start_async(): payload: %s", payload)
@@ -147,37 +164,48 @@ class Contribution:
         status_url = urllib.parse.urljoin(
             self.worker_url, f"ingest/file-async/{self.request_id}"
         )
-        responseJson = Http().get(status_url)
 
-        contrib_status = get_contribution_status(responseJson)
-        finished = False
-        match contrib_status:
-            case ContributionState.FINISHED:
-                finished = True
+        # Retry monitor query if needed
+        monitor_request_retry_attempts = 0
+        retry = True
+        while retry:
+            response_json = Http().get(status_url)
+            retry = raise_error(
+                response_json, monitor_request_retry_attempts, MAX_RETRY_ATTEMPTS)
+            if retry:
+                monitor_request_retry_attempts += 1
+                time.sleep(monitor_request_retry_attempts)
+
+        contrib_monitor = ContributionMonitor(response_json)
+        contrib_finished = False
+        # For transaction state description
+        # see: https://confluence.lsstcorp.org/display/DM/Ingest%3A+9.5.3.+Asynchronous+Protocol
+        match contrib_monitor.status:
             case ContributionState.IN_PROGRESS:
                 _LOG.debug("_ingest_chunk: request %s in progress", self.request_id)
+            case ContributionState.FINISHED:
+                contrib_finished = True
+            case (ContributionState.CREATE_FAILED |
+                  ContributionState.START_FAILED |
+                  ContributionState.READ_FAILED |
+                  ContributionState.LOAD_FAILED):
+                errmsg = ""
+                if not contrib_monitor.retry_allowed:
+                    errmsg = "and is not retriable"
+                elif self.retry_attempts >= MAX_RETRY_ATTEMPTS:
+                    errmsg = "and has exceeded maximum number of ingest attempts"
+                if len(errmsg) != 0:
+                    raise IngestError(
+                        f"Contribution {self} is in status {contrib_monitor.status} " +
+                        f"with error: \"{contrib_monitor.error}\", " +
+                        f"system error: {contrib_monitor.system_error}" +
+                        f"http error: {contrib_monitor.http_error} {errmsg}"
+                    )
+                self.retry_attempts += 1
+                self.request_id = None
             case ContributionState.CANCELLED:
                 raise IngestError(
                     f"Contribution {self} ingest has been cancelled by a third-party"
                 )
-            case ContributionState.READ_FAILED:
-                if self.retry_attempts >= MAX_RETRY_ATTEMPTS:
-                    raise IngestError(
-                        "Exceeding maximum number of attempts for "
-                        + f"Contribution {self}"
-                    )
-                self.retry_attempts += 1
-                self.request_id = None
-            case _:
-                retry = raise_error(
-                    responseJson, self.retry_attempts, MAX_RETRY_ATTEMPTS
-                )
-                if retry:
-                    self.retry_attempts += 1
-                    self.request_id = None
-                else:
-                    raise ReplicationControllerError(
-                        f"Contribution {self} should be in an error"
-                        + f" state instead of {contrib_status}"
-                    )
-        return finished
+
+        return contrib_finished

@@ -78,6 +78,7 @@ def test_print():
     params.pop("load_balanced_base_url")
     params.pop("worker_host")
     params.pop("worker_port")
+    params["is_overlap"] = int(params["is_overlap"])
     params["load_balanced_url"] = c.load_balanced_url
     params["request_id"] = None
     params["retry_attempts"] = 0

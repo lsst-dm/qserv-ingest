@@ -56,6 +56,25 @@ class ContributionState(Enum):
     READ_FAILED = "READ_FAILED"
     LOAD_FAILED = "LOAD_FAILED"
 
+    @classmethod
+    def from_str(cls, label):
+        if label in ("CANCELLED"):
+            return cls.CANCELLED
+        elif label in ("FINISHED"):
+            return cls.FINISHED
+        elif label in ("IN_PROGRESS"):
+            return cls.IN_PROGRESS
+        elif label in ("CREATE_FAILED"):
+            return cls.CREATE_FAILED
+        elif label in ("START_FAILED"):
+            return cls.START_FAILED
+        elif label in ("READ_FAILED"):
+            return cls.READ_FAILED
+        elif label in ("LOAD_FAILED"):
+            return cls.LOAD_FAILED
+        else:
+            raise NotImplementedError(f"Unsupported value: {label} for ContributionState")
+
 
 class DatabaseStatus(Enum):
     NOT_REGISTERED = -1
@@ -67,6 +86,75 @@ class TransactionState(Enum):
     ABORTED = "ABORTED"
     STARTED = "STARTED"
     FINISHED = "FINISHED"
+
+
+class ContributionMonitor:
+    """Store contribution status returned by the Ingest Service
+    see https://confluence.lsstcorp.org/display/DM/Ingest%3A+9.5.3.+Asynchronous+Protocol
+    for details
+
+    Parameters
+    ----------
+        response_json (dict): Ingest Service response for a HTTP request against URL: ingest/file-async/<request_id>
+
+    Raises
+    ------
+        ReplicationControllerError: If 'response_json' does not have the expected value or format
+    """
+
+    status: ContributionState
+    """ Status of the contribution """
+
+    error: str
+    """ Error message for the contribution """
+
+    system_error: int
+    """ System error code for the contribution """
+
+    http_error: int
+    """ HTTP error code for the contribution """
+
+    retry_allowed: bool
+    """ True if the contribution can be retried """
+
+    def __init__(self, response_json: dict):
+
+        json_contrib = response_json['contrib']
+
+        if "status" not in json_contrib:
+            raise ReplicationControllerError(
+                "Missing 'status' field for contribution" + f"{json_contrib}")
+
+        try:
+            json_status = response_json["contrib"]["status"]
+            self.status = ContributionState.from_str(json_status)
+        except NotImplementedError:
+            raise ReplicationControllerError(
+                f"Unknow status {json_status} for Contribution {json_contrib}")
+
+        if "error" not in response_json["contrib"]:
+            raise ReplicationControllerError(
+                "Missing 'error' field for contribution" + f"{json_contrib}")
+
+        self.error = json_contrib["error"]
+
+        if "system_error" not in response_json["contrib"]:
+            raise ReplicationControllerError(
+                "Missing 'system_error' field for contribution" + f"{json_contrib}")
+
+        self.system_error = int(json_contrib["system_error"])
+
+        if "http_error" not in response_json["contrib"]:
+            raise ReplicationControllerError(
+                "Missing 'http_error' field for contribution" + f"{json_contrib}")
+
+        self.http_error = int(json_contrib["http_error"])
+
+        if "retry_allowed" not in response_json["contrib"]:
+            raise ReplicationControllerError(
+                "Missing 'retry_allowed' field for contribution" + f"{json_contrib}")
+
+        self.retry_allowed = bool(int(json_contrib["retry_allowed"]))
 
 
 def filter_transactions(responseJson: Dict, database: str, states: List[TransactionState]) -> List[int]:
@@ -82,28 +170,6 @@ def filter_transactions(responseJson: Dict, database: str, states: List[Transact
             if state in states:
                 transaction_ids.append(int(trans["id"]))
     return transaction_ids
-
-
-def get_contribution_status(responseJson: dict) -> ContributionState:
-    """Retrieve contribution status"""
-    if responseJson["contrib"]["status"] == ContributionState.FINISHED.value:
-        return ContributionState.FINISHED
-    elif responseJson["contrib"]["status"] == ContributionState.IN_PROGRESS.value:
-        return ContributionState.IN_PROGRESS
-    elif responseJson["contrib"]["status"] == ContributionState.CANCELLED.value:
-        return ContributionState.CANCELLED
-    elif responseJson["contrib"]["status"] == ContributionState.CREATE_FAILED.value:
-        return ContributionState.CREATE_FAILED
-    elif responseJson["contrib"]["status"] == ContributionState.START_FAILED.value:
-        return ContributionState.START_FAILED
-    elif responseJson["contrib"]["status"] == ContributionState.READ_FAILED.value:
-        return ContributionState.READ_FAILED
-    elif responseJson["contrib"]["status"] == ContributionState.LOAD_FAILED.value:
-        return ContributionState.LOAD_FAILED
-    else:
-        raise ReplicationControllerError(
-            "Unknown contribution status:" + f"{responseJson['contrib']['status']}"
-        )
 
 
 def get_indexes(responseJson, existing_indexes: Dict[str, set] = dict()):
