@@ -231,10 +231,9 @@ class ContributionMetadata:
         return table_names
 
     def get_json_indexes(self):
-        json_indexes = []
-        for t in self.tables:
-            for json_idx in t["indexes"]:
-                json_indexes.append(json_idx)
+        json_indexes: List[str] = []
+        for tbl in self.tables:
+            json_indexes.extend(tbl.json_indexes)
         return json_indexes
 
     def get_ordered_tables_json(self) -> List[Dict[Any, Any]]:
