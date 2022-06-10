@@ -29,8 +29,9 @@ Manage metadata related to input data
 #  Imports of standard modules --
 # -------------------------------
 from dataclasses import dataclass
+import json
 import logging
-from typing import List
+from typing import Any, Dict, List
 import urllib.parse
 
 
@@ -122,14 +123,15 @@ class TableSpec:
     """Contain table specifications for a given database"""
 
     contrib_specs: List[TableContributionsSpec]
-    data: dict()
+    data: List[Any]
+    schema_file: str
     is_director: bool
     is_partitioned: bool
     json_indexes: List[str]
-    json_schema: dict()
+    json_schema: Dict
     name: str
 
-    def __init__(self, metadata_url: str, table_meta: str):
+    def __init__(self, metadata_url: str, table_meta: Dict):
         self.data = table_meta["data"]
         schema_file = table_meta["schema"]
         self.json_schema = json_get(metadata_url, schema_file)
@@ -235,7 +237,7 @@ class ContributionMetadata:
                 json_indexes.append(json_idx)
         return json_indexes
 
-    def get_ordered_tables_json(self) -> List[str]:
+    def get_ordered_tables_json(self) -> List[Dict[Any, Any]]:
         """Retrieve json schema for each tables of a given database
         in order to register them inside the replication service
 

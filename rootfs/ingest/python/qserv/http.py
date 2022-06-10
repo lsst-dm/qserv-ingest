@@ -159,7 +159,8 @@ class Http:
             )
             raise e
         if r.status_code != 200:
-            raise HTTPError(url, r.status_code, f"HTTP {r.status_code} Error for url (POST): {url}", r, None)
+            raise HTTPError(url, r.status_code, f"HTTP {r.status_code} Error for url (POST): {url}",
+                            None, None)
         response_json = r.json()
         _LOG.debug("POST %s: success", url)
         return response_json
@@ -173,7 +174,7 @@ class Http:
         if r.status_code != 200:
             raise HTTPError(url, r.status_code,
                             f"HTTP {r.status_code} Error for url (PUT): {url}",
-                            r, None)
+                            None, None)
         response_json = r.json()
         if not response_json["success"]:
             _LOG.critical("%s %s", url, response_json["error"])

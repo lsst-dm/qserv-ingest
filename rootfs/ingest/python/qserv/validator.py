@@ -36,6 +36,7 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+from typing import IO
 
 # ----------------------------
 # Imports for other modules --
@@ -178,8 +179,12 @@ class Validator:
             process = subprocess.Popen(
                 cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
             )
-            for c in iter(process.stdout.readline, b""):
-                f.write(c)
+            if process.stdout:
+                buffer: IO[bytes] = process.stdout
+                for c in iter(buffer.readline, b""):
+                    f.write(c)
+            else:
+                _LOG.warning(f"No stdout for command: {cmd}")
 
         if _LOG.isEnabledFor(logging.INFO):
             log = open(dbbench_log, "r")

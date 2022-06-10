@@ -40,6 +40,7 @@ from .exception import IngestError
 from .http import Http
 from .jsonparser import ContributionState, ContributionMonitor, raise_error
 from .metadata import LoadBalancedURL
+from .util import increase_wait_time
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -57,7 +58,7 @@ class Contribution:
     http://<worker_host:worker_port>/ingest/file-async
 
     """
-    is_overlap: bool
+    is_overlap: int
 
     def __init__(
         self,
@@ -82,7 +83,7 @@ class Contribution:
             self.is_overlap = int(is_overlap)
         if filepath.endswith(".tsv"):
             self.column_separator = "\\t"
-        elif filepath.endswith(".csv"):
+        elif filepath.endswith(".csv") or filepath.endswith(".txt") :
             self.column_separator = ","
         else:
             raise IngestError("Unsupported data format for regular table"
@@ -116,7 +117,7 @@ class Contribution:
         payload = {
             "transaction_id": transaction_id,
             "table": self.table,
-            "column_separator": "\\t",
+            "column_separator": self.column_separator,
             "chunk": self.chunk_id,
             "overlap": self.is_overlap,
             "url": self.load_balanced_url.get(),
@@ -168,13 +169,16 @@ class Contribution:
         # Retry monitor query if needed
         monitor_request_retry_attempts = 0
         retry = True
+        wait_sec = 1
         while retry:
             response_json = Http().get(status_url)
             retry = raise_error(
                 response_json, monitor_request_retry_attempts, MAX_RETRY_ATTEMPTS)
             if retry:
                 monitor_request_retry_attempts += 1
-                time.sleep(monitor_request_retry_attempts)
+                time.sleep(wait_sec)
+                # Sleep for longer and longer
+                wait_sec = increase_wait_time(wait_sec)
 
         contrib_monitor = ContributionMonitor(response_json)
         contrib_finished = False
@@ -198,7 +202,7 @@ class Contribution:
                     raise IngestError(
                         f"Contribution {self} is in status {contrib_monitor.status} " +
                         f"with error: \"{contrib_monitor.error}\", " +
-                        f"system error: {contrib_monitor.system_error}" +
+                        f"system error: {contrib_monitor.system_error}, " +
                         f"http error: {contrib_monitor.http_error} {errmsg}"
                     )
                 self.retry_attempts += 1

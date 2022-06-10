@@ -151,9 +151,10 @@ class QueueManager:
 
     def lock_contribfiles(self) -> list[typing.Tuple[str, int, str, bool, str]]:
         """If some contributions are already locked in queue for current pod,
-           return them
-           if not, lock a batch of them and then return their representation,
-           return None if all contribution have been ingested
+        return them
+        if not, lock a batch of them and then return their representation,
+        return None if all contribution have been ingested
+
         Returns
         -------
         A list of chunk contributions representation where:
@@ -200,10 +201,10 @@ class QueueManager:
 
                 self.engine.execute(query)
 
-                contributions_locked = self._select_locked_contribfiles()
-                contributions_locked_count = len(contributions_locked)
-                _LOG.debug("contributions_locked_count: %s", contributions_locked_count)
-                if contributions_locked_count < self._contribfiles_to_lock_number:
+                contribfiles_locked = self._select_locked_contribfiles()
+                contribfiles_locked_count = len(contribfiles_locked)
+                _LOG.debug("contributions_locked_count: %s", contribfiles_locked_count)
+                if contribfiles_locked_count < self._contribfiles_to_lock_number:
                     previous_table = self.current_table
                     self._pop_current_table()
                     logging.info(
@@ -213,20 +214,17 @@ class QueueManager:
                     )
 
         logging.debug(
-            "Contributions locked by pod %s: %s", self.pod, contributions_locked
+            "Contribution files locked by pod %s: %s", self.pod, contribfiles_locked
         )
-        return contributions_locked
+        return contribfiles_locked
 
-    def release_locked_contributions(self, ingest_success) -> None:
+    def release_locked_contributions(self, ingest_success: bool) -> None:
         """Mark contributions as "succeed" in contribution queue if super-transaction
             has been successfully commited
             Release contributions in queue when the super-transaction has been aborted
 
             WARN: this operation will be retried until it succeed
             so that contribution queue state is consistent with ingest state
-        Returns
-        -------
-        Integer number, String
         """
         if ingest_success:
             query = self.queue_table.update().values(succeed=1)

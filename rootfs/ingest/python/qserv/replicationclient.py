@@ -32,7 +32,7 @@ from functools import lru_cache
 import logging
 import posixpath
 import socket
-from typing import Any, List, Tuple
+from typing import Any, Dict, List, Tuple
 import urllib.parse
 
 # ----------------------------
@@ -259,7 +259,7 @@ class ReplicationClient:
                 self.index_url, params, timeout=self.timeout_short
             )
             jsonparser.raise_error(responseJson)
-            indexes = dict()
+            indexes:  Dict[str, set] = dict()
             jsonparser.get_indexes(responseJson, indexes)
         _LOG.info("Indexes %s", indexes)
         jsonparser.raise_error(responseJson)

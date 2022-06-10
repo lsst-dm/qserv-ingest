@@ -280,23 +280,27 @@ class Ingester:
 
         return True
 
-    def transaction_helper(self, action: TransactionAction, trans_id: List[int] = None):
+    def transaction_helper(self, action: TransactionAction, trans_id: int = None):
         """
         High-level method which help in managing transaction(s)
         """
         database = self.contrib_meta.database
-        if TransactionAction.ABORT_ALL:
-            self.repl_client.abort_transactions(database)
-        elif TransactionAction.START:
-            transaction_id = self.repl_client.start_transaction(database)
-            _LOG.info("Start transaction %s", transaction_id)
-        elif TransactionAction.CLOSE:
-            self.repl_client.close_transaction(database, trans_id, True)
-            _LOG.info("Commit transaction %s", trans_id)
-        elif TransactionAction.CLOSE_ALL:
-            transaction_ids = self.repl_client.get_transactions_started(database)
-            for i in transaction_ids:
-                self.repl_client.close_transaction(database, i, True)
-                _LOG.info("Commit transaction %s", i)
-        elif TransactionAction.LIST_STARTED:
-            self.repl_client.get_transactions_started(database)
+        match action:
+            case TransactionAction.ABORT_ALL:
+                self.repl_client.abort_transactions(database)
+            case TransactionAction.START:
+                transaction_id = self.repl_client.start_transaction(database)
+                _LOG.info("Start transaction %s", transaction_id)
+            case TransactionAction.CLOSE:
+                if trans_id:
+                    self.repl_client.close_transaction(database, trans_id, True)
+                    _LOG.info("Commit transaction %s", trans_id)
+                else:
+                    raise ValueError(f"Missing transaction id for {TransactionAction.CLOSE}")
+            case TransactionAction.CLOSE_ALL:
+                transaction_ids = self.repl_client.get_transactions_started(database)
+                for i in transaction_ids:
+                    self.repl_client.close_transaction(database, i, True)
+                    _LOG.info("Commit transaction %s", i)
+            case TransactionAction.LIST_STARTED:
+                self.repl_client.get_transactions_started(database)
