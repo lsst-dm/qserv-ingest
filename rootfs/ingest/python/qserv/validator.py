@@ -80,12 +80,12 @@ def _dircmp(dir1: str, dir2: str) -> bool:
 
     has_same_files = True
     for f in left:
+        _LOG.info("Analyze query %s results", f)
         query_result = os.path.join(dir1, f)
         query_expected_result = os.path.join(dir2, f)
-        result = open(query_result, "r")
-        expected_result = open(query_expected_result, "r")
-        delta = difflib.unified_diff(result.readlines(), expected_result.readlines())
-        _LOG.info("Analyze query %s results", f)
+        result = open(query_result, "r").readlines()
+        expected_result = open(query_expected_result, "r").readlines()
+        delta = difflib.unified_diff(result, expected_result)
         i = 0
         for line in delta:
             i += 1

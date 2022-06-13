@@ -62,6 +62,30 @@
          ]
       },
       {
+         "schema":"Filter.json",
+         "indexes":[],
+         "data":[
+            {
+               "directory":"",
+               "files":[
+                  "Filter.tsv"
+               ]
+            }
+         ]
+      },
+      {
+         "schema":"LeapSeconds.json",
+         "indexes":[],
+         "data":[
+            {
+               "directory":"",
+               "files":[
+                  "LeapSeconds.tsv"
+               ]
+            }
+         ]
+      },
+      {
          "schema":"Logs.json",
          "indexes":[],
          "data":[
@@ -69,6 +93,42 @@
                "directory":"",
                "files":[
                   "Logs.tsv"
+               ]
+            }
+         ]
+      },
+      {
+         "schema":"RefSrcMatch.json",
+         "indexes":[],
+         "data":[
+            {
+               "directory":"",
+               "files":[
+                  "RefSrcMatch.tsv"
+               ]
+            }
+         ]
+      },
+      {
+         "schema":"sdqa_Metric.json",
+         "indexes":[],
+         "data":[
+            {
+               "directory":"",
+               "files":[
+                  "sdqa_Metric.tsv"
+               ]
+            }
+         ]
+      },
+      {
+         "schema":"SimRefObject.json",
+         "indexes":[],
+         "data":[
+            {
+               "directory":"",
+               "files":[
+                  "SimRefObject.tsv"
                ]
             }
          ]
