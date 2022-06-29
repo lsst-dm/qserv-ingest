@@ -1,6 +1,6 @@
 # Integration test datasets for qserv-ingest
 
-datasets/case01 -> datasets/case05 : Generated from qserv repository, using `get-testdata.sh` on a developmemt workstation
+datasets/case01 -> datasets/case05 : Generated from qserv repository, using `get-testdata.sh` on a developememt workstation
 
 
 

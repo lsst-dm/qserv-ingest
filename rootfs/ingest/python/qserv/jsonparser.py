@@ -57,23 +57,8 @@ class ContributionState(Enum):
     LOAD_FAILED = "LOAD_FAILED"
 
     @classmethod
-    def from_str(cls, label):
-        if label in ("CANCELLED"):
-            return cls.CANCELLED
-        elif label in ("FINISHED"):
-            return cls.FINISHED
-        elif label in ("IN_PROGRESS"):
-            return cls.IN_PROGRESS
-        elif label in ("CREATE_FAILED"):
-            return cls.CREATE_FAILED
-        elif label in ("START_FAILED"):
-            return cls.START_FAILED
-        elif label in ("READ_FAILED"):
-            return cls.READ_FAILED
-        elif label in ("LOAD_FAILED"):
-            return cls.LOAD_FAILED
-        else:
-            raise NotImplementedError(f"Unsupported value: {label} for ContributionState")
+    def from_str(cls, label: str):
+        return ContributionState(label)
 
 
 class DatabaseStatus(Enum):
@@ -95,7 +80,8 @@ class ContributionMonitor:
 
     Parameters
     ----------
-        response_json (dict): Ingest Service response for a HTTP request against URL: ingest/file-async/<request_id>
+        response_json: `dict`
+            Ingest Service response for a HTTP request against URL: ingest/file-async/<request_id>
 
     Raises
     ------
@@ -134,25 +120,25 @@ class ContributionMonitor:
 
         if "error" not in response_json["contrib"]:
             raise ReplicationControllerError(
-                "Missing 'error' field for contribution" + f"{json_contrib}")
+                "Missing 'error' field for contribution" f"{json_contrib}")
 
         self.error = json_contrib["error"]
 
         if "system_error" not in response_json["contrib"]:
             raise ReplicationControllerError(
-                "Missing 'system_error' field for contribution" + f"{json_contrib}")
+                "Missing 'system_error' field for contribution" f"{json_contrib}")
 
         self.system_error = int(json_contrib["system_error"])
 
         if "http_error" not in response_json["contrib"]:
             raise ReplicationControllerError(
-                "Missing 'http_error' field for contribution" + f"{json_contrib}")
+                "Missing 'http_error' field for contribution" f"{json_contrib}")
 
         self.http_error = int(json_contrib["http_error"])
 
         if "retry_allowed" not in response_json["contrib"]:
             raise ReplicationControllerError(
-                "Missing 'retry_allowed' field for contribution" + f"{json_contrib}")
+                "Missing 'retry_allowed' field for contribution" f"{json_contrib}")
 
         self.retry_allowed = bool(int(json_contrib["retry_allowed"]))
 
@@ -198,15 +184,15 @@ def get_regular_table_locations(responseJson: dict) -> List[Tuple[str, int]]:
 
     Parameters
     ----------
-    responseJson `dict`:
-                Response for replication service for the regular table locations API
-                see https://confluence.lsstcorp.org/pages/viewpage.action?pageId=133333850#UserguidefortheQservIngestsystem(APIversion8)-Locateregulartables
+    responseJson: `dict`
+        Response for replication service for the regular table locations API
+        see https://confluence.lsstcorp.org/pages/viewpage.action?pageId=133333850#UserguidefortheQservIngestsystem(APIversion8)-Locateregulartables
 
     Returns
     -------
     locations `typing.List[typing.Tuple[str, int]]`:
-                List of connection parameters , for Data ingest Service REST API i.e. http,
-                of workers which are available for ingesting regular (fully replicated) tables
+        List of connection parameters , for Data ingest Service REST API i.e. http,
+        of workers which are available for ingesting regular (fully replicated) tables
     """
     locations = []
     for entry in responseJson["locations"]:
@@ -242,19 +228,23 @@ def raise_error(
 
     Parameters
     ----------
-        responseJson (dict): response of a replication controller query, in json format
-        retry_attempts (int, optional): number of current retry attempts. Defaults to -1.
-        max_retry_attempts (int, optional): number of maximum retry attempts. Defaults to 0.
+    responseJson: `dict`
+        Response of a replication controller query, in json format
+    retry_attempts: `(int, optional)`
+        Number of current retry attempts. Defaults to -1.
+    max_retry_attempts: `(int, optional)`
+        Number of maximum retry attempts. Defaults to 0.
 
     Raises
     ------
-        ReplicationControllerError
-            Raised in case of error in JSON response for a non-retriable request
+    ReplicationControllerError
+        Raised in case of error in JSON response for a non-retriable request
 
     Returns
     -------
-        bool: True if retry_attempts < max_retry_attempts and if error allows retrying request
-              False if no error in JSON response
+    is_error_retryable: `bool`
+        True if retry_attempts < max_retry_attempts and if error allows retrying request
+        False if no error in JSON response
     """
     if retry_attempts < max_retry_attempts:
         check_retry = True

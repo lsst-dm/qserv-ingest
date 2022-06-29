@@ -55,12 +55,12 @@ _LOG = logging.getLogger(__name__)
 @dataclass
 class TableContributionsSpec:
     """Contain contribution specification for a given table
-    and for a given path
+    and for a given path.
 
-     Store informations which will allow to retrieve contributions file
-     each entry of the list is a tuple: (<path>, [chunk_ids], <is_overlap>, <table>)
+     Store informations which will allow to retrieve contributions file.
+     Each entry of the list is a tuple: (<path>, [chunk_ids], <is_overlap>, <table>)
      where [chunk_ids] is the list of the contribution files (XOR overlap) available
-     at a given path for a given table and a given chunk
+     at a given path for a given table and a given chunk.
     """
 
     base_path: str
@@ -185,9 +185,10 @@ class ContributionMetadata:
 
         Parameters
         ----------
-            path (str): Path to metadata
-            loadbalancers (List[str], optional): List of http(s) load balancer urls providing
-            access to metadata. Defaults to [].
+        path : `str`
+            Path to metadata
+        loadbalancers: `List[str]` optional
+            List of http(s) load balancer urls providing access to metadata. Defaults to [].
         """
 
         # Get scheme configuration
@@ -215,8 +216,7 @@ class ContributionMetadata:
             Iterator[List[dict()]]: Iterator on each contribution specifications for a database
         """
         for table in self.tables:
-            for table_contrib_spec in table.contrib_specs:
-                yield table_contrib_spec
+            yield from table.contrib_specs
 
     def get_file_url(self, path: str) -> str:
         """

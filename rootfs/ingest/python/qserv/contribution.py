@@ -135,9 +135,7 @@ class Contribution:
             )
             responseJson = Http().post(url, payload)
 
-            retry = raise_error(
-                responseJson, self.retry_attempts_post, MAX_RETRY_ATTEMPTS
-            )
+            retry = raise_error(responseJson, self.retry_attempts_post, MAX_RETRY_ATTEMPTS)
             if retry:
                 self.retry_attempts_post += 1
             else:

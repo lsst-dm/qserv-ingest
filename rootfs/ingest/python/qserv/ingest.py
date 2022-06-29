@@ -66,6 +66,16 @@ class TransactionAction(Enum):
 class Ingester:
     """
     Manage contribution ingestion tasks
+    Retrieve contribution metadata and connection to concurrent queue manager
+
+    Parameters
+    ----------
+        contribution_metadata: `ContributionMetadata`
+            Metadata for contribution
+        replication_url: `str`
+            Replication controller URL
+        queue_manager: `QueueManager`
+            Manager to access contribution queue
     """
 
     contrib_meta: ContributionMetadata
@@ -77,7 +87,6 @@ class Ingester:
         replication_url: str,
         queue_manager: QueueManager = None,
     ):
-        """Retrieve contribution metadata and connection to concurrent queue manager"""
         self.contrib_meta = contribution_metadata
         self.queue_manager = queue_manager
         self.repl_client = ReplicationClient(replication_url)
@@ -156,11 +165,13 @@ class Ingester:
 
         Parameters
         ----------
-            contribfiles_locked (List[Tuple[str, int, str, bool, str]]): _description_
+            contribfiles_locked: `List[Tuple[str, int, str, bool, str]]` 
+              List of locked contribution files, in queue
 
         Returns
         -------
-            List[Contribution]: List of contributions to be ingested
+            contributions: `List[Contribution]`
+              List of contributions to be ingested
         """
         contributions = []
         for contrib_file in contribfiles_locked:
@@ -183,15 +194,16 @@ class Ingester:
                     contributions.append(contribution)
         return contributions
 
-    def _ingest_transaction(self):
+    def _ingest_transaction(self) -> bool:
         """Get contributions from a queue server for a given database
         then ingest it inside Qserv,
         during a super-transation
 
         Returns:
         --------
-        Integer number: 0 if no more contribution to load,
-                        1 if at least one contribution was loaded successfully
+        continue: `bool`
+            0 if no more contribution to load,
+            1 if at least one contribution was loaded successfully
         """
 
         _LOG.info("Start ingest transaction")
