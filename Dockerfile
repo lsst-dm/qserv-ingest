@@ -38,5 +38,6 @@ FROM ingest-deps
 COPY rootfs/ingest /ingest
 
 # TODO build an image with static analysis tools
+# TODO run 'black rootfs --line-length 110'
 # RUN python3 -m pip install mypy==0.950
 
