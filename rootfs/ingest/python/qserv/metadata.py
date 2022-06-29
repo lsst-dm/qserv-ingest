@@ -113,9 +113,7 @@ class TableContributionsSpec:
             yield data
 
     def _filepath(self, filename: str) -> str:
-        filepath = (self.base_path.strip("/")
-                    + "/"
-                    + filename.strip("/"))
+        filepath = self.base_path.strip("/") + "/" + filename.strip("/")
         return filepath
 
 
@@ -138,8 +136,7 @@ class TableSpec:
         self.name = self.json_schema["table"]
         self.is_partitioned = self.json_schema["is_partitioned"] == 1
         self.is_director = (
-            "director_table" in self.json_schema
-            and len(self.json_schema["director_table"]) == 0
+            "director_table" in self.json_schema and len(self.json_schema["director_table"]) == 0
         )
         idx_files = table_meta["indexes"]
         self.json_indexes = []
@@ -163,9 +160,7 @@ class TableSpec:
                         chunks_overlap = d[_CHUNKS]
             else:
                 files = d[_FILES]
-            self.contrib_specs.append(
-                TableContributionsSpec(path, self.name, files, chunks, chunks_overlap)
-            )
+            self.contrib_specs.append(TableContributionsSpec(path, self.name, files, chunks, chunks_overlap))
 
 
 class ContributionMetadata:
@@ -200,9 +195,7 @@ class ContributionMetadata:
         filename = self.metadata["database"]
         self.json_db = json_get(self.metadata_url, filename)
         self.database = self.json_db["database"]
-        self.family = "layout_{}_{}".format(
-            self.json_db["num_stripes"], self.json_db["num_sub_stripes"]
-        )
+        self.family = "layout_{}_{}".format(self.json_db["num_stripes"], self.json_db["num_sub_stripes"])
         self._init_tables()
 
     def get_table_contribs_spec(self):

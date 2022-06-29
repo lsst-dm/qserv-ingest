@@ -105,4 +105,4 @@ def test_get_table_names() -> None:
     contribution_metadata = metadata.ContributionMetadata(data_url)
     table_names = contribution_metadata.get_tables_names()
 
-    assert table_names == ['object', 'position', 'forced_photometry', 'reference', 'truth_match']
+    assert table_names == ["object", "position", "forced_photometry", "reference", "truth_match"]

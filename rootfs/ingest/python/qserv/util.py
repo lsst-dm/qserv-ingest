@@ -47,6 +47,7 @@ from sqlalchemy.engine import Engine
 # ---------------------------------
 _LOG = logging.getLogger(__name__)
 
+
 @event.listens_for(Engine, "before_cursor_execute")
 def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
     conn.info.setdefault("query_start_time", []).append(time.time())
@@ -67,9 +68,7 @@ def add_default_arguments(parser: argparse.ArgumentParser):
         action=IngestConfigAction,
         metavar="FILE",
     )
-    parser.add_argument(
-        "--verbose", "-v", action="store_true", help="Use debug logging"
-    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Use debug logging")
 
 
 def get_default_logger(verbose):
@@ -82,9 +81,7 @@ def get_default_logger(verbose):
     else:
         logger.setLevel(logging.INFO)
     streamHandler = logging.StreamHandler()
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     streamHandler.setFormatter(formatter)
     logger.addHandler(streamHandler)
     return logger

@@ -82,17 +82,11 @@ class LoadBalancedURL:
         if loadbalancers_count == 0:
             url = self.direct_url
         else:
-            url = urllib.parse.urljoin(
-                self.loadbalancers[self.count % loadbalancers_count], self.url_path
-            )
+            url = urllib.parse.urljoin(self.loadbalancers[self.count % loadbalancers_count], self.url_path)
             self.count += 1
         return url
 
     @classmethod
     def new(cls, lb_url: LoadBalancedURL, filepath: str) -> LoadBalancedURL:
-        url_path = (
-            lb_url.url_path.rstrip("/")
-            + "/"
-            + filepath.strip("/")
-        )
+        url_path = lb_url.url_path.rstrip("/") + "/" + filepath.strip("/")
         return cls(url_path, lb_url.loadbalancers)

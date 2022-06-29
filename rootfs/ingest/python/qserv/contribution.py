@@ -58,6 +58,7 @@ class Contribution:
     http://<worker_host:worker_port>/ingest/file-async
 
     """
+
     is_overlap: int
 
     def __init__(
@@ -83,11 +84,10 @@ class Contribution:
             self.is_overlap = int(is_overlap)
         if filepath.endswith(".tsv"):
             self.column_separator = "\\t"
-        elif filepath.endswith(".csv") or filepath.endswith(".txt") :
+        elif filepath.endswith(".csv") or filepath.endswith(".txt"):
             self.column_separator = ","
         else:
-            raise IngestError("Unsupported data format for regular table"
-                              "only *.csv and .tsv are supported")
+            raise IngestError("Unsupported data format for regular table" "only *.csv and .tsv are supported")
         self.load_balanced_url = LoadBalancedURL.new(load_balanced_base_url, filepath)
         self.request_id = None
         self.retry_attempts = 0
@@ -160,9 +160,7 @@ class Contribution:
             bool: True if contribution has been successfully ingested
                   False if contribution is being ingested
         """
-        status_url = urllib.parse.urljoin(
-            self.worker_url, f"ingest/file-async/{self.request_id}"
-        )
+        status_url = urllib.parse.urljoin(self.worker_url, f"ingest/file-async/{self.request_id}")
 
         # Retry monitor query if needed
         monitor_request_retry_attempts = 0
@@ -170,8 +168,7 @@ class Contribution:
         wait_sec = 1
         while retry:
             response_json = Http().get(status_url)
-            retry = raise_error(
-                response_json, monitor_request_retry_attempts, MAX_RETRY_ATTEMPTS)
+            retry = raise_error(response_json, monitor_request_retry_attempts, MAX_RETRY_ATTEMPTS)
             if retry:
                 monitor_request_retry_attempts += 1
                 time.sleep(wait_sec)
@@ -187,10 +184,12 @@ class Contribution:
                 _LOG.debug("_ingest_chunk: request %s in progress", self.request_id)
             case ContributionState.FINISHED:
                 contrib_finished = True
-            case (ContributionState.CREATE_FAILED |
-                  ContributionState.START_FAILED |
-                  ContributionState.READ_FAILED |
-                  ContributionState.LOAD_FAILED):
+            case (
+                ContributionState.CREATE_FAILED
+                | ContributionState.START_FAILED
+                | ContributionState.READ_FAILED
+                | ContributionState.LOAD_FAILED
+            ):
                 errmsg = ""
                 if not contrib_monitor.retry_allowed:
                     errmsg = "and is not retriable"
@@ -198,16 +197,14 @@ class Contribution:
                     errmsg = "and has exceeded maximum number of ingest attempts"
                 if len(errmsg) != 0:
                     raise IngestError(
-                        f"Contribution {self} is in status {contrib_monitor.status} " +
-                        f"with error: \"{contrib_monitor.error}\", " +
-                        f"system error: {contrib_monitor.system_error}, " +
-                        f"http error: {contrib_monitor.http_error} {errmsg}"
+                        f"Contribution {self} is in status {contrib_monitor.status} "
+                        + f'with error: "{contrib_monitor.error}", '
+                        + f"system error: {contrib_monitor.system_error}, "
+                        + f"http error: {contrib_monitor.http_error} {errmsg}"
                     )
                 self.retry_attempts += 1
                 self.request_id = None
             case ContributionState.CANCELLED:
-                raise IngestError(
-                    f"Contribution {self} ingest has been cancelled by a third-party"
-                )
+                raise IngestError(f"Contribution {self} ingest has been cancelled by a third-party")
 
         return contrib_finished

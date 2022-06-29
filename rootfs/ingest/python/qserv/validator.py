@@ -73,9 +73,7 @@ def _dircmp(dir1: str, dir2: str) -> bool:
     left = sorted(comp.left_list)
     right = sorted(comp.right_list)
     if left != right:
-        _LOG.warning(
-            "Query results filenames (%s) are not the expected ones (%s)", left, right
-        )
+        _LOG.warning("Query results filenames (%s) are not the expected ones (%s)", left, right)
         return False
 
     has_same_files = True
@@ -118,13 +116,10 @@ class Validator:
         database = self.contribution_metadata.database
         qserv_url = make_url(self.query_url)
         if not qserv_url.database and qserv_url.drivername == "mysql":
-            qserv_db_url = qserv_url.set(
-                drivername="mariadb+mariadbconnector", database=database
-            )
+            qserv_db_url = qserv_url.set(drivername="mariadb+mariadbconnector", database=database)
         else:
             raise ValueError(
-                "Database field in Qserv url must be empty"
-                + " and driver must be mysql: %s",
+                "Database field in Qserv url must be empty" + " and driver must be mysql: %s",
                 qserv_url,
             )
         self.engine = sqlalchemy.create_engine(qserv_db_url)
@@ -176,9 +171,7 @@ class Validator:
         ]
         _LOG.info("Run command: %s", " ".join(cmd))
         with open(dbbench_log, "wb") as f:
-            process = subprocess.Popen(
-                cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT
-            )
+            process = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             if process.stdout:
                 buffer: IO[bytes] = process.stdout
                 for c in iter(buffer.readline, b""):
@@ -192,9 +185,7 @@ class Validator:
                 _LOG.info(line)
 
         # TODO start a thread to download the result archive
-        dbbench_expected_results_tgz = self._download_to_workdir(
-            _TESTBENCH_EXPECTED_RESULTS
-        )
+        dbbench_expected_results_tgz = self._download_to_workdir(_TESTBENCH_EXPECTED_RESULTS)
         shutil.unpack_archive(dbbench_expected_results_tgz, _WORKDIR)
 
         dbbench_expected_results_path = os.path.join(_WORKDIR, "dbbench-expected")

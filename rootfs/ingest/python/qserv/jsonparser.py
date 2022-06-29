@@ -105,40 +105,38 @@ class ContributionMonitor:
 
     def __init__(self, response_json: dict):
 
-        json_contrib = response_json['contrib']
+        json_contrib = response_json["contrib"]
 
         if "status" not in json_contrib:
-            raise ReplicationControllerError(
-                "Missing 'status' field for contribution" + f"{json_contrib}")
+            raise ReplicationControllerError("Missing 'status' field for contribution" + f"{json_contrib}")
 
         try:
             json_status = response_json["contrib"]["status"]
             self.status = ContributionState.from_str(json_status)
         except NotImplementedError:
-            raise ReplicationControllerError(
-                f"Unknow status {json_status} for Contribution {json_contrib}")
+            raise ReplicationControllerError(f"Unknow status {json_status} for Contribution {json_contrib}")
 
         if "error" not in response_json["contrib"]:
-            raise ReplicationControllerError(
-                "Missing 'error' field for contribution" f"{json_contrib}")
+            raise ReplicationControllerError("Missing 'error' field for contribution" f"{json_contrib}")
 
         self.error = json_contrib["error"]
 
         if "system_error" not in response_json["contrib"]:
             raise ReplicationControllerError(
-                "Missing 'system_error' field for contribution" f"{json_contrib}")
+                "Missing 'system_error' field for contribution" f"{json_contrib}"
+            )
 
         self.system_error = int(json_contrib["system_error"])
 
         if "http_error" not in response_json["contrib"]:
-            raise ReplicationControllerError(
-                "Missing 'http_error' field for contribution" f"{json_contrib}")
+            raise ReplicationControllerError("Missing 'http_error' field for contribution" f"{json_contrib}")
 
         self.http_error = int(json_contrib["http_error"])
 
         if "retry_allowed" not in response_json["contrib"]:
             raise ReplicationControllerError(
-                "Missing 'retry_allowed' field for contribution" f"{json_contrib}")
+                "Missing 'retry_allowed' field for contribution" f"{json_contrib}"
+            )
 
         self.retry_allowed = bool(int(json_contrib["retry_allowed"]))
 
@@ -204,9 +202,7 @@ def get_regular_table_locations(responseJson: dict) -> List[Tuple[str, int]]:
 
 def parse_database_status(responseJson, database, family):
     jsonpath_expr = parse(
-        '$.config.databases[?(database="{}" & family_name="{}")].is_published'.format(
-            database, family
-        )
+        '$.config.databases[?(database="{}" & family_name="{}")].is_published'.format(database, family)
     )
     result = jsonpath_expr.find(responseJson)
     if len(result) == 0:
@@ -221,9 +217,7 @@ def parse_database_status(responseJson, database, family):
     return status
 
 
-def raise_error(
-    responseJson: dict, retry_attempts: int = -1, max_retry_attempts: int = 0
-) -> bool:
+def raise_error(responseJson: dict, retry_attempts: int = -1, max_retry_attempts: int = 0) -> bool:
     """Check JSON response for error
 
     Parameters
@@ -260,9 +254,7 @@ def raise_error(
             if check_retry:
                 is_error_retryable = _check_retry(error_ext)
         if not is_error_retryable:
-            raise ReplicationControllerError(
-                "Error in JSON response", responseJson["error"], error_ext
-            )
+            raise ReplicationControllerError("Error in JSON response", responseJson["error"], error_ext)
     return is_error_retryable
 
 

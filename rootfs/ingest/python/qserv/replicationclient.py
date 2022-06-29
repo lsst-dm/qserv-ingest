@@ -108,9 +108,7 @@ class ReplicationClient:
         # TODO Check if there is only one transaction in responseJson in
         # order to remove 'database' parameter
         for trans in responseJson["databases"][database]["transactions"]:
-            _LOG.debug(
-                "Close transaction (id: %s state: %s)", trans["id"], trans["state"]
-            )
+            _LOG.debug("Close transaction (id: %s state: %s)", trans["id"], trans["state"])
 
     def _check_version(self):
         url = urllib.parse.urljoin(self.repl_url, "meta/version")
@@ -118,8 +116,7 @@ class ReplicationClient:
         jsonparser.raise_error(responseJson)
         if responseJson["version"] != _VERSION:
             raise ValueError(
-                "Invalid replication server version "
-                + f"(is {responseJson['version']}, expected {_VERSION})"
+                "Invalid replication server version " + f"(is {responseJson['version']}, expected {_VERSION})"
             )
         _LOG.info("Replication service version: v%s", _VERSION)
 
@@ -133,9 +130,7 @@ class ReplicationClient:
             "CAINFO": "/etc/pki/tls/certs/ca-bundle.crt",
             "SSL_VERIFYPEER": 1,
         }
-        _LOG.debug(
-            "Configure database inside replication system, url: %s, json: %s", url, json
-        )
+        _LOG.debug("Configure database inside replication system, url: %s, json: %s", url, json)
         responseJson = self.http.put(url, json, timeout=self.timeout_long)
         jsonparser.raise_error(responseJson)
 
@@ -179,15 +174,11 @@ class ReplicationClient:
             if felis is not None and json_data["table"] in felis:
                 schema = felis[json_data["table"]]
                 json_data["schema"] = schema + json_data["schema"]
-            _LOG.debug(
-                "Starting a table registration request: %s with %s", url, json_data
-            )
+            _LOG.debug("Starting a table registration request: %s with %s", url, json_data)
             responseJson = self.http.post(url, json_data, timeout=self.timeout_long)
             jsonparser.raise_error(responseJson)
 
-    def get_database_status(
-        self, database: str, family: str
-    ) -> jsonparser.DatabaseStatus:
+    def get_database_status(self, database: str, family: str) -> jsonparser.DatabaseStatus:
         url = urllib.parse.urljoin(self.repl_url, "replication/config")
         responseJson = self.http.get(url, timeout=self.timeout_short)
         jsonparser.raise_error(responseJson)
@@ -255,11 +246,9 @@ class ReplicationClient:
     def get_current_indexes(self, database, tables: list):
         for t in tables:
             params = {"database": database, "overlap": 1, "table": t}
-            responseJson = self.http.get(
-                self.index_url, params, timeout=self.timeout_short
-            )
+            responseJson = self.http.get(self.index_url, params, timeout=self.timeout_short)
             jsonparser.raise_error(responseJson)
-            indexes:  Dict[str, set] = dict()
+            indexes: Dict[str, set] = dict()
             jsonparser.get_indexes(responseJson, indexes)
         _LOG.info("Indexes %s", indexes)
         jsonparser.raise_error(responseJson)

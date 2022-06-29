@@ -65,9 +65,7 @@ class QueueManager:
     def __init__(self, connection, contribution_metadata: ContributionMetadata):
 
         db_url = make_url(connection)
-        self.engine = sqlalchemy.create_engine(
-            db_url, poolclass=StaticPool, pool_pre_ping=True
-        )
+        self.engine = sqlalchemy.create_engine(db_url, poolclass=StaticPool, pool_pre_ping=True)
         self.pod = socket.gethostname()
 
         db_meta = MetaData(bind=self.engine)
@@ -83,9 +81,7 @@ class QueueManager:
         """
         contributions_count = self._count_contribution_files_per_database()
         _LOG.debug("Contributions queue size: %s", contributions_count)
-        self._contribfiles_to_lock_number = (
-            int(contributions_count / contributions_queue_fraction) + 1
-        )
+        self._contribfiles_to_lock_number = int(contributions_count / contributions_queue_fraction) + 1
 
     def _count_contribution_files_per_database(self):
         """
@@ -94,9 +90,7 @@ class QueueManager:
            else count all contributions.
         """
         query = select([func.count("*")]).select_from(self.queue_table)
-        query = query.where(
-            self.queue_table.c.database == self.contribution_metadata.database
-        )
+        query = query.where(self.queue_table.c.database == self.contribution_metadata.database)
         result = self.engine.execute(query)
         contributions_count = next(result)[0]
         result.close()
@@ -121,9 +115,7 @@ class QueueManager:
         )
         query = query.where(self.queue_table.c.locking_pod == self.pod)
         query = query.where(self.queue_table.c.succeed.is_(None))
-        query = query.where(
-            self.queue_table.c.database == self.contribution_metadata.database
-        )
+        query = query.where(self.queue_table.c.database == self.contribution_metadata.database)
         result = self.engine.execute(query)
         contributions = result.fetchall()
         result.close()
@@ -170,8 +162,7 @@ class QueueManager:
             # Lock contributions for one or more tables
             _LOG.debug("Current table: %s", self.current_table)
             while (
-                not self._is_queue_empty()
-                and contribfiles_locked_count < self._contribfiles_to_lock_number
+                not self._is_queue_empty() and contribfiles_locked_count < self._contribfiles_to_lock_number
             ):
 
                 # SqlAlchemy has only limited support for MariaDB SQL extension
@@ -185,16 +176,12 @@ class QueueManager:
                 #                    self.chunk_meta.database,
                 #                    self._chunks_to_lock_number-chunks_locked_count)
 
-                contribfiles_to_lock_count = (
-                    self._contribfiles_to_lock_number - contribfiles_locked_count
+                contribfiles_to_lock_count = self._contribfiles_to_lock_number - contribfiles_locked_count
+                query = self.queue_table.update(mysql_limit=contribfiles_to_lock_count).values(
+                    locking_pod=self.pod
                 )
-                query = self.queue_table.update(
-                    mysql_limit=contribfiles_to_lock_count
-                ).values(locking_pod=self.pod)
                 query = query.where(self.queue_table.c.locking_pod.is_(None))
-                query = query.where(
-                    self.queue_table.c.database == self.contribution_metadata.database
-                )
+                query = query.where(self.queue_table.c.database == self.contribution_metadata.database)
                 query = query.where(self.queue_table.c.table == self.current_table)
 
                 _LOG.debug("Query: %s", query)
@@ -210,21 +197,19 @@ class QueueManager:
                     logging.info(
                         "No more contribution to lock for table %s, switch to %s",
                         previous_table,
-                        self.current_table
+                        self.current_table,
                     )
 
-        logging.debug(
-            "Contribution files locked by pod %s: %s", self.pod, contribfiles_locked
-        )
+        logging.debug("Contribution files locked by pod %s: %s", self.pod, contribfiles_locked)
         return contribfiles_locked
 
     def release_locked_contributions(self, ingest_success: bool) -> None:
         """Mark contributions as "succeed" in contribution queue if super-transaction
-            has been successfully commited
-            Release contributions in queue when the super-transaction has been aborted
+        has been successfully commited
+        Release contributions in queue when the super-transaction has been aborted
 
-            WARN: this operation will be retried until it succeed
-            so that contribution queue state is consistent with ingest state
+        WARN: this operation will be retried until it succeed
+        so that contribution queue state is consistent with ingest state
         """
         if ingest_success:
             query = self.queue_table.update().values(succeed=1)
@@ -267,9 +252,7 @@ class QueueManager:
             ]
         )
         query = query.where(self.queue_table.c.succeed.is_(None))
-        query = query.where(
-            self.queue_table.c.database == self.contribution_metadata.database
-        )
+        query = query.where(self.queue_table.c.database == self.contribution_metadata.database)
         result = self.engine.execute(query)
         contributions = result.fetchall()
         return contributions
