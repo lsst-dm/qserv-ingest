@@ -23,8 +23,8 @@ EOD
 # get the options
 while getopts h c ; do
     case $c in
-	    h) usage ; exit 0 ;;
-	    \?) usage ; exit 2 ;;
+        h) usage ; exit 0 ;;
+        \?) usage ; exit 2 ;;
     esac
 done
 shift `expr $OPTIND - 1`
@@ -42,7 +42,7 @@ if [ ! -d "$QSERV_SRC_DIR" ]; then
 fi
 
 cd "$QSERV_SRC_DIR"
-git checkout tickets/DM-34521
+git checkout "2022.6.2-rc1-19-g5e52f0365"
 git submodule update --init
 
 # Install qserv cli
@@ -62,7 +62,7 @@ if [ "$USER_ID" -eq 1000 ]; then
   USER_OPT="--user=qserv"
 fi
 qserv build -j8 $USER_OPT --unit-test
-qserv prepare-data 
+qserv prepare-data
 
 
 CONTAINER_NAME="${USER}_testdata"
