@@ -28,12 +28,12 @@ Manage custom error
 
 
 class IngestError(Exception):
-    """Error related to ingest client
-    """
+    """Error related to ingest client"""
+
     pass
 
 
 class ReplicationControllerError(Exception):
-    """Error related to replication controller response
-    """
+    """Error related to replication controller response"""
+
     pass

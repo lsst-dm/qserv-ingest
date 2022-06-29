@@ -32,7 +32,7 @@ from functools import lru_cache
 import logging
 import posixpath
 import socket
-from typing import Any, Tuple
+from typing import Any, Dict, List, Tuple
 import urllib.parse
 
 # ----------------------------
@@ -50,7 +50,7 @@ _LOG = logging.getLogger(__name__)
 _VERSION = 8
 
 
-class ReplicationClient():
+class ReplicationClient:
     """
     Client for the Qserv ingest/replication service
 
@@ -76,17 +76,22 @@ class ReplicationClient():
         """
         for transaction_id in self.get_transactions_started(database):
             success = False
-            self._close_transaction(transaction_id, success)
+            self.close_transaction(database, transaction_id, success)
             _LOG.info("Abort transaction: %s", transaction_id)
 
     def build_secondary_index(self, database):
         url = urllib.parse.urljoin(self.repl_url, "ingest/index/secondary")
         _LOG.info("Create secondary index")
-        payload = {"database": database, "allow_for_published": 1, "local": 1, "rebuild": 1}
+        payload = {
+            "database": database,
+            "allow_for_published": 1,
+            "local": 1,
+            "rebuild": 1,
+        }
         r = self.http.post(url, payload)
         jsonparser.raise_error(r)
 
-    def close_transaction(self, database, transaction_id, success):
+    def close_transaction(self, database: str, transaction_id: int, success: bool) -> None:
         """
         Close or abort a transaction
         """
@@ -102,17 +107,17 @@ class ReplicationClient():
 
         # TODO Check if there is only one transaction in responseJson in
         # order to remove 'database' parameter
-        for trans in responseJson['databases'][database]['transactions']:
-            _LOG.debug("Close transaction (id: %s state: %s)",
-                       trans['id'], trans['state'])
+        for trans in responseJson["databases"][database]["transactions"]:
+            _LOG.debug("Close transaction (id: %s state: %s)", trans["id"], trans["state"])
 
     def _check_version(self):
         url = urllib.parse.urljoin(self.repl_url, "meta/version")
         responseJson = self.http.get(url, timeout=self.timeout_short)
         jsonparser.raise_error(responseJson)
-        if responseJson['version'] != _VERSION:
-            raise ValueError("Invalid replication server version " +
-                             f"(is {responseJson['version']}, expected {_VERSION})")
+        if responseJson["version"] != _VERSION:
+            raise ValueError(
+                "Invalid replication server version " + f"(is {responseJson['version']}, expected {_VERSION})"
+            )
         _LOG.info("Replication service version: v%s", _VERSION)
 
     def database_config(self, database):
@@ -120,10 +125,11 @@ class ReplicationClient():
         Configure a database inside replication system
         """
         url = urllib.parse.urljoin(self.repl_url, "/ingest/config/")
-        json = {"database": database,
-                "CAINFO": "/etc/pki/tls/certs/ca-bundle.crt",
-                "SSL_VERIFYPEER": 1
-            }
+        json = {
+            "database": database,
+            "CAINFO": "/etc/pki/tls/certs/ca-bundle.crt",
+            "SSL_VERIFYPEER": 1,
+        }
         _LOG.debug("Configure database inside replication system, url: %s, json: %s", url, json)
         responseJson = self.http.put(url, json, timeout=self.timeout_long)
         jsonparser.raise_error(responseJson)
@@ -162,14 +168,13 @@ class ReplicationClient():
         if _LOG.isEnabledFor(logging.DEBUG):
             _LOG.debug("Ordered list of table to register")
             for json_data in tables_json_data:
-                _LOG.debug(" %s", json_data['table'])
+                _LOG.debug(" %s", json_data["table"])
 
         for json_data in tables_json_data:
             if felis is not None and json_data["table"] in felis:
                 schema = felis[json_data["table"]]
                 json_data["schema"] = schema + json_data["schema"]
-            _LOG.debug("Starting a table registration request: %s with %s",
-                       url, json_data)
+            _LOG.debug("Starting a table registration request: %s with %s", url, json_data)
             responseJson = self.http.post(url, json_data, timeout=self.timeout_long)
             jsonparser.raise_error(responseJson)
 
@@ -182,7 +187,7 @@ class ReplicationClient():
         return status
 
     @lru_cache(maxsize=None)
-    def get_chunk_location(self, chunk: str, database: str) -> Tuple[str, int]:
+    def get_chunk_location(self, chunk_id: int, database: str) -> Tuple[str, int]:
         """Get the location of a chunk for a given database
 
         Parameters
@@ -201,24 +206,49 @@ class ReplicationClient():
             the qserv worker which store the chunk
         """
         url = urllib.parse.urljoin(self.repl_url, "ingest/chunk")
-        payload = {"chunk": chunk,
-                   "database": database}
+        payload = {"chunk": chunk_id, "database": database}
         responseJson = Http().post(url, payload, timeout=self.timeout_short)
         jsonparser.raise_error(responseJson)
 
-        host, port = jsonparser.get_location(responseJson)
-        _LOG.info("Location for chunk %d: %s %d", chunk, host, port)
+        host, port = jsonparser.get_chunk_location(responseJson)
+        _LOG.info("Location for chunk %d: %s %d", chunk_id, host, port)
 
         return (host, port)
 
+    @lru_cache(maxsize=None)
+    def get_regular_tables_locations(self, database: str) -> List[Tuple[str, int]]:
+        """Returns connection parameters of the Data Ingest Service of workers
+           which are available for ingesting regular (fully replicated) tables:
+
+        Parameters
+        ----------
+        database : `str`
+            Database name.
+
+        Returns
+        -------
+        x : `str`
+            Hostname of the qserv worker which store the chunk
+        y : `int`
+            Port number of the of replication service on
+            the qserv worker which store the chunk
+        """
+        url = urllib.parse.urljoin(self.repl_url, "ingest/regular")
+        payload = {"database": database}
+        responseJson = Http().get(url, payload, timeout=self.timeout_short)
+        jsonparser.raise_error(responseJson)
+
+        locations = jsonparser.get_regular_table_locations(responseJson)
+        _LOG.info("Locations for regular tables for database %d: %d", database, locations)
+
+        return locations
+
     def get_current_indexes(self, database, tables: list):
         for t in tables:
-            params = {'database': database,
-                      'overlap': 1,
-                      'table': t}
+            params = {"database": database, "overlap": 1, "table": t}
             responseJson = self.http.get(self.index_url, params, timeout=self.timeout_short)
             jsonparser.raise_error(responseJson)
-            indexes = dict()
+            indexes: Dict[str, set] = dict()
             jsonparser.get_indexes(responseJson, indexes)
         _LOG.info("Indexes %s", indexes)
         jsonparser.raise_error(responseJson)
@@ -228,8 +258,7 @@ class ReplicationClient():
         """
         Return transactions ids
         """
-        url = urllib.parse.urljoin(self.repl_url,
-                                   "ingest/trans?database=" + database)
+        url = urllib.parse.urljoin(self.repl_url, "ingest/trans?database=" + database)
         responseJson = self.http.get(url, timeout=self.timeout_short)
         jsonparser.raise_error(responseJson)
         transaction_ids = jsonparser.filter_transactions(responseJson, database, states)
@@ -241,7 +270,10 @@ class ReplicationClient():
         return self._get_transactions(states, database)
 
     def get_transactions_not_finished(self, database):
-        states = [jsonparser.TransactionState.ABORTED, jsonparser.TransactionState.STARTED]
+        states = [
+            jsonparser.TransactionState.ABORTED,
+            jsonparser.TransactionState.STARTED,
+        ]
         return self._get_transactions(states, database)
 
     def index_all_tables(self, json_indexes: Any):
@@ -252,7 +284,7 @@ class ReplicationClient():
 
     def start_transaction(self, database):
         url = urllib.parse.urljoin(self.repl_url, "ingest/trans")
-        payload = {"database": database, "context": {'pod': socket.gethostname()}}
+        payload = {"database": database, "context": {"pod": socket.gethostname()}}
         responseJson = self.http.post(url, payload, timeout=self.timeout_short)
         jsonparser.raise_error(responseJson)
 

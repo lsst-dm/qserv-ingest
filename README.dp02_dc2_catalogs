@@ -1,0 +1,138 @@
+Scope
+----------------------------------------------------------------------------------
+This folder has a collection of thei configuration files for the Ingest system and
+the partitioned CSV files of the `dp02_dc2_catalogs` that are ready to be ingested
+into Qserv.
+
+The configuration file for the catalog 'dp02_dc2_catalogs'
+------------------------------------------------------------------------------------------------------------------
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config/dp02_dc2_catalogs.json
+
+
+The configuration files for the tables
+---------------------------------------------------------------------------------------------------------
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config/CcdVisit.json
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config/DiaObject.json
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config/DiaSource.json
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config/ForcedSource.json
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config/ForcedSourceOnDiaObject.json
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config/MatchesTruth.json
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config/Object.json
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config/Source.json
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config/Visit.json
+
+
+The configuration files for creating table-level indexes at workers for the tables
+--------------------------------------------------------------------------------------------------------------------------------
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config_indexes/idx_CcdVisit_ccdVisitId.json
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config_indexes/idx_CcdVisit_visitId.json
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config_indexes/idx_DiaObject_diaObjectId.json
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config_indexes/idx_DiaObject_subChunkId.json
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config_indexes/idx_DiaSource_diaObjectId.json
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config_indexes/idx_DiaSource_diaSourceId.json
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config_indexes/idx_ForcedSource_objectId.json
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config_indexes/idx_ForcedSourceOnDiaObject_ccdVisitId.json
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config_indexes/idx_ForcedSourceOnDiaObject_diaObjectId.json
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config_indexes/idx_ForcedSourceOnDiaObject_forcedSourceOnDiaObjectId.json
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config_indexes/idx_MatchesTruth_id.json
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config_indexes/idx_MatchesTruth_index.json
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config_indexes/idx_MatchesTruth_match_objectId.json
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config_indexes/idx_Object_coord_dec.json
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config_indexes/idx_Object_coord_ra.json
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config_indexes/idx_Object_objectId.json
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config_indexes/idx_Object_subChunkId.json
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config_indexes/idx_Source_ccdVisitId.json
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config_indexes/idx_Source_sourceId.json
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config_indexes/idx_Source_subChunkId.json
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config_indexes/idx_Source_visit.json
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/config_indexes/idx_Visit_visit.json
+
+
+Collections of links to the CSV files (contributions) for each table
+-----------------------------------------------------------------------------------------------------------------------------
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/csv/dp02_dc2_catalogs_CcdVisit.https.url
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/csv/dp02_dc2_catalogs_DiaObject.https.url
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/csv/dp02_dc2_catalogs_DiaSource.https.url
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/csv/dp02_dc2_catalogs_ForcedSource.https.url
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/csv/dp02_dc2_catalogs_ForcedSourceOnDiaObject.https.url
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/csv/dp02_dc2_catalogs_MatchesTruth.https.url
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/csv/dp02_dc2_catalogs_Object.https.url
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/csv/dp02_dc2_catalogs_Source.https.url
+https://storage.googleapis.com/qserv-us-central1-argo-artifact/dp02/PREOPS-905/in2p3/csv/dp02_dc2_catalogs_Visit.https.url
+
+
+Important notes and additional instructions on the ingest
+---------------------------------------------------------
+
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+The configuration files and links to the CSV files for the partitioned table 'TruthSummary'
+are not presently available due to an issues with duplicate rows found in the table.
+The issue is being investigated.
+
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+'Source' is the most problematic table for the Ingest system as it has over 1.6 million
+individual file contributions. Based on the prior experience of ingesting the table
+into Qserv at IDF (5 worker nodes) it may take up to 48 hours or longer to ingest the table.
+The large number of files may also cause the Qserv worker ingest service to run out
+of memory and be terminated by Kubernetes due to a known problem in the memory management
+model of the Ingest service. The curent implementaton of the service won't
+release memory allocated for each file contribution. This memory is used for maintaining
+the status of the contributions and it was (originally) meant to speed up statues inqueries
+for the previously submitted contribution requests. While serving its purpose, the
+model also results in the steady memory growth of the process 'qserv-replica-worker'.
+In the 5 workers configuration each worker process may grow up to 128 GB by the end of the
+ingest. A possible solution to the problem is to split the collection of the 'Source'
+contributions into smaller subsets and ingest each subset in a separate set of
+the super-transactions. It's importat to restart the worker ingest service 'qserv-replica-worker'
+before ingesting each such subset. In IDF (5 workers, 64 GB RAM per worker) the collection
+had to be split into 2 subsets. In Qserv instances that have larger number of worker
+nodes (at least 10) with the same (or larger) amount of memory per node the split may
+not be necessary.
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+It's recommented to ingest each table in its own set of the super-transactions.
+
+It's recommented to start at least 10 super-transactions for ingesting the large tables
+Object, Source, ForcedSource, DiaObject, DiaSource and ForcedSourceOnDiaObject
+
+One super-transaction is sufficient for ingesting the small "regular" (fully-replicated)
+tables: Visit, CcdVisit and MatchesTruth.
+
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Due to the large amount of data in the catalog (over 36 TB), the catalog publishing stage
+will take many hours (12 hours or longer).
+
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+For the very same reason building the table-level indexing will also take many hours.
+
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+After publishing the catalog, it's recommended to build the row counter statistics that
+is used for optimizing unconstrained queries like:
+
+  SELECT COUNT(*) FROM dp02_dc2_catalogs.Object
+
+Otherwise Qserv will resort to using the shared scan to count rows in the tables. Given
+the large scale of the catalog, the query may take a while (it takes over 2 hours in IDF
+for the table 'ForcedSource').
+The following will build the desired statistics and deploy it in the Qserv Czar database:
+
+  mkdir logs;
+  for table in Object Source ForcedSource DiaObject DiaSource ForcedSourceOnDiaObject Visit CcdVisit MatchesTruth; do
+    curl 'http://localhost:8080/ingest/table-stats' \
+      -X POST \
+      -H 'Content-Type: application/json' \
+      -d'{"auth_key":"","database":"dp02_dc2_catalogs","table":"'${table}'","row_counters_state_update_policy":"ENABLED","row_counters_deploy_at_qserv":1,"force_rescan":1}' \
+      -ologs/table-stats.${table}.json \
+      >& logs/table-stats.${table}.log;
+  done;
+
+Due to the large amount of data in the catalog (over 36 TB), this operation will take many hours
+as it requires scanning each table.
+
+
+

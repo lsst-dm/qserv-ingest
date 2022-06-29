@@ -31,7 +31,7 @@ Parse JSON responses from replication service
 # -------------------------------
 from enum import Enum
 import logging
-import typing
+from typing import Dict, List, Tuple
 
 # ----------------------------
 # Imports for other modules --
@@ -43,6 +43,7 @@ from jsonpath_ng.ext import parse
 # Local non-exported definitions --
 # ---------------------------------
 from .exception import ReplicationControllerError
+
 _LOG = logging.getLogger(__name__)
 
 
@@ -54,6 +55,10 @@ class ContributionState(Enum):
     START_FAILED = "START_FAILED"
     READ_FAILED = "READ_FAILED"
     LOAD_FAILED = "LOAD_FAILED"
+
+    @classmethod
+    def from_str(cls, label: str):
+        return ContributionState(label)
 
 
 class DatabaseStatus(Enum):
@@ -68,47 +73,91 @@ class TransactionState(Enum):
     FINISHED = "FINISHED"
 
 
-def filter_transactions(responseJson, database, states):
-    """Filter transactions by state inside json response issued by replication service
+class ContributionMonitor:
+    """Store contribution status returned by the Ingest Service
+    see https://confluence.lsstcorp.org/display/DM/Ingest%3A+9.5.3.+Asynchronous+Protocol
+    for details
+
+    Parameters
+    ----------
+        response_json: `dict`
+            Ingest Service response for a HTTP request against URL: ingest/file-async/<request_id>
+
+    Raises
+    ------
+        ReplicationControllerError: If 'response_json' does not have the expected value or format
     """
+
+    status: ContributionState
+    """ Status of the contribution """
+
+    error: str
+    """ Error message for the contribution """
+
+    system_error: int
+    """ System error code for the contribution """
+
+    http_error: int
+    """ HTTP error code for the contribution """
+
+    retry_allowed: bool
+    """ True if the contribution can be retried """
+
+    def __init__(self, response_json: dict):
+
+        json_contrib = response_json["contrib"]
+
+        if "status" not in json_contrib:
+            raise ReplicationControllerError("Missing 'status' field for contribution" + f"{json_contrib}")
+
+        try:
+            json_status = response_json["contrib"]["status"]
+            self.status = ContributionState.from_str(json_status)
+        except NotImplementedError:
+            raise ReplicationControllerError(f"Unknow status {json_status} for Contribution {json_contrib}")
+
+        if "error" not in response_json["contrib"]:
+            raise ReplicationControllerError("Missing 'error' field for contribution" f"{json_contrib}")
+
+        self.error = json_contrib["error"]
+
+        if "system_error" not in response_json["contrib"]:
+            raise ReplicationControllerError(
+                "Missing 'system_error' field for contribution" f"{json_contrib}"
+            )
+
+        self.system_error = int(json_contrib["system_error"])
+
+        if "http_error" not in response_json["contrib"]:
+            raise ReplicationControllerError("Missing 'http_error' field for contribution" f"{json_contrib}")
+
+        self.http_error = int(json_contrib["http_error"])
+
+        if "retry_allowed" not in response_json["contrib"]:
+            raise ReplicationControllerError(
+                "Missing 'retry_allowed' field for contribution" f"{json_contrib}"
+            )
+
+        self.retry_allowed = bool(int(json_contrib["retry_allowed"]))
+
+
+def filter_transactions(responseJson: Dict, database: str, states: List[TransactionState]) -> List[int]:
+    """Filter transactions by state inside json response issued by replication service"""
     transaction_ids = []
-    transactions = responseJson["databases"][database]['transactions']
+    transactions = responseJson["databases"][database]["transactions"]
     _LOG.debug(states)
     if len(transactions) != 0:
         _LOG.debug(f"Transactions for database {database}")
         for trans in transactions:
-            _LOG.debug("  id: %s state: %s",
-                       trans['id'], trans['state'])
-            state = TransactionState(trans['state'])
+            _LOG.debug("  id: %s state: %s", trans["id"], trans["state"])
+            state = TransactionState(trans["state"])
             if state in states:
-                transaction_ids.append(trans['id'])
+                transaction_ids.append(int(trans["id"]))
     return transaction_ids
 
 
-def get_contribution_status(responseJson: dict) -> ContributionState:
-    """ Retrieve contribution status
-    """
-    if responseJson['contrib']['status'] == ContributionState.FINISHED.value:
-        return ContributionState.FINISHED
-    elif responseJson['contrib']['status'] == ContributionState.IN_PROGRESS.value:
-        return ContributionState.IN_PROGRESS
-    elif responseJson['contrib']['status'] == ContributionState.CANCELLED.value:
-        return ContributionState.CANCELLED
-    elif responseJson['contrib']['status'] == ContributionState.CREATE_FAILED.value:
-        return ContributionState.CREATE_FAILED
-    elif responseJson['contrib']['status'] == ContributionState.START_FAILED.value:
-        return ContributionState.START_FAILED
-    elif responseJson['contrib']['status'] == ContributionState.READ_FAILED.value:
-        return ContributionState.READ_FAILED
-    elif responseJson['contrib']['status'] == ContributionState.LOAD_FAILED.value:
-        return ContributionState.LOAD_FAILED
-    else:
-        raise ReplicationControllerError("Unknown contribution status:" +
-                                         f"{responseJson['contrib']['status']}")
-
-
-def get_indexes(responseJson, existing_indexes: typing.Dict[str, set] = dict()):
-    for worker, data in responseJson['workers'].items():
+def get_indexes(responseJson, existing_indexes: Dict[str, set] = dict()):
+    for worker, data in responseJson["workers"].items():
         table = list(data.keys())[0]
         for idx_data in data[table]:
             try:
@@ -118,17 +167,43 @@ def get_indexes(responseJson, existing_indexes: typing.Dict[str, set] = dict()):
     return existing_indexes
 
 
-def get_location(responseJson: dict) -> typing.Tuple[str, int]:
-    """ Retrieve chunk location (worker host and port)
-        inside json response issued by replication service
+def get_chunk_location(responseJson: dict) -> Tuple[str, int]:
+    """Retrieve chunk location (worker host and port)
+    inside json response issued by replication service
     """
     host = responseJson["location"]["http_host"]
     port = int(responseJson["location"]["http_port"])
     return (host, port)
 
 
+def get_regular_table_locations(responseJson: dict) -> List[Tuple[str, int]]:
+    """Retrieve locations (workers host and port) for regular tables
+    inside json response issued by replication service
+
+    Parameters
+    ----------
+    responseJson: `dict`
+        Response for replication service for the regular table locations API
+        see https://confluence.lsstcorp.org/pages/viewpage.action?pageId=133333850#UserguidefortheQservIngestsystem(APIversion8)-Locateregulartables
+
+    Returns
+    -------
+    locations `typing.List[typing.Tuple[str, int]]`:
+        List of connection parameters , for Data ingest Service REST API i.e. http,
+        of workers which are available for ingesting regular (fully replicated) tables
+    """
+    locations = []
+    for entry in responseJson["locations"]:
+        host = entry["http_host"]
+        port = entry["http_port"]
+        locations.append((host, port))
+    return locations
+
+
 def parse_database_status(responseJson, database, family):
-    jsonpath_expr = parse('$.config.databases[?(database="{}" & family_name="{}")].is_published'.format(database, family))
+    jsonpath_expr = parse(
+        '$.config.databases[?(database="{}" & family_name="{}")].is_published'.format(database, family)
+    )
     result = jsonpath_expr.find(responseJson)
     if len(result) == 0:
         status = DatabaseStatus.NOT_REGISTERED
@@ -147,19 +222,23 @@ def raise_error(responseJson: dict, retry_attempts: int = -1, max_retry_attempts
 
     Parameters
     ----------
-        responseJson (dict): response of a replication controller query, in json format
-        retry_attempts (int, optional): number of current retry attempts. Defaults to -1.
-        max_retry_attempts (int, optional): number of maximum retry attempts. Defaults to 0.
+    responseJson: `dict`
+        Response of a replication controller query, in json format
+    retry_attempts: `(int, optional)`
+        Number of current retry attempts. Defaults to -1.
+    max_retry_attempts: `(int, optional)`
+        Number of maximum retry attempts. Defaults to 0.
 
     Raises
     ------
-        ReplicationControllerError
-            Raised in case of error in JSON response for a non-retriable request
+    ReplicationControllerError
+        Raised in case of error in JSON response for a non-retriable request
 
     Returns
     -------
-        bool: True if retry_attempts < max_retry_attempts and if error allows retrying request
-              False if no error in JSON response
+    is_error_retryable: `bool`
+        True if retry_attempts < max_retry_attempts and if error allows retrying request
+        False if no error in JSON response
     """
     if retry_attempts < max_retry_attempts:
         check_retry = True
@@ -168,15 +247,14 @@ def raise_error(responseJson: dict, retry_attempts: int = -1, max_retry_attempts
     is_error_retryable = False
     if not responseJson["success"]:
         _LOG.critical(responseJson["error"])
-        error_ext = ''
+        error_ext = ""
         if "error_ext" in responseJson:
             _LOG.critical(responseJson["error_ext"])
             error_ext = responseJson["error_ext"]
             if check_retry:
                 is_error_retryable = _check_retry(error_ext)
         if not is_error_retryable:
-            raise ReplicationControllerError('Error in JSON response',
-                                             responseJson["error"], error_ext)
+            raise ReplicationControllerError("Error in JSON response", responseJson["error"], error_ext)
     return is_error_retryable
 
 

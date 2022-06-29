@@ -28,8 +28,10 @@ Manage metadata related to input data
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
+from dataclasses import dataclass
+import json
 import logging
-from typing import List
+from typing import Any, Dict, List
 import urllib.parse
 
 
@@ -42,23 +44,131 @@ from .loadbalancerurl import LoadBalancedURL
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
+_CHUNKS = "chunks"
+_FILES = "files"
 _METADATA_FILENAME = "metadata.json"
-_DIRECTOR = "director"
-_CHUNK = "chunks"
-_OVERLAP = 'overlaps'
-_FILE_TYPES = [_CHUNK, _OVERLAP]
+_OVERLAPS = "overlaps"
 
 _LOG = logging.getLogger(__name__)
 
 
-def _get_name(table):
-    return table['json']['table']
+@dataclass
+class TableContributionsSpec:
+    """Contain contribution specification for a given table
+    and for a given path.
 
-
-class ContributionMetadata():
-    """Manage metadata related to data to ingest:
-       database, tables and contribution files
+     Store informations which will allow to retrieve contributions file.
+     Each entry of the list is a tuple: (<path>, [chunk_ids], <is_overlap>, <table>)
+     where [chunk_ids] is the list of the contribution files (XOR overlap) available
+     at a given path for a given table and a given chunk.
     """
+
+    base_path: str
+    """ Base path """
+
+    table: str
+    """ Table name """
+
+    files: List[str]
+    """ Files for regular tables, empty for partitioned tables """
+
+    chunks: List[int]
+    """ Chunks ids for files for partitioned tables, empty for non-partitioned tables """
+
+    chunks_overlap: List[int]
+    """ Chunks ids for overlap files for partioned tables, empty for non-partitioned tables """
+
+    def get_contrib(self):
+        """Generator for contribution specifications for a given table and a given path
+
+        Yields
+        ------
+            Iterator[List[dict()]]: Iterator on each contribution specifications for a table
+        """
+        for file in self.files:
+            data = {
+                "chunk_id": None,
+                "filepath": self._filepath(file),
+                "is_overlap": None,
+                "table": self.table,
+            }
+            yield data
+
+        for id in self.chunks:
+            data = {
+                "chunk_id": id,
+                "filepath": self._filepath(f"chunk_{id}.txt"),
+                "is_overlap": False,
+                "table": self.table,
+            }
+            yield data
+
+        for id in self.chunks_overlap:
+            data = {
+                "chunk_id": id,
+                "filepath": self._filepath(f"chunk_{id}_overlap.txt"),
+                "is_overlap": True,
+                "table": self.table,
+            }
+            yield data
+
+    def _filepath(self, filename: str) -> str:
+        filepath = self.base_path.strip("/") + "/" + filename.strip("/")
+        return filepath
+
+
+class TableSpec:
+    """Contain table specifications for a given database"""
+
+    contrib_specs: List[TableContributionsSpec]
+    data: List[Any]
+    schema_file: str
+    is_director: bool
+    is_partitioned: bool
+    json_indexes: List[str]
+    json_schema: Dict
+    name: str
+
+    def __init__(self, metadata_url: str, table_meta: Dict):
+        self.data = table_meta["data"]
+        schema_file = table_meta["schema"]
+        self.json_schema = json_get(metadata_url, schema_file)
+        self.name = self.json_schema["table"]
+        self.is_partitioned = self.json_schema["is_partitioned"] == 1
+        self.is_director = (
+            "director_table" in self.json_schema and len(self.json_schema["director_table"]) == 0
+        )
+        idx_files = table_meta["indexes"]
+        self.json_indexes = []
+        for f in idx_files:
+            self.json_indexes.append(json_get(metadata_url, f))
+
+        self.contrib_specs = []
+        for d in self.data:
+            path = d["directory"]
+            chunks = []
+            chunks_overlap = []
+            files = []
+            if self.is_partitioned:
+                chunks = d[_CHUNKS]
+                # Only director tables can have (extra) overlaps
+                if self.is_director:
+                    # chunk ids for overlaps migh be different of regular chunk ids
+                    if d.get(_OVERLAPS):
+                        chunks_overlap = d[_OVERLAPS]
+                    else:
+                        chunks_overlap = d[_CHUNKS]
+            else:
+                files = d[_FILES]
+            self.contrib_specs.append(TableContributionsSpec(path, self.name, files, chunks, chunks_overlap))
+
+
+class ContributionMetadata:
+    """Manage metadata related to data to ingest:
+    database, tables and contribution files
+    """
+
+    tables: List[TableSpec]
 
     def __init__(self, path: str, loadbalancers: List[str] = []):
         """Retrieve and store metadata located at 'path' and describing:
@@ -68,50 +178,38 @@ class ContributionMetadata():
 
            Support for file:// and http(s):// protocols
 
-        Args:
-            path (str): Path to metadata
-            loadbalancers (List[str], optional): List of http(s) load balancer urls providing access to metadata. Defaults to [].
+        Parameters
+        ----------
+        path : `str`
+            Path to metadata
+        loadbalancers: `List[str]` optional
+            List of http(s) load balancer urls providing access to metadata. Defaults to [].
         """
 
         # Get scheme configuration
-        self.load_balanced_url = LoadBalancedURL(path, loadbalancers)
+        self.lb_url = LoadBalancedURL(path, loadbalancers)
 
-        self.metadata_url = self.load_balanced_url.direct_url
+        self.metadata_url = self.lb_url.direct_url
         self.metadata = json_get(self.metadata_url, _METADATA_FILENAME)
-        _LOG.debug("Metadata: %s", self.metadata)
 
-        filename = self.metadata['database']
+        filename = self.metadata["database"]
         self.json_db = json_get(self.metadata_url, filename)
-        self.database = self.json_db['database']
-        self.family = "layout_{}_{}".format(self.json_db['num_stripes'],
-                                            self.json_db['num_sub_stripes'])
+        self.database = self.json_db["database"]
+        self.family = "layout_{}_{}".format(self.json_db["num_stripes"], self.json_db["num_sub_stripes"])
         self._init_tables()
 
-    def get_contribution_files_info(self):
-        """
-        Retrieve information about input contribution files (CSV formatted)
+    def get_table_contribs_spec(self):
+        """Generator for contribution specifications for the whole database
+
+        Retrieve information about input contribution files
         in order to insert them inside the contribution files queue
 
-        Returns a list of informations which will allow to retrieve these file
-        each entry of the list is a tuple: (<path>, [chunk_ids], <is_overlap>, <table>)
-        where [chunk_ids] is the list of the contribution files (XOR overlap) available
-        at a given path for a given table and a given chunk
+        Yields
+        ------
+            Iterator[List[dict()]]: Iterator on each contribution specifications for a database
         """
-        files_info = []
         for table in self.tables:
-            for d in table['data']:
-                path = d['directory']
-                # TODO simplify algorithm: only director table can have (extra) overlaps
-                if self._has_extra_overlaps:
-                    for ftype in _FILE_TYPES:
-                        if d.get(ftype):
-                            is_overlap = (ftype == _OVERLAP)
-                            files_info.append((path, d[ftype], is_overlap, _get_name(table)))
-                else:
-                    files_info.append((path, d[_CHUNK], False, _get_name(table)))
-                    if _is_director(table):
-                        files_info.append((path, d[_CHUNK], True, _get_name(table)))
-        return files_info
+            yield from table.contrib_specs
 
     def get_file_url(self, path: str) -> str:
         """
@@ -122,58 +220,36 @@ class ContributionMetadata():
     def get_tables_names(self):
         table_names = []
         for t in self.tables:
-            table_name = t['json']['table']
-            table_names.append(table_name)
+            table_names.append(t.name)
         return table_names
 
     def get_json_indexes(self):
-        json_indexes = []
-        for t in self.tables:
-            for json_idx in t['indexes']:
-                json_indexes.append(json_idx)
+        json_indexes: List[str] = []
+        for tbl in self.tables:
+            json_indexes.extend(tbl.json_indexes)
         return json_indexes
 
-    def get_ordered_tables_json(self):
-        """
-        Retrieve information about database tables
-        in order to register them with the replication service
+    def get_ordered_tables_json(self) -> List[Dict[Any, Any]]:
+        """Retrieve json schema for each tables of a given database
+        in order to register them inside the replication service
 
-        Returns a list of json data, one for each table, director tables are at the beginning of the list
+        Returns
+        -------
+        l: List[str]
+            a list of json schemas in the R-I system format, one for each table,
+            director tables are at the beginning of the list
         """
-        jsons = []
+        schema_files = []
         for t in self.tables:
-            json_data = t['json']
-            # Director tables need to be loaded first
-            if _is_director(t):
-                jsons.insert(0, json_data)
-            else:
-                jsons.append(json_data)
-        return jsons
+            schema_files.append(t.json_schema)
+        return schema_files
 
     def _init_tables(self):
         self.tables = []
         self._has_extra_overlaps = False
-        for t in self.metadata['tables']:
-            table = dict()
-            table['data'] = t['data']
-
-            # True if overlap files are different from contribution files,
-            # this might occurs if some contribution or overlap files does not exists
-            if self._has_extra_overlaps == False:
-                for data in table['data']:
-                    if data.get(_OVERLAP):
-                        self._has_extra_overlaps = True
-            _LOG.debug("Table metadata: %s", t)
-            schema_file = t['schema']
-            table['json'] = json_get(self.metadata_url, schema_file)
-            idx_files = t['indexes']
-            table['indexes'] = []
-            for f in idx_files:
-                table['indexes'].append(json_get(self.metadata_url, f))
-            if _is_director(table):
+        for table_meta in self.metadata["tables"]:
+            table = TableSpec(self.metadata_url, table_meta)
+            if table.is_director:
                 self.tables.insert(0, table)
             else:
                 self.tables.append(table)
-
-def _is_director(table):
-    return('director_table' in table['json'] and len(table['json']['director_table'])==0)

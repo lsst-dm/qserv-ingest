@@ -2,7 +2,14 @@ apiVersion: argoproj.io/v1alpha1
 kind: Workflow
 metadata:
   generateName: qserv-ingest-
+  labels:
+    app: qserv
+    tier: ingest
 spec:
+  podMetadata:
+    labels:
+        app: qserv
+        tier: ingest
   entrypoint: main
   volumes:
   - name: repl-creds
@@ -47,6 +54,10 @@ spec:
         spec:
           parallelism: {{workflow.parameters.superTransactions}}
           template:
+            metadata:
+              labels:
+                app: qserv
+                tier: ingest
             spec:
               containers:
               - name: ingest

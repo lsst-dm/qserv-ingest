@@ -1,0 +1,50 @@
+{
+	"chunkStats": {
+		"nrec":      1000,
+		"n":         2,
+		"min":       92,
+		"max":       908,
+		"quartile": [908, 908, 908],
+		"mean":      500,
+		"sigma":     408,
+		"skewness":  0,
+		"kurtosis":  -2
+	},
+	"overlapChunkStats": {
+		"nrec":      0,
+		"n":         2,
+		"min":       0,
+		"max":       0,
+		"quartile": [0, 0, 0],
+		"mean":      0,
+		"sigma":     0,
+		"skewness":  null,
+		"kurtosis":  null
+	},
+	"subChunkStats": {
+		"nrec":      1000,
+		"n":         21,
+		"min":       1,
+		"max":       154,
+		"quartile": [13, 41, 74],
+		"mean":      47.6,
+		"sigma":     46,
+		"skewness":  1.26,
+		"kurtosis":  0.337
+	},
+	"overlapSubChunkStats": {
+		"nrec":      0,
+		"n":         21,
+		"min":       0,
+		"max":       0,
+		"quartile": [0, 0, 0],
+		"mean":      0,
+		"sigma":     0,
+		"skewness":  null,
+		"kurtosis":  null
+	},
+	"chunks": [
+		{"id":   6995, "nrec": [92, 0]},
+		{"id":   7165, "nrec": [908, 0]}
+	]
+}

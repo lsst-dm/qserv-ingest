@@ -43,10 +43,11 @@ import urllib.parse
 _LOG = logging.getLogger(__name__)
 
 
-class LoadBalancedURL():
+class LoadBalancedURL:
     """Manage http(s) load balanced URL
-       Also file file:// protocol, and use it as default if no scheme is provided
+    Also file file:// protocol, and use it as default if no scheme is provided
     """
+
     count = 0
 
     def __init__(self, path: str, loadbalancers: List[str] = []):
@@ -81,11 +82,11 @@ class LoadBalancedURL():
         if loadbalancers_count == 0:
             url = self.direct_url
         else:
-            url = urllib.parse.urljoin(self.loadbalancers[self.count % loadbalancers_count],
-                                       self.url_path)
+            url = urllib.parse.urljoin(self.loadbalancers[self.count % loadbalancers_count], self.url_path)
             self.count += 1
         return url
 
-    def join(self, path: str, filename: str) -> LoadBalancedURL:
-        url_path = self.url_path.rstrip("/") + "/" + path.strip("/") + "/" + filename.strip("/")
-        return LoadBalancedURL(url_path, self.loadbalancers)
+    @classmethod
+    def new(cls, lb_url: LoadBalancedURL, filepath: str) -> LoadBalancedURL:
+        url_path = lb_url.url_path.rstrip("/") + "/" + filepath.strip("/")
+        return cls(url_path, lb_url.loadbalancers)

@@ -36,14 +36,13 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
-import time
+from typing import IO
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
 import sqlalchemy
-from sqlalchemy import event, MetaData
-from sqlalchemy.engine import Engine
+from sqlalchemy import MetaData
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.sql import select, func
 
@@ -64,18 +63,6 @@ _WORKDIR = "/tmp"
 
 _LOG = logging.getLogger(__name__)
 
-@event.listens_for(Engine, "before_cursor_execute")
-def before_cursor_execute(conn, cursor, statement,
-                          parameters, context, executemany):
-    conn.info.setdefault('query_start_time', []).append(time.time())
-    _LOG.debug("Query: %s", statement)
-
-@event.listens_for(Engine, "after_cursor_execute")
-def after_cursor_execute(conn, cursor, statement,
-                         parameters, context, executemany):
-    total = time.time() - conn.info['query_start_time'].pop(-1)
-    _LOG.debug("Query total time: %f", total)
-
 
 def _dircmp(dir1: str, dir2: str) -> bool:
     """
@@ -91,12 +78,12 @@ def _dircmp(dir1: str, dir2: str) -> bool:
 
     has_same_files = True
     for f in left:
+        _LOG.info("Analyze query %s results", f)
         query_result = os.path.join(dir1, f)
         query_expected_result = os.path.join(dir2, f)
-        result = open(query_result, "r")
-        expected_result = open(query_expected_result, "r")
-        delta = difflib.unified_diff(result.readlines(), expected_result.readlines())
-        _LOG.info("Analyze query %s results", f)
+        result = open(query_result, "r").readlines()
+        expected_result = open(query_expected_result, "r").readlines()
+        delta = difflib.unified_diff(result, expected_result)
         i = 0
         for line in delta:
             i += 1
@@ -106,15 +93,18 @@ def _dircmp(dir1: str, dir2: str) -> bool:
     return has_same_files
 
 
-class Validator():
+class Validator:
     """
     Validate Qserv ingest process has been successful
        - lauch SQL query against currently ingested database
     """
 
-    def __init__(self, contribution_metadata: metadata.ContributionMetadata,
-                 query_url: str,
-                 sqlEngine: bool = False):
+    def __init__(
+        self,
+        contribution_metadata: metadata.ContributionMetadata,
+        query_url: str,
+        sqlEngine: bool = False,
+    ):
         self.contribution_metadata = contribution_metadata
 
         self.query_url = util.trailing_slash(query_url)
@@ -126,12 +116,12 @@ class Validator():
         database = self.contribution_metadata.database
         qserv_url = make_url(self.query_url)
         if not qserv_url.database and qserv_url.drivername == "mysql":
-            qserv_db_url = qserv_url.set(drivername="mariadb+mariadbconnector",
-                                         database=database)
+            qserv_db_url = qserv_url.set(drivername="mariadb+mariadbconnector", database=database)
         else:
-            raise ValueError("Database field in Qserv url must be empty" +
-                             " and driver must be mysql: %s",
-                             qserv_url)
+            raise ValueError(
+                "Database field in Qserv url must be empty" + " and driver must be mysql: %s",
+                qserv_url,
+            )
         self.engine = sqlalchemy.create_engine(qserv_db_url)
         _LOG.debug("Qserv URL: %s", qserv_db_url)
 
@@ -171,15 +161,23 @@ class Validator():
         Path(dbbench_results_path).mkdir(parents=True, exist_ok=True)
         dbbench_log = os.path.join(_WORKDIR, "dbbench.log")
 
-        cmd = ['dbbench', '--url', self.query_url,
-               '--database', self.contribution_metadata.database, dbbench_config]
-        _LOG.info("Run command: %s", ' '.join(cmd))
-        with open(dbbench_log, 'wb') as f:
-            process = subprocess.Popen(cmd, shell=False,
-                                       stdout=subprocess.PIPE,
-                                       stderr=subprocess.STDOUT)
-            for c in iter(process.stdout.readline, b''):
-                f.write(c)
+        cmd = [
+            "dbbench",
+            "--url",
+            self.query_url,
+            "--database",
+            self.contribution_metadata.database,
+            dbbench_config,
+        ]
+        _LOG.info("Run command: %s", " ".join(cmd))
+        with open(dbbench_log, "wb") as f:
+            process = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            if process.stdout:
+                buffer: IO[bytes] = process.stdout
+                for c in iter(buffer.readline, b""):
+                    f.write(c)
+            else:
+                _LOG.warning(f"No stdout for command: {cmd}")
 
         if _LOG.isEnabledFor(logging.INFO):
             log = open(dbbench_log, "r")

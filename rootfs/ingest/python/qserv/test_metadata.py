@@ -48,6 +48,61 @@ def test_get_ordered_tables_json():
     data_url = os.path.join(_CWD, "testdata", "dp01_dc2_catalogs")
     contribution_metadata = metadata.ContributionMetadata(data_url)
     tables_json_data = contribution_metadata.get_ordered_tables_json()
-    _LOG.info("Ordered list of tables")
+    tables = []
     for json_data in tables_json_data:
-        _LOG.info(" %s", json_data['table'])
+        tables.append(json_data["table"])
+    _LOG.info("Ordered list of tables %s", tables)
+
+    assert tables == [
+        "object",
+        "position",
+        "forced_photometry",
+        "reference",
+        "truth_match",
+    ]
+
+
+def test_get_contribution_file_specs_1() -> None:
+    data_url = os.path.join(_CWD, "testdata", "dp01_dc2_catalogs")
+    contribution_metadata = metadata.ContributionMetadata(data_url)
+    contrib_count = 0
+    contrib_director_count = 0
+    contrib_director_overlap_count = 0
+    contrib_director_chunk_count = 0
+    for table_contrib_spec in contribution_metadata.get_table_contribs_spec():
+        for contrib_spec in table_contrib_spec.get_contrib():
+            contrib_count += 1
+            contrib_spec["database"] = contribution_metadata.database
+            if contrib_spec["table"] == "object":
+                contrib_director_count += 1
+                if contrib_spec["is_overlap"]:
+                    contrib_director_overlap_count += 1
+                else:
+                    contrib_director_chunk_count += 1
+
+    assert contrib_count == 13040
+    assert contrib_director_overlap_count == 2197
+    assert contrib_director_chunk_count == 2111
+
+
+def test_get_contribution_file_specs_2() -> None:
+    data_url = os.path.join(_CWD, "testdata", "case01")
+    contribution_metadata = metadata.ContributionMetadata(data_url)
+    contrib_count = 0
+    for table_contrib_spec in contribution_metadata.get_table_contribs_spec():
+        for contrib_spec in table_contrib_spec.get_contrib():
+            contrib_count += 1
+            contrib_spec["database"] = contribution_metadata.database
+            if contrib_spec["table"] == "Logs":
+                assert contrib_spec["filepath"] == "/Logs.tsv"
+                break
+
+    assert contrib_count == 37
+
+
+def test_get_table_names() -> None:
+    data_url = os.path.join(_CWD, "testdata", "dp01_dc2_catalogs")
+    contribution_metadata = metadata.ContributionMetadata(data_url)
+    table_names = contribution_metadata.get_tables_names()
+
+    assert table_names == ["object", "position", "forced_photometry", "reference", "truth_match"]

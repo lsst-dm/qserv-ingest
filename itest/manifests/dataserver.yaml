@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dataserver
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+      - name: nginx
+        image: nginxinc/nginx-unprivileged:1.20
+        ports:
+        - containerPort: 8080
+        volumeMounts:
+          - name: www
+            mountPath: /usr/share/nginx/html
+      volumes:
+      - name: testdata
+        configMap:
+          name: testdata
+      - name: www
+        emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dataserver
+spec:
+  selector:
+    app: dataserver
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080

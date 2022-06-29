@@ -30,16 +30,17 @@ Helper for ingest contribution management
 #  Imports of standard modules --
 # -------------------------------
 import logging
+import time
 import urllib.parse
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-from .exception import IngestError,  ReplicationControllerError
+from .exception import IngestError
 from .http import Http
-from .jsonparser import ContributionState, get_contribution_status, raise_error
+from .jsonparser import ContributionState, ContributionMonitor, raise_error
 from .metadata import LoadBalancedURL
-from .replicationclient import ReplicationClient
+from .util import increase_wait_time
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -50,38 +51,7 @@ _LOG = logging.getLogger(__name__)
 MAX_RETRY_ATTEMPTS = 3
 
 
-def build_contributions(contributions_locked: list,
-                        repl_client: ReplicationClient,
-                        load_balanced_base_url: LoadBalancedURL) -> list:
-    """Build list of contributions to be ingested
-
-    Parameters
-    ----------
-        contributions_locked (_type_): _description_
-        repl_client (_type_): _description_
-        load_balanced_url (list): _description_
-
-    Returns
-    -------
-        list: contributions to be ingested
-
-    """
-    contributions = []
-    for i, contribution in enumerate(contributions_locked):
-        (database, chunk_id, path, is_overlap, table) = contribution
-
-        (host, port) = repl_client.get_chunk_location(chunk_id, database)
-        contribution = Contribution(host, port,
-                                    chunk_id,
-                                    path,
-                                    table,
-                                    is_overlap,
-                                    load_balanced_base_url)
-        contributions.append(contribution)
-    return contributions
-
-
-class Contribution():
+class Contribution:
     """Represent an ingest contribution
 
     Store input parameters for replication REST api located at
@@ -89,17 +59,36 @@ class Contribution():
 
     """
 
-    def __init__(self, worker_host: str, worker_port: int, chunk_id: int, path: str,
-                 table: str, is_overlap: bool, load_balanced_base_url: str):
+    is_overlap: int
+
+    def __init__(
+        self,
+        worker_host: str,
+        worker_port: int,
+        chunk_id: int,
+        filepath: str,
+        table: str,
+        is_overlap: bool,
+        load_balanced_base_url: LoadBalancedURL,
+    ):
         self.chunk_id = chunk_id
-        self.path = path
+        if chunk_id is None:
+            # regular tables
+            self.chunk_id = -1
         self.table = table
-        self.is_overlap = is_overlap
-        if self.is_overlap:
-            filename = f"chunk_{self.chunk_id}_overlap.txt"
+        if is_overlap is None:
+            # regular tables
+            self.is_overlap = -1
         else:
-            filename = f"chunk_{self.chunk_id}.txt"
-        self.load_balanced_url = load_balanced_base_url.join(path, filename)
+            # partitioned tables
+            self.is_overlap = int(is_overlap)
+        if filepath.endswith(".tsv"):
+            self.column_separator = "\\t"
+        elif filepath.endswith(".csv") or filepath.endswith(".txt"):
+            self.column_separator = ","
+        else:
+            raise IngestError("Unsupported data format for regular table" "only *.csv and .tsv are supported")
+        self.load_balanced_url = LoadBalancedURL.new(load_balanced_base_url, filepath)
         self.request_id = None
         self.retry_attempts = 0
         self.retry_attempts_post = 0
@@ -124,26 +113,33 @@ class Contribution():
         """
         url = urllib.parse.urljoin(self.worker_url, "ingest/file-async")
         _LOG.debug("start_async(): url: %s", url)
-        payload = {"transaction_id": transaction_id,
-                   "table": self.table,
-                   "column_separator": ",",
-                   "chunk": self.chunk_id,
-                   "overlap": int(self.is_overlap),
-                   "url": self.load_balanced_url.get()}
+
+        payload = {
+            "transaction_id": transaction_id,
+            "table": self.table,
+            "column_separator": self.column_separator,
+            "chunk": self.chunk_id,
+            "overlap": self.is_overlap,
+            "url": self.load_balanced_url.get(),
+        }
         _LOG.debug("start_async(): payload: %s", payload)
 
         while not self.request_id:
             # Start ASYNC file ingest request using the POST method.
             # See https://lsstc.slack.com/archives/D2Y1TQY5S/p1645556026791089
-            _LOG.debug("_ingest_chunk: url %s, retry attempts: %s, payload: %s",
-                       url, self.retry_attempts_post, payload)
+            _LOG.debug(
+                "_ingest_chunk: url %s, retry attempts: %s, payload: %s",
+                url,
+                self.retry_attempts_post,
+                payload,
+            )
             responseJson = Http().post(url, payload)
 
             retry = raise_error(responseJson, self.retry_attempts_post, MAX_RETRY_ATTEMPTS)
             if retry:
                 self.retry_attempts_post += 1
             else:
-                self.request_id = responseJson['contrib']['id']
+                self.request_id = responseJson["contrib"]["id"]
 
     def monitor(self) -> bool:
         """Monitor an asynchronous ingest query for a chunk contribution
@@ -164,31 +160,51 @@ class Contribution():
             bool: True if contribution has been successfully ingested
                   False if contribution is being ingested
         """
-        status_url = urllib.parse.urljoin(self.worker_url,
-                                          f"ingest/file-async/{self.request_id}")
-        responseJson = Http().get(status_url)
+        status_url = urllib.parse.urljoin(self.worker_url, f"ingest/file-async/{self.request_id}")
 
-        contrib_status = get_contribution_status(responseJson)
-        finished = False
-        match contrib_status:
-            case ContributionState.FINISHED:
-                finished = True
+        # Retry monitor query if needed
+        monitor_request_retry_attempts = 0
+        retry = True
+        wait_sec = 1
+        while retry:
+            response_json = Http().get(status_url)
+            retry = raise_error(response_json, monitor_request_retry_attempts, MAX_RETRY_ATTEMPTS)
+            if retry:
+                monitor_request_retry_attempts += 1
+                time.sleep(wait_sec)
+                # Sleep for longer and longer
+                wait_sec = increase_wait_time(wait_sec)
+
+        contrib_monitor = ContributionMonitor(response_json)
+        contrib_finished = False
+        # For transaction state description
+        # see: https://confluence.lsstcorp.org/display/DM/Ingest%3A+9.5.3.+Asynchronous+Protocol
+        match contrib_monitor.status:
             case ContributionState.IN_PROGRESS:
                 _LOG.debug("_ingest_chunk: request %s in progress", self.request_id)
-            case ContributionState.CANCELLED:
-                raise IngestError(f'Contribution {self} ingest has been cancelled by a third-party')
-            case ContributionState.READ_FAILED:
-                if self.retry_attempts >= MAX_RETRY_ATTEMPTS:
-                    raise IngestError("Exceeding maximum number of attempts for " +
-                                      f"Contribution {self}")
+            case ContributionState.FINISHED:
+                contrib_finished = True
+            case (
+                ContributionState.CREATE_FAILED
+                | ContributionState.START_FAILED
+                | ContributionState.READ_FAILED
+                | ContributionState.LOAD_FAILED
+            ):
+                errmsg = ""
+                if not contrib_monitor.retry_allowed:
+                    errmsg = "and is not retriable"
+                elif self.retry_attempts >= MAX_RETRY_ATTEMPTS:
+                    errmsg = "and has exceeded maximum number of ingest attempts"
+                if len(errmsg) != 0:
+                    raise IngestError(
+                        f"Contribution {self} is in status {contrib_monitor.status} "
+                        + f'with error: "{contrib_monitor.error}", '
+                        + f"system error: {contrib_monitor.system_error}, "
+                        + f"http error: {contrib_monitor.http_error} {errmsg}"
+                    )
                 self.retry_attempts += 1
                 self.request_id = None
-            case _:
-                retry = raise_error(responseJson, self.retry_attempts, MAX_RETRY_ATTEMPTS)
-                if retry:
-                    self.retry_attempts += 1
-                    self.request_id = None
-                else:
-                    raise ReplicationControllerError(f"Contribution {self} should be in an error" +
-                                                     f" state instead of {contrib_status}")
-        return finished
+            case ContributionState.CANCELLED:
+                raise IngestError(f"Contribution {self} ingest has been cancelled by a third-party")
+
+        return contrib_finished

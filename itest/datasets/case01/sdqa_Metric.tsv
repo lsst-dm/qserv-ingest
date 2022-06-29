@@ -1,0 +1,53 @@
+1	nGoodPix	counts	f	Number of good pixels.
+2	nDeadPix	counts	f	Number of dead pixels.
+3	nHotPix	counts	f	Number of hot pixels.
+4	nSpurPix	counts	f	Number of spurious pixels.
+5	nSatPix	counts	f	Number of saturated pixels.
+6	nObjPix	counts	f	Number of object-coverage pixels.
+7	nNanPix	counts	f	Number of NaNed pixels.
+8	nDirtPix	counts	f	Number of pixels with filter dirt.
+9	nStarPix	counts	f	Number of star-coverage pixels.
+10	nGalxPix	counts	f	Number of galaxy-coverage pixels.
+11	nObjSex	counts	f	Number of objects found by SExtractor.
+12	fwhmSex	Arcsec	t	SExtractor FWHM of PSF.
+13	gMean	D.N.	t	Image global mean.
+14	gMedian	D.N.	t	Image global median.
+15	cMedian1	D.N.	t	Image upper-left corner median.
+16	cMedian2	D.N.	t	Image upper-right corner median.
+17	cMedian3	D.N.	t	Image lower-right corner median.
+18	cMedian4	D.N.	t	Image lower-left corner median.
+19	gMode	D.N.	t	Image global mode.
+20	MmFlag	counts	i	Image global mode.
+21	gStdDev	D.N.	t	Image global standard deviation.
+22	gMAbsDev	D.N.	t	Image mean absolute deviation.
+23	gSkewns	D.N.	t	Image skewness.
+24	gKurtos	D.N.	t	Image kurtosis.
+25	gMinVal	D.N.	t	Image minimum value.
+26	gMaxVal	D.N.	t	Image maximum value.
+27	pTile1	D.N.	t	Image 1-percentile.
+28	pTile16	D.N.	t	Image 16-percentile.
+29	pTile84	D.N.	t	Image 84-percentile.
+30	pTile99	D.N.	t	Image 99-percentile.
+31	phot.psf.numAvailStars	counts	f	Number of available PSF stars.
+32	phot.psf.numGoodStars	counts	f	Number of good PSF stars.
+33	phot.psf.spatialFitChi2	dimensionless	t	Chi^2 for spatial PSF fit.
+34	phot.psf.spatialLowOrdFlag	flag	f	Flag if forced to lower spatial order in PSF fit.
+35	ip.isr.numSaturatedPixels	counts	f	Number of saturated pixels.
+36	ip.isr.numCosmicRayPixels	counts	f	Number of cosmic-ray pixels.
+37	ip.diffim.residuals	sigma	t	Residuals.
+38	ip.diffim.kernelSum	dimensionless	t	Kernel sum.
+39	ip.diffim.d_residuals	sigma	t	Per-footprint residuals.
+40	nBadCalibPix	counts	f	Number of pixels with compromised values (charge traps, hot pixels).
+41	nSaturatePix	counts	f	Number of pixels compromised by detector saturation, including pixels with uncorrectable non-linearity.
+42	overscanMean	ADU	t	Mean of overscan pixels, computed from Good pixels.
+43	overscanStdDev	ADU	t	Standard deviation of overscan pixels, computed from Good pixels.
+44	overscanMedian	ADU	t	Median of overscan pixels, computed from Good pixels; used as robust estimate of CCD bias level.
+45	overscanMin	ADU	t	Min of overscan pixels, computed from Good pixels.
+46	overscanMax	ADU	t	Max of overscan pixels, computed from Good pixels.
+47	imageClipMean4Sig3Pass	e-	t	Clipped mean of image at 4 sigma with 3 iterations, computed from Good pixels.
+48	imageSigma	e-	t	Standard devation of image, computed from Good pixels.
+49	imageMedian	e-	t	Median of image, computed from Good pixels.
+50	imageMin	e-	t	Minimum of image, computed from Good pixels.
+51	imageMax	e-	t	Maximum of image, computed from Good pixels.
+52	imageGradientX	e-/pixel	t	Image gradient along axis 1, computed from Good pixels in background regions.
+53	imageGradientY	e-/pixel	t	Image gradient along axis 2, computed from Good pixels in background regions.

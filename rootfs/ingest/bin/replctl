@@ -105,7 +105,7 @@ if __name__ == "__main__":
     if args.task == Task.QUEUE:
         logger.debug("Queue")
         queue_manager = QueueManager(args.config.queue_url, chunk_metadata)
-        queue_manager.load()
+        queue_manager.insert_contribfiles()
     elif args.task == Task.REGISTER:
         ingester = Ingester(chunk_metadata, args.config.replication_url)
         database_status = ingester.get_database_status()
