@@ -1,0 +1,15 @@
+{
+    "database": "dp02_dc2_catalogs",
+    "table": "DiaSource",
+    "index": "idx_diaSourceId",
+    "spec": "DEFAULT",
+    "comment": "The non-unique index on the DIA source identifiers",
+    "columns": [
+        {
+            "column": "diaSourceId",
+            "length": 0,
+            "ascending": 1
+        }
+    ],
+    "auth_key": ""
+}

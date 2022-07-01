@@ -1,0 +1,15 @@
+{
+    "database": "dp02_dc2_catalogs",
+    "table": "DiaSource",
+    "index": "idx_diaObjectId",
+    "spec": "DEFAULT",
+    "comment": "The non-unique index on the foreign key for the DIA object identifiers",
+    "columns": [
+        {
+            "column": "diaObjectId",
+            "length": 0,
+            "ascending": 1
+        }
+    ],
+    "auth_key": ""
+}

@@ -98,6 +98,17 @@ class Contribution:
     def __str__(self):
         return f"Contribution({self.__dict__})"
 
+    def _build_payload(self, transaction_id: int) -> dict:
+        payload = {
+            "transaction_id": transaction_id,
+            "table": self.table,
+            "column_separator": self.column_separator,
+            "chunk": self.chunk_id,
+            "overlap": self.is_overlap,
+            "url": self.load_balanced_url.get(),
+        }
+        return payload
+
     def start_async(self, transaction_id: int) -> None:
         """Start an asynchronous ingest query for a chunk contribution
            Raise an exception if the query fails after a fixed number of attempts
@@ -113,15 +124,8 @@ class Contribution:
         """
         url = urllib.parse.urljoin(self.worker_url, "ingest/file-async")
         _LOG.debug("start_async(): url: %s", url)
+        payload = self._build_payload(transaction_id)
 
-        payload = {
-            "transaction_id": transaction_id,
-            "table": self.table,
-            "column_separator": self.column_separator,
-            "chunk": self.chunk_id,
-            "overlap": self.is_overlap,
-            "url": self.load_balanced_url.get(),
-        }
         _LOG.debug("start_async(): payload: %s", payload)
 
         while not self.request_id:

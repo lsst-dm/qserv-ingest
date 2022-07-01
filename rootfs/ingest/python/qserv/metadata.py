@@ -29,7 +29,6 @@ Manage metadata related to input data
 #  Imports of standard modules --
 # -------------------------------
 from dataclasses import dataclass
-import json
 import logging
 from typing import Any, Dict, List
 import urllib.parse
@@ -39,7 +38,7 @@ import urllib.parse
 # Imports for other modules --
 # ----------------------------
 from .http import json_get
-from .loadbalancerurl import LoadBalancedURL
+from .loadbalancerurl import LoadBalancerAlgorithm, LoadBalancedURL
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -66,6 +65,9 @@ class TableContributionsSpec:
     base_path: str
     """ Base path """
 
+    database: str
+    """ Database name """
+
     table: str
     """ Table name """
 
@@ -88,6 +90,7 @@ class TableContributionsSpec:
         for file in self.files:
             data = {
                 "chunk_id": None,
+                "database": self.database,
                 "filepath": self._filepath(file),
                 "is_overlap": None,
                 "table": self.table,
@@ -97,6 +100,7 @@ class TableContributionsSpec:
         for id in self.chunks:
             data = {
                 "chunk_id": id,
+                "database": self.database,
                 "filepath": self._filepath(f"chunk_{id}.txt"),
                 "is_overlap": False,
                 "table": self.table,
@@ -106,6 +110,7 @@ class TableContributionsSpec:
         for id in self.chunks_overlap:
             data = {
                 "chunk_id": id,
+                "database": self.database,
                 "filepath": self._filepath(f"chunk_{id}_overlap.txt"),
                 "is_overlap": True,
                 "table": self.table,
@@ -118,10 +123,19 @@ class TableContributionsSpec:
 
 
 class TableSpec:
-    """Contain table specifications for a given database"""
+    """Contain table specifications
+
+    Parameters:
+    -----------
+        metadata_url: str
+            Url of metadata, used to access tables' json configuration files for R-I service
+        table_meta: Dict
+            metadata for a table
+    """
 
     contrib_specs: List[TableContributionsSpec]
     data: List[Any]
+    database: str
     schema_file: str
     is_director: bool
     is_partitioned: bool
@@ -134,10 +148,9 @@ class TableSpec:
         schema_file = table_meta["schema"]
         self.json_schema = json_get(metadata_url, schema_file)
         self.name = self.json_schema["table"]
+        self.database = self.json_schema["database"]
         self.is_partitioned = self.json_schema["is_partitioned"] == 1
-        self.is_director = (
-            "director_table" in self.json_schema and len(self.json_schema["director_table"]) == 0
-        )
+        self.is_director = self._is_director()
         idx_files = table_meta["indexes"]
         self.json_indexes = []
         for f in idx_files:
@@ -153,14 +166,25 @@ class TableSpec:
                 chunks = d[_CHUNKS]
                 # Only director tables can have (extra) overlaps
                 if self.is_director:
-                    # chunk ids for overlaps migh be different of regular chunk ids
+                    # chunk ids for overlaps might be different of regular chunk ids
                     if d.get(_OVERLAPS):
                         chunks_overlap = d[_OVERLAPS]
                     else:
                         chunks_overlap = d[_CHUNKS]
             else:
                 files = d[_FILES]
-            self.contrib_specs.append(TableContributionsSpec(path, self.name, files, chunks, chunks_overlap))
+            self.contrib_specs.append(TableContributionsSpec(path, self.database, self.name, files,
+                                                             chunks, chunks_overlap))
+
+    def _is_director(self) -> bool:
+        is_director: bool = False
+        director_table = self.json_schema.get("director_table")
+        if director_table is not None:
+            if len(director_table) == 0:
+                is_director = True
+        elif self.json_schema.get("is_partitioned") == 1:
+            is_director = True
+        return is_director
 
 
 class ContributionMetadata:
@@ -187,7 +211,8 @@ class ContributionMetadata:
         """
 
         # Get scheme configuration
-        self.lb_url = LoadBalancedURL(path, loadbalancers)
+        lbAlgo = LoadBalancerAlgorithm(loadbalancers)
+        self.lb_url = LoadBalancedURL(path, lbAlgo)
 
         self.metadata_url = self.lb_url.direct_url
         self.metadata = json_get(self.metadata_url, _METADATA_FILENAME)

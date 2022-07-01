@@ -20,7 +20,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """
-Tools used by ingest algorithm
+Unit tests for http.py
 
 @author  Fabrice Jammes, IN2P3
 """

@@ -34,7 +34,7 @@ import logging
 # Imports for other modules --
 # ----------------------------
 from .contribution import Contribution
-from .loadbalancerurl import LoadBalancedURL
+from .loadbalancerurl import LoadBalancerAlgorithm, LoadBalancedURL
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -43,7 +43,9 @@ _LOG = logging.getLogger(__name__)
 
 _PATH = "/lsst/data/"
 _SERVERS = ["https://server1", "https://server2", "https://server3"]
-_LB_URL = LoadBalancedURL(_PATH, _SERVERS)
+
+_LBALGO = LoadBalancerAlgorithm(_SERVERS)
+_LB_URL = LoadBalancedURL(_PATH, _LBALGO)
 
 _PARAMS = {
     "worker_host": "host",
@@ -66,10 +68,45 @@ def test_init():
     assert contribution.load_balanced_url.get() == url.format(1)
 
 
+def test_build_payload():
+    transaction_id = 12345
+    lbAlgo = LoadBalancerAlgorithm(_SERVERS)
+    params = {
+        "worker_host": "host",
+        "worker_port": 8080,
+        "chunk_id": 1,
+        "filepath": "step1_1/chunk_1_overlap.txt",
+        "table": "mytable",
+        "is_overlap": True,
+        "load_balanced_base_url": LoadBalancedURL(_PATH, lbAlgo),
+    }
+    c1 = Contribution(**params)
+    payload1 = c1._build_payload(transaction_id)
+
+    params['filepath'] = "step2_2/chunk_2_overlap.txt"
+    params['load_balanced_base_url'] = LoadBalancedURL(_PATH, lbAlgo)
+    c2 = Contribution(**params)
+    payload2 = c2._build_payload(transaction_id)
+
+    params['filepath'] = "step3_3/chunk_3_overlap.txt"
+    params['load_balanced_base_url'] = LoadBalancedURL(_PATH, lbAlgo)
+    c3 = Contribution(**params)
+    payload3 = c3._build_payload(transaction_id)
+
+    params['filepath'] = "step4_4/chunk_4_overlap.txt"
+    params['load_balanced_base_url'] = LoadBalancedURL(_PATH, lbAlgo)
+    c4 = Contribution(**params)
+    payload4 = c4._build_payload(transaction_id)
+
+    assert payload1['url'] == 'https://server1/lsst/data/step1_1/chunk_1_overlap.txt'
+    assert payload2['url'] == 'https://server2/lsst/data/step2_2/chunk_2_overlap.txt'
+    assert payload3['url'] == 'https://server3/lsst/data/step3_3/chunk_3_overlap.txt'
+    assert payload4['url'] == 'https://server1/lsst/data/step4_4/chunk_4_overlap.txt'
+
+
 def test_print():
 
     c = Contribution(**_PARAMS)
-    print(c)
     _LOG.debug(c)
 
     params = _PARAMS

@@ -97,7 +97,7 @@ class Ingester:
         _LOG.debug(f"IDs of transactions in STARTED state: {trans}")
         if len(trans) > 0:
             raise IngestError(f"Database publication prevented by started transactions: {trans}")
-        contributions = self.queue_manager.select_noningested_contributions()
+        contributions = self.queue_manager.select_noningested_contribfiles()
         if len(contributions) > 0:
             _LOG.error(f"Non ingested contributions: {contributions}")
             raise IngestError(
@@ -186,8 +186,7 @@ class Ingester:
 
     def _ingest_transaction(self) -> bool:
         """Get contributions from a queue server for a given database
-        then ingest it inside Qserv,
-        during a super-transation
+        then ingest it inside Qserv during a super-transation
 
         Returns:
         --------
@@ -218,7 +217,7 @@ class Ingester:
         finally:
             if transaction_id:
                 self.repl_client.close_transaction(self.contrib_meta.database, transaction_id, ingest_success)
-                self.queue_manager.release_locked_contributions(ingest_success)
+                self.queue_manager.release_locked_contribfiles(ingest_success)
 
         return True
 

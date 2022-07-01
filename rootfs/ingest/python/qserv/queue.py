@@ -39,7 +39,8 @@ import typing
 # ----------------------------
 from .metadata import ContributionMetadata
 import sqlalchemy
-from sqlalchemy import MetaData, Table
+from sqlalchemy import MetaData, Table, update
+from sqlalchemy.dialects import mysql
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.pool import StaticPool
 from sqlalchemy.sql import select, func
@@ -62,10 +63,14 @@ class QueueManager:
     Class implementing contributions queue manager for Qserv ingest process
     """
 
-    def __init__(self, connection, contribution_metadata: ContributionMetadata):
+    def __init__(self, connection_url: str, contribution_metadata: ContributionMetadata):
 
-        db_url = make_url(connection)
-        self.engine = sqlalchemy.create_engine(db_url, poolclass=StaticPool, pool_pre_ping=True)
+        db_url = make_url(connection_url)
+        self.engine = sqlalchemy.create_engine(db_url,
+                                               poolclass=StaticPool,
+                                               pool_pre_ping=True,
+                                               future=True)
+        self.connection = self.engine.connect()
         self.pod = socket.gethostname()
 
         db_meta = MetaData(bind=self.engine)
@@ -75,15 +80,18 @@ class QueueManager:
         _LOG.debug("Ordered tables to load: %s", self.ordered_tables_to_load)
         self._pop_current_table()
 
+    def __del__(self):
+        self.connection.close()
+
     def set_transaction_size(self, contributions_queue_fraction):
         """
         Set number of contributions managed by a single transaction
         """
-        contributions_count = self._count_contribution_files_per_database()
+        contributions_count = self._count_contribfiles()
         _LOG.debug("Contributions queue size: %s", contributions_count)
         self._contribfiles_to_lock_number = int(contributions_count / contributions_queue_fraction) + 1
 
-    def _count_contribution_files_per_database(self):
+    def _count_contribfiles(self) -> int:
         """
         Count contributions for current database
            if loaded is 'True' count contributions which are not ingested
@@ -91,7 +99,7 @@ class QueueManager:
         """
         query = select([func.count("*")]).select_from(self.queue_table)
         query = query.where(self.queue_table.c.database == self.contribution_metadata.database)
-        result = self.engine.execute(query)
+        result = self.connection.execute(query)
         contributions_count = next(result)[0]
         result.close()
         return contributions_count
@@ -100,10 +108,10 @@ class QueueManager:
         if len(self.ordered_tables_to_load) != 0:
             self.current_table = self.ordered_tables_to_load.pop(0)
         else:
-            _LOG.warn("No table to load")
+            _LOG.warning("No table to load")
             self.current_table = None
 
-    def _select_locked_contribfiles(self) -> list[typing.Tuple[str, int, str, bool, str]]:
+    def _select_locked_contribfiles(self) -> typing.List[typing.Tuple[str, int, str, bool, str]]:
         query = select(
             [
                 self.queue_table.c.database,
@@ -116,12 +124,12 @@ class QueueManager:
         query = query.where(self.queue_table.c.locking_pod == self.pod)
         query = query.where(self.queue_table.c.succeed.is_(None))
         query = query.where(self.queue_table.c.database == self.contribution_metadata.database)
-        result = self.engine.execute(query)
+        result = self.connection.execute(query)
         contributions = result.fetchall()
         result.close()
         return contributions
 
-    def insert_contribfiles(self):
+    def insert_contribfiles(self) -> None:
         """If queue is empty for current database, then load contribution
            files specification in queue, else do nothing
 
@@ -130,18 +138,44 @@ class QueueManager:
         Nothing
         """
 
-        contributions_count = self._count_contribution_files_per_database()
+        contributions_count = self._count_contribfiles()
         if contributions_count != 0:
             _LOG.warn("Skip contributions queue load, because it is not empty")
             return
 
         for table_contribs_spec in self.contribution_metadata.get_table_contribs_spec():
-            for contrib_spec in table_contribs_spec.get_contrib():
-                contrib_spec["database"] = self.contribution_metadata.database
-                _LOG.debug("Add contribution (%s) to queue", contrib_spec)
-                self.engine.execute(self.queue_table.insert(), contrib_spec)
+            contrib_specs = list(table_contribs_spec.get_contrib())
+            self.connection.execute(self.queue_table.insert(), contrib_specs)
+            self.connection.commit()
 
-    def lock_contribfiles(self) -> list[typing.Tuple[str, int, str, bool, str]]:
+    def _run_lock_queries(self, contribfiles_to_lock_count: int) -> None:
+        # SELECT FOR UPDATE + autocommit=0
+        # See:
+        # - https://stackoverflow.com/a/18144869/2784039
+        # - https://dba.stackexchange.com/questions/311242/mysql-concurrent-updates
+        select_query = select(self.queue_table.c.id).with_for_update().limit(contribfiles_to_lock_count)
+        select_query = select_query.where(self.queue_table.c.locking_pod.is_(None))
+        select_query = select_query.where(self.queue_table.c.database == self.contribution_metadata.database)
+        select_query = select_query.where(self.queue_table.c.table == self.current_table)
+
+        _LOG.debug("Query select: %s", select_query.compile(dialect=mysql.dialect()))
+        rows = self.connection.execute(select_query)
+
+        ids = []
+        for e in rows:
+            ids.append(e[0])
+
+        update_query = update(self.queue_table).values(
+            locking_pod=self.pod
+        )
+        # update_query = update_query.where(self.queue_table.c.id.in_(ids))
+        update_query = update_query.where(self.queue_table.c.id.in_(ids))
+
+        _LOG.debug("Query update: %s", update_query.compile(dialect=mysql.dialect()))
+        self.connection.execute(update_query)
+        self.connection.commit()
+
+    def lock_contribfiles(self) -> typing.List[typing.Tuple[str, int, str, bool, str]]:
         """If some contributions are already locked in queue for current pod,
         return them
         if not, lock a batch of them and then return their representation,
@@ -175,18 +209,9 @@ class QueueManager:
                 # query = sql.format(self.pod, self.current_table,
                 #                    self.chunk_meta.database,
                 #                    self._chunks_to_lock_number-chunks_locked_count)
-
                 contribfiles_to_lock_count = self._contribfiles_to_lock_number - contribfiles_locked_count
-                query = self.queue_table.update(mysql_limit=contribfiles_to_lock_count).values(
-                    locking_pod=self.pod
-                )
-                query = query.where(self.queue_table.c.locking_pod.is_(None))
-                query = query.where(self.queue_table.c.database == self.contribution_metadata.database)
-                query = query.where(self.queue_table.c.table == self.current_table)
 
-                _LOG.debug("Query: %s", query)
-
-                self.engine.execute(query)
+                self._run_lock_queries(contribfiles_to_lock_count)
 
                 contribfiles_locked = self._select_locked_contribfiles()
                 contribfiles_locked_count = len(contribfiles_locked)
@@ -203,7 +228,7 @@ class QueueManager:
         logging.debug("Contribution files locked by pod %s: %s", self.pod, contribfiles_locked)
         return contribfiles_locked
 
-    def release_locked_contributions(self, ingest_success: bool) -> None:
+    def release_locked_contribfiles(self, ingest_success: bool) -> None:
         """Mark contributions as "succeed" in contribution queue if super-transaction
         has been successfully commited
         Release contributions in queue when the super-transaction has been aborted
@@ -212,24 +237,23 @@ class QueueManager:
         so that contribution queue state is consistent with ingest state
         """
         if ingest_success:
-            query = self.queue_table.update().values(succeed=1)
             logging.debug("Mark contributions as 'succeed' in queue")
-            query = self.queue_table.update().values(succeed=1)
+            query = update(self.queue_table).values(succeed=1)
         else:
             logging.debug("Unlock contributions in queue")
-            query = self.queue_table.update().values(locking_pod=None)
+            query = update(self.queue_table).values(locking_pod=None)
 
         query = query.where(self.queue_table.c.locking_pod == self.pod)
-        query = query.where(self.queue_table.c.succeed.is_(None))
 
         wait_sec = 1
         while True:
             try:
                 _LOG.debug("Query: %s", query)
-                self.engine.execute(query)
+                self.connection.execute(query)
+                self.connection.commit()
                 break
-            except Exception:
-                _LOG.critical("Retry failed query %s", query)
+            except Exception as e:
+                _LOG.critical("Retry failed query %s, exception: %s", query, e)
                 time.sleep(wait_sec)
                 # Sleep for longer and longer
                 wait_sec = increase_wait_time(wait_sec)
@@ -240,8 +264,8 @@ class QueueManager:
         else:
             return False
 
-    def select_noningested_contributions(self):
-        """Return all contribution in queue not successfully loaded for current database"""
+    def select_noningested_contribfiles(self):
+        """Return all contribution files in queue not successfully loaded for current database"""
         query = select(
             [
                 self.queue_table.c.database,
@@ -251,8 +275,8 @@ class QueueManager:
                 self.queue_table.c.table,
             ]
         )
-        query = query.where(self.queue_table.c.succeed.is_(None))
+        query = query.where(self.queue_table.c.succeed.is_not(True))
         query = query.where(self.queue_table.c.database == self.contribution_metadata.database)
-        result = self.engine.execute(query)
-        contributions = result.fetchall()
-        return contributions
+        result = self.connection.execute(query)
+        contribfiles = result.fetchall()
+        return contribfiles

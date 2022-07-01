@@ -1,0 +1,15 @@
+{"database":"dp02_dc2_catalogs",
+ "table":"MatchesTruth",
+ "is_partitioned":0,
+ "auth_key":"",
+ "schema":[
+   {"name":"index","type":"BIGINT"},
+   {"name":"match_candidate","type":"BOOLEAN"},
+   {"name":"match_row","type":"BIGINT"},
+   {"name":"match_count","type":"INT"},
+   {"name":"match_chisq","type":"DOUBLE"},
+   {"name":"match_n_chisq_finite","type":"INT"},
+   {"name":"id","type":"CHAR(16)"},
+   {"name":"match_objectId","type":"BIGINT"}
+ ]
+}

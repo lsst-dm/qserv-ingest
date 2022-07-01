@@ -1,0 +1,15 @@
+{
+    "database": "dp02_dc2_catalogs",
+    "table": "Object",
+    "index": "idx_coord_dec",
+    "spec": "DEFAULT",
+    "comment": "The index on the spatial coordinate coord_dec",
+    "columns": [
+        {
+            "column": "coord_dec",
+            "length": 0,
+            "ascending": 1
+        }
+    ],
+    "auth_key": ""
+}

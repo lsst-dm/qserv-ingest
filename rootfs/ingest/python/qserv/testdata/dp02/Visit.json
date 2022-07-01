@@ -1,0 +1,22 @@
+{"database":"dp02_dc2_catalogs",
+ "table":"Visit",
+ "is_partitioned":0,
+ "auth_key":"",
+ "schema":[
+   {"name":"visit","type":"BIGINT NOT NULL"},
+   {"name":"physical_filter","type":"CHAR(32)"},
+   {"name":"band","type":"CHAR(1)"},
+   {"name":"ra","type":"DOUBLE"},
+   {"name":"decl","type":"DOUBLE"},
+   {"name":"skyRotation","type":"DOUBLE"},
+   {"name":"azimuth","type":"DOUBLE"},
+   {"name":"altitude","type":"DOUBLE"},
+   {"name":"zenithDistance","type":"DOUBLE"},
+   {"name":"airmass","type":"DOUBLE"},
+   {"name":"expTime","type":"DOUBLE"},
+   {"name":"expMidpt","type":"DATETIME(6)"},
+   {"name":"expMidptMJD","type":"DOUBLE"},
+   {"name":"obsStart","type":"DATETIME(6)"},
+   {"name":"obsStartMJD","type":"DOUBLE"}
+ ]
+}
