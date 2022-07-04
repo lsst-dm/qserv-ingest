@@ -1,0 +1,15 @@
+{
+    "database": "dp02_dc2_catalogs",
+    "table": "CcdVisit",
+    "index": "idx_ccdVisitId",
+    "spec": "DEFAULT",
+    "comment": "The non-unique index on the CCD visit identifier",
+    "columns": [
+        {
+            "column": "ccdVisitId",
+            "length": 0,
+            "ascending": 1
+        }
+    ],
+    "auth_key": ""
+}

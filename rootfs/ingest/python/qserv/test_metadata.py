@@ -89,14 +89,53 @@ def test_get_contribution_file_specs_2() -> None:
     data_url = os.path.join(_CWD, "testdata", "case01")
     contribution_metadata = metadata.ContributionMetadata(data_url)
     contrib_count = 0
+    contrib_director_count = 0
+    contrib_director_overlap_count = 0
+    contrib_director_chunk_count = 0
     for table_contrib_spec in contribution_metadata.get_table_contribs_spec():
         for contrib_spec in table_contrib_spec.get_contrib():
             contrib_count += 1
             contrib_spec["database"] = contribution_metadata.database
             if contrib_spec["table"] == "Logs":
                 assert contrib_spec["filepath"] == "/Logs.tsv"
-                break
+            if contrib_spec["table"] == "Object":
+                contrib_director_count += 1
+                if contrib_spec["is_overlap"]:
+                    contrib_director_overlap_count += 1
+                else:
+                    contrib_director_chunk_count += 1
 
+    _LOG.info("contrib_director_chunk_count %s", contrib_director_chunk_count)
+    _LOG.info("contrib_director_overlap_count %s", contrib_director_overlap_count)
+
+    assert contrib_director_chunk_count == 13
+    assert contrib_director_overlap_count == 10
+    assert contrib_count == 37
+
+
+def test_get_contribution_file_specs_dp02() -> None:
+    data_url = os.path.join(_CWD, "testdata", "dp02")
+    contribution_metadata = metadata.ContributionMetadata(data_url)
+    contrib_count = 0
+    contrib_director_count = 0
+    contrib_director_overlap_count = 0
+    contrib_director_chunk_count = 0
+    for table_contrib_spec in contribution_metadata.get_table_contribs_spec():
+        for contrib_spec in table_contrib_spec.get_contrib():
+            contrib_count += 1
+            contrib_spec["database"] = contribution_metadata.database
+            if contrib_spec["table"] == "Object":
+                contrib_director_count += 1
+                if contrib_spec["is_overlap"]:
+                    contrib_director_overlap_count += 1
+                else:
+                    contrib_director_chunk_count += 1
+
+    _LOG.info("contrib_director_chunk_count %s", contrib_director_chunk_count)
+    _LOG.info("contrib_director_overlap_count %s", contrib_director_overlap_count)
+
+    assert contrib_director_chunk_count == 2469
+    assert contrib_director_overlap_count == 10
     assert contrib_count == 37
 
 

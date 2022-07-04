@@ -1,0 +1,8 @@
+{"database":"dp02_dc2_catalogs",
+ "auto_build_secondary_index":1,
+ "local_load_secondary_index":1,
+ "num_stripes":340,
+ "num_sub_stripes":3,
+ "overlap":0.01667,
+ "auth_key":""
+}

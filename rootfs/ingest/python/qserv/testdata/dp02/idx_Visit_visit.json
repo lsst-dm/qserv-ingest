@@ -1,0 +1,15 @@
+{
+    "database": "dp02_dc2_catalogs",
+    "table": "Visit",
+    "index": "idx_visit",
+    "spec": "DEFAULT",
+    "comment": "The non-unique index on the visit identifier",
+    "columns": [
+        {
+            "column": "visit",
+            "length": 0,
+            "ascending": 1
+        }
+    ],
+    "auth_key": ""
+}

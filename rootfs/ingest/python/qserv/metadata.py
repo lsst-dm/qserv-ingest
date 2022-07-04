@@ -29,7 +29,6 @@ Manage metadata related to input data
 #  Imports of standard modules --
 # -------------------------------
 from dataclasses import dataclass
-import json
 import logging
 from typing import Any, Dict, List
 import urllib.parse
@@ -153,7 +152,7 @@ class TableSpec:
                 chunks = d[_CHUNKS]
                 # Only director tables can have (extra) overlaps
                 if self.is_director:
-                    # chunk ids for overlaps migh be different of regular chunk ids
+                    # chunk ids for overlaps might be different of regular chunk ids
                     if d.get(_OVERLAPS):
                         chunks_overlap = d[_OVERLAPS]
                     else:
