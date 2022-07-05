@@ -1,6 +1,7 @@
 {"database":"dp02_dc2_catalogs",
  "table":"DiaObject",
  "is_partitioned":1,
+ "director_table":""
  "director_key":"diaObjectId",
  "latitude_key":"decl",
  "longitude_key":"ra",
