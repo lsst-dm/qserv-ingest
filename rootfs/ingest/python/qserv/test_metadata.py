@@ -135,8 +135,8 @@ def test_get_contribution_file_specs_dp02() -> None:
     _LOG.info("contrib_director_overlap_count %s", contrib_director_overlap_count)
 
     assert contrib_director_chunk_count == 2469
-    assert contrib_director_overlap_count == 10
-    assert contrib_count == 37
+    assert contrib_director_overlap_count == 2508
+    assert contrib_count == 1692713
 
 
 def test_get_table_names() -> None:
