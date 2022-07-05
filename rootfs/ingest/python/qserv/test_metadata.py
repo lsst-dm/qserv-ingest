@@ -62,7 +62,7 @@ def test_get_ordered_tables_json():
     ]
 
 
-def test_get_contribution_file_specs_1() -> None:
+def test_get_contribution_file_specs_dp01() -> None:
     data_url = os.path.join(_CWD, "testdata", "dp01_dc2_catalogs")
     contribution_metadata = metadata.ContributionMetadata(data_url)
     contrib_count = 0
@@ -85,7 +85,7 @@ def test_get_contribution_file_specs_1() -> None:
     assert contrib_director_chunk_count == 2111
 
 
-def test_get_contribution_file_specs_2() -> None:
+def test_get_contribution_file_specs_case01() -> None:
     data_url = os.path.join(_CWD, "testdata", "case01")
     contribution_metadata = metadata.ContributionMetadata(data_url)
     contrib_count = 0
@@ -118,6 +118,7 @@ def test_get_contribution_file_specs_dp02() -> None:
     contribution_metadata = metadata.ContributionMetadata(data_url)
     contrib_count = 0
     contrib_director_count = 0
+    contrib_source_count = 0
     contrib_director_overlap_count = 0
     contrib_director_chunk_count = 0
     for table_contrib_spec in contribution_metadata.get_table_contribs_spec():
@@ -130,12 +131,15 @@ def test_get_contribution_file_specs_dp02() -> None:
                     contrib_director_overlap_count += 1
                 else:
                     contrib_director_chunk_count += 1
+            if contrib_spec["table"] == "Source":
+                contrib_source_count += 1
 
     _LOG.info("contrib_director_chunk_count %s", contrib_director_chunk_count)
     _LOG.info("contrib_director_overlap_count %s", contrib_director_overlap_count)
 
     assert contrib_director_chunk_count == 2469
     assert contrib_director_overlap_count == 2508
+    assert contrib_source_count == 1661647
     assert contrib_count == 1692713
 
 
