@@ -65,6 +65,9 @@ class TableContributionsSpec:
     base_path: str
     """ Base path """
 
+    database: str
+    """ Database name """
+
     table: str
     """ Table name """
 
@@ -87,6 +90,7 @@ class TableContributionsSpec:
         for file in self.files:
             data = {
                 "chunk_id": None,
+                "database": self.database,
                 "filepath": self._filepath(file),
                 "is_overlap": None,
                 "table": self.table,
@@ -96,6 +100,7 @@ class TableContributionsSpec:
         for id in self.chunks:
             data = {
                 "chunk_id": id,
+                "database": self.database,
                 "filepath": self._filepath(f"chunk_{id}.txt"),
                 "is_overlap": False,
                 "table": self.table,
@@ -105,6 +110,7 @@ class TableContributionsSpec:
         for id in self.chunks_overlap:
             data = {
                 "chunk_id": id,
+                "database": self.database,
                 "filepath": self._filepath(f"chunk_{id}_overlap.txt"),
                 "is_overlap": True,
                 "table": self.table,
@@ -117,10 +123,19 @@ class TableContributionsSpec:
 
 
 class TableSpec:
-    """Contain table specifications for a given database"""
+    """Contain table specifications
+
+    Parameters:
+    -----------
+        metadata_url: str
+            Url of metadata, used to access tables' json configuration files for R-I service
+        table_meta: Dict
+            metadata for a table
+    """
 
     contrib_specs: List[TableContributionsSpec]
     data: List[Any]
+    database: str
     schema_file: str
     is_director: bool
     is_partitioned: bool
@@ -133,6 +148,7 @@ class TableSpec:
         schema_file = table_meta["schema"]
         self.json_schema = json_get(metadata_url, schema_file)
         self.name = self.json_schema["table"]
+        self.database = self.json_schema["database"]
         self.is_partitioned = self.json_schema["is_partitioned"] == 1
         self.is_director = (
             "director_table" in self.json_schema and len(self.json_schema["director_table"]) == 0
@@ -159,7 +175,8 @@ class TableSpec:
                         chunks_overlap = d[_CHUNKS]
             else:
                 files = d[_FILES]
-            self.contrib_specs.append(TableContributionsSpec(path, self.name, files, chunks, chunks_overlap))
+            self.contrib_specs.append(TableContributionsSpec(path, self.database, self.name, files,
+                                                             chunks, chunks_overlap))
 
 
 class ContributionMetadata:

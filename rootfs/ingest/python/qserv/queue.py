@@ -103,7 +103,7 @@ class QueueManager:
             _LOG.warn("No table to load")
             self.current_table = None
 
-    def _select_locked_contribfiles(self) -> list[typing.Tuple[str, int, str, bool, str]]:
+    def _select_locked_contribfiles(self) -> typing.List[typing.Tuple[str, int, str, bool, str]]:
         query = select(
             [
                 self.queue_table.c.database,
@@ -136,12 +136,10 @@ class QueueManager:
             return
 
         for table_contribs_spec in self.contribution_metadata.get_table_contribs_spec():
-            for contrib_spec in table_contribs_spec.get_contrib():
-                contrib_spec["database"] = self.contribution_metadata.database
-                _LOG.debug("Add contribution (%s) to queue", contrib_spec)
-                self.engine.execute(self.queue_table.insert(), contrib_spec)
+            contrib_specs = list(table_contribs_spec.get_contrib())
+            self.engine.execute(self.queue_table.insert(), contrib_specs)
 
-    def lock_contribfiles(self) -> list[typing.Tuple[str, int, str, bool, str]]:
+    def lock_contribfiles(self) -> typing.List[typing.Tuple[str, int, str, bool, str]]:
         """If some contributions are already locked in queue for current pod,
         return them
         if not, lock a batch of them and then return their representation,
