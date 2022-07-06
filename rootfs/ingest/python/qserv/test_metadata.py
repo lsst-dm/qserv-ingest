@@ -113,6 +113,43 @@ def test_get_contribution_file_specs_case01() -> None:
     assert contrib_count == 37
 
 
+def test_get_table_names() -> None:
+    data_url = os.path.join(_CWD, "testdata", "dp01_dc2_catalogs")
+    contribution_metadata = metadata.ContributionMetadata(data_url)
+    table_names = contribution_metadata.get_tables_names()
+
+    assert table_names == ["object", "position", "forced_photometry", "reference", "truth_match"]
+
+
+def test_is_director() -> None:
+    data_url = os.path.join(_CWD, "testdata", "dp02")
+    contribution_metadata = metadata.ContributionMetadata(data_url)
+    table_names = contribution_metadata.get_tables_names()
+    _LOG.info("tables: %s", table_names)
+    _LOG.info("table %s", contribution_metadata.tables[0].name)
+    _LOG.info("table %s", contribution_metadata.tables[1].name)
+
+    # case: "director_table":""
+    idx = table_names.index("Source")
+    tableSpec = contribution_metadata.tables[idx]
+    assert tableSpec._is_director()
+
+    #  case: no "director_table" field, and "is_partitioned": 1
+    idx = table_names.index("DiaObject")
+    tableSpec = contribution_metadata.tables[idx]
+    assert tableSpec._is_director()
+
+    #  case: parititioned non director table
+    idx = table_names.index("DiaSource")
+    tableSpec = contribution_metadata.tables[idx]
+    assert not tableSpec._is_director()
+
+    #  case: regular non director table
+    idx = table_names.index("CcdVisit")
+    tableSpec = contribution_metadata.tables[idx]
+    assert not tableSpec._is_director()
+
+
 def test_get_contribution_file_specs_dp02() -> None:
     data_url = os.path.join(_CWD, "testdata", "dp02")
     contribution_metadata = metadata.ContributionMetadata(data_url)
@@ -134,18 +171,8 @@ def test_get_contribution_file_specs_dp02() -> None:
             if contrib_spec["table"] == "Source":
                 contrib_source_count += 1
 
-    _LOG.info("contrib_director_chunk_count %s", contrib_director_chunk_count)
-    _LOG.info("contrib_director_overlap_count %s", contrib_director_overlap_count)
-
     assert contrib_director_chunk_count == 2469
     assert contrib_director_overlap_count == 2508
     assert contrib_source_count == 1661647
     assert contrib_count == 1692713
 
-
-def test_get_table_names() -> None:
-    data_url = os.path.join(_CWD, "testdata", "dp01_dc2_catalogs")
-    contribution_metadata = metadata.ContributionMetadata(data_url)
-    table_names = contribution_metadata.get_tables_names()
-
-    assert table_names == ["object", "position", "forced_photometry", "reference", "truth_match"]

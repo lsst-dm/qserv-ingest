@@ -143,6 +143,7 @@ class TableSpec:
     json_schema: Dict
     name: str
 
+
     def __init__(self, metadata_url: str, table_meta: Dict):
         self.data = table_meta["data"]
         schema_file = table_meta["schema"]
@@ -150,9 +151,7 @@ class TableSpec:
         self.name = self.json_schema["table"]
         self.database = self.json_schema["database"]
         self.is_partitioned = self.json_schema["is_partitioned"] == 1
-        self.is_director = (
-            "director_table" in self.json_schema and len(self.json_schema["director_table"]) == 0
-        )
+        self.is_director = self._is_director()
         idx_files = table_meta["indexes"]
         self.json_indexes = []
         for f in idx_files:
@@ -177,6 +176,16 @@ class TableSpec:
                 files = d[_FILES]
             self.contrib_specs.append(TableContributionsSpec(path, self.database, self.name, files,
                                                              chunks, chunks_overlap))
+
+    def _is_director(self) -> bool:
+        is_director: bool = False
+        director_table = self.json_schema.get("director_table")
+        if director_table is not None:
+            if len(director_table) == 0:
+                is_director = True
+        elif self.json_schema.get("is_partitioned") == 1:
+            is_director = True
+        return is_director
 
 
 class ContributionMetadata:
