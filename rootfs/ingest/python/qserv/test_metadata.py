@@ -125,9 +125,6 @@ def test_is_director() -> None:
     data_url = os.path.join(_CWD, "testdata", "dp02")
     contribution_metadata = metadata.ContributionMetadata(data_url)
     table_names = contribution_metadata.get_tables_names()
-    _LOG.info("tables: %s", table_names)
-    _LOG.info("table %s", contribution_metadata.tables[0].name)
-    _LOG.info("table %s", contribution_metadata.tables[1].name)
 
     # case: "director_table":""
     idx = table_names.index("Source")
