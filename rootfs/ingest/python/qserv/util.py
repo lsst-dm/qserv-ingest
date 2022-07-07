@@ -30,7 +30,6 @@ Tools used by ingest algorithm
 #  Imports of standard modules --
 # -------------------------------
 import argparse
-import io
 import json
 import logging
 import yaml
@@ -51,7 +50,7 @@ _LOG = logging.getLogger(__name__)
 @event.listens_for(Engine, "before_cursor_execute")
 def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
     conn.info.setdefault("query_start_time", []).append(time.time())
-    _LOG.debug("Query: %s", statement)
+    _LOG.debug("Query: %s, %s", statement, parameters)
 
 
 @event.listens_for(Engine, "after_cursor_execute")
