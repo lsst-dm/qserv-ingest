@@ -29,9 +29,8 @@ Manage metadata related to input data
 #  Imports of standard modules --
 # -------------------------------
 from __future__ import annotations
-from dataclasses import dataclass
 import logging
-from typing import List
+from typing import List, Optional
 import urllib.parse
 
 # ----------------------------
@@ -45,6 +44,8 @@ _LOG = logging.getLogger(__name__)
 
 
 class LoadBalancerAlgorithm:
+    """Load balancing algorithm for accessing http servers
+    """
     count: int
     loadbalancers: List[str]
 
@@ -52,7 +53,7 @@ class LoadBalancerAlgorithm:
         self.count = 0
         self.loadbalancers = loadbalancers
 
-    def get(self) -> str:
+    def get(self) -> Optional[str]:
         loadbalancers_count = len(self.loadbalancers)
         if loadbalancers_count == 0:
             url = None
@@ -67,12 +68,18 @@ class LoadBalancedURL:
     Also file file:// protocol, and use it as default if no scheme is provided
     """
 
+    loadBalancerAlgorithm: Optional[LoadBalancerAlgorithm]
+    direct_url: str
+
     def __init__(self, path: str, lbAlgo: LoadBalancerAlgorithm):
         """Manage a load balanced URL
 
-        Args:
+        Parameters:
+        -----------
             path (str): path of the url
-            loadbalancers (List[str], optional): List of http(s) load balancer urls. Defaults to [].
+            lbAlgo LoadBalancerAlgorithm: List of http(s) load balancer urls. Defaults to [].
+
+            TODO TODO + mypy
 
         Raises:
             ValueError: if path uses an unsupported protocol
@@ -89,15 +96,18 @@ class LoadBalancedURL:
         self.loadBalancerAlgorithm = None
         if url.scheme in ["http", "https"]:
             self.loadBalancerAlgorithm = lbAlgo
-        elif url.scheme != "file":
+        if url.scheme == "file":
+            self.loadBalancerAlgorithm = lbAlgo
+        else:
             raise ValueError("Unsupported scheme for URL: %s, %s", path, lbAlgo)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"LoadBalancedURL({self.__dict__})"
 
     def get(self) -> str:
-        lbUrl = self.loadBalancerAlgorithm.get()
-        if lbUrl is None:
+        if self.loadBalancerAlgorithm is not None:
+            lbUrl = self.loadBalancerAlgorithm.get()
+        if self.loadBalancerAlgorithm is None or lbUrl is None:
             url = self.direct_url
         else:
             url = urllib.parse.urljoin(lbUrl, self.url_path)
