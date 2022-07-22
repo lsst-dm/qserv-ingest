@@ -33,6 +33,12 @@ class IngestError(Exception):
     pass
 
 
+class QueueError(Exception):
+    """Error related to ingest queue"""
+
+    pass
+
+
 class ReplicationControllerError(Exception):
     """Error related to replication controller response"""
 

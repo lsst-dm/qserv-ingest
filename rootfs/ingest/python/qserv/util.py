@@ -50,7 +50,7 @@ _LOG = logging.getLogger(__name__)
 @event.listens_for(Engine, "before_cursor_execute")
 def before_cursor_execute(conn, cursor, statement, parameters, context, executemany) -> None:
     conn.info.setdefault("query_start_time", []).append(time.time())
-    _LOG.debug("Query: %s, %s", statement, parameters)
+    _LOG.debug("Query: %s, %s", statement[:200], parameters[:200])
 
 
 @event.listens_for(Engine, "after_cursor_execute")

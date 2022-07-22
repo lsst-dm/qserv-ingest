@@ -72,12 +72,12 @@ class LoadBalancedURL:
     direct_url: str
 
     def __init__(self, path: str, lbAlgo: LoadBalancerAlgorithm):
-        """Manage a load balanced URL
+        """Manage a load balanced URL for http:// protocole, also support access for file:// protocola
 
         Parameters:
         -----------
-            path (str): path of the url
-            lbAlgo LoadBalancerAlgorithm: List of http(s) load balancer urls. Defaults to [].
+            path str: path of the url
+            lbAlgo LoadBalancerAlgorithm: http(s) load balancer algorithm, not used for file:// access
 
             TODO TODO + mypy
 
@@ -85,7 +85,7 @@ class LoadBalancedURL:
             ValueError: if path uses an unsupported protocol
         """
 
-        if len(lbAlgo.loadbalancers) != 0:
+        if lbAlgo is not None and len(lbAlgo.loadbalancers) != 0:
             self.direct_url = urllib.parse.urljoin(lbAlgo.loadbalancers[0], path)
         else:
             self.direct_url = path
@@ -96,7 +96,7 @@ class LoadBalancedURL:
         self.loadBalancerAlgorithm = None
         if url.scheme in ["http", "https"]:
             self.loadBalancerAlgorithm = lbAlgo
-        if url.scheme == "file":
+        elif url.scheme == "file":
             self.loadBalancerAlgorithm = lbAlgo
         else:
             raise ValueError("Unsupported scheme for URL: %s, %s", path, lbAlgo)

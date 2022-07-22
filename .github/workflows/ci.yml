@@ -31,6 +31,9 @@ jobs:
           mkdir -p artifacts
           docker save "${{ env.IMAGE }}" > artifacts/image.tar
           echo "${{ env.IMAGE }}" > artifacts/image-tag
+      - name: Launch unit tests
+        run: |
+          ./code-checks.sh -u
       - uses: actions/upload-artifact@v2
         with:
           name: image

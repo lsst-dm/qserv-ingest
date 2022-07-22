@@ -29,6 +29,7 @@ on the client side
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
+import datetime
 import logging
 import socket
 import time
@@ -37,6 +38,7 @@ import typing
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
+from .exception import QueueError
 from .metadata import ContributionMetadata
 import sqlalchemy
 from sqlalchemy import MetaData, Table, update
@@ -70,11 +72,13 @@ class QueueManager:
                                                poolclass=StaticPool,
                                                pool_pre_ping=True,
                                                future=True)
+
         self.connection = self.engine.connect()
         self.pod = socket.gethostname()
 
         db_meta = MetaData(bind=self.engine)
-        self.queue_table = Table("chunkfile_queue", db_meta, autoload=True)
+        self.queue = Table("contribfile_queue", db_meta, autoload=True)
+        self.mutex = Table("mutex", db_meta, autoload=True)
         self.contribution_metadata = contribution_metadata
         self.ordered_tables_to_load = self.contribution_metadata.get_tables_names()
         _LOG.debug("Ordered tables to load: %s", self.ordered_tables_to_load)
@@ -97,8 +101,8 @@ class QueueManager:
            if loaded is 'True' count contributions which are not ingested
            else count all contributions.
         """
-        query = select([func.count("*")]).select_from(self.queue_table)
-        query = query.where(self.queue_table.c.database == self.contribution_metadata.database)
+        query = select([func.count("*")]).select_from(self.queue)
+        query = query.where(self.queue.c.database == self.contribution_metadata.database)
         result = self.connection.execute(query)
         contributions_count = next(result)[0]
         result.close()
@@ -114,16 +118,16 @@ class QueueManager:
     def _select_locked_contribfiles(self) -> typing.List[typing.Tuple[str, int, str, bool, str]]:
         query = select(
             [
-                self.queue_table.c.database,
-                self.queue_table.c.chunk_id,
-                self.queue_table.c.filepath,
-                self.queue_table.c.is_overlap,
-                self.queue_table.c.table,
+                self.queue.c.database,
+                self.queue.c.chunk_id,
+                self.queue.c.filepath,
+                self.queue.c.is_overlap,
+                self.queue.c.table,
             ]
         )
-        query = query.where(self.queue_table.c.locking_pod == self.pod)
-        query = query.where(self.queue_table.c.succeed.is_(None))
-        query = query.where(self.queue_table.c.database == self.contribution_metadata.database)
+        query = query.where(self.queue.c.locking_pod == self.pod)
+        query = query.where(self.queue.c.succeed.is_(None))
+        query = query.where(self.queue.c.database == self.contribution_metadata.database)
         result = self.connection.execute(query)
         contributions = result.fetchall()
         result.close()
@@ -145,18 +149,63 @@ class QueueManager:
 
         for table_contribs_spec in self.contribution_metadata.get_table_contribs_spec():
             contrib_specs = list(table_contribs_spec.get_contrib())
-            self.connection.execute(self.queue_table.insert(), contrib_specs)
+            self.connection.execute(self.queue.insert(), contrib_specs)
             self.connection.commit()
+
+    def _wait_for_mutex(self) -> None:
+
+        query = select([func.count("*")]).select_from(self.mutex)
+        result = self.connection.execute(query)
+        size_mutex = next(result)[0]
+        result.close()
+
+        if size_mutex != 1:
+            raise QueueError("Invalid mutex size", size_mutex)
+
+        loop = True
+        wait_sec = 1
+        while loop:
+            query = select([func.count("*")]).select_from(self.mutex)
+            query = query.where(self.mutex.c.pod == self.pod)
+            result = self.connection.execute(query)
+            has_mutex = bool(next(result)[0])
+            result.close()
+
+            if has_mutex:
+                loop = False
+            else:
+                acquire_mutex_query = update(self.mutex).values(
+                    pod=self.pod,
+                    latest_move=datetime.datetime.now()
+                )
+                acquire_mutex_query = acquire_mutex_query.where(self.mutex.c.pod.is_(None))
+                self.connection.execute(acquire_mutex_query)
+                self.connection.commit()
+                time.sleep(wait_sec)
+                # Sleep for longer and longer
+                wait_sec = increase_wait_time(wait_sec)
+
+    def _release_mutex(self) -> None:
+        release_mutex_query = update(self.mutex).values(
+            pod=None,
+            latest_move=datetime.datetime.now()
+        )
+        release_mutex_query = release_mutex_query.where(self.mutex.c.pod == self.pod)
+        self.connection.execute(release_mutex_query)
+        self.connection.commit()
 
     def _run_lock_queries(self, contribfiles_to_lock_count: int) -> None:
         # SELECT FOR UPDATE + autocommit=0
         # See:
         # - https://stackoverflow.com/a/18144869/2784039
         # - https://dba.stackexchange.com/questions/311242/mysql-concurrent-updates
-        select_query = select(self.queue_table.c.id).with_for_update().limit(contribfiles_to_lock_count)
-        select_query = select_query.where(self.queue_table.c.locking_pod.is_(None))
-        select_query = select_query.where(self.queue_table.c.database == self.contribution_metadata.database)
-        select_query = select_query.where(self.queue_table.c.table == self.current_table)
+
+        self._wait_for_mutex()
+
+        select_query = select(self.queue.c.id).limit(contribfiles_to_lock_count)
+        select_query = select_query.where(self.queue.c.locking_pod.is_(None))
+        select_query = select_query.where(self.queue.c.database == self.contribution_metadata.database)
+        select_query = select_query.where(self.queue.c.table == self.current_table)
 
         _LOG.debug("Query select: %s", select_query.compile(dialect=mysql.dialect()))
         rows = self.connection.execute(select_query)
@@ -165,15 +214,16 @@ class QueueManager:
         for e in rows:
             ids.append(e[0])
 
-        update_query = update(self.queue_table).values(
+        update_query = update(self.queue).values(
             locking_pod=self.pod
         )
-        # update_query = update_query.where(self.queue_table.c.id.in_(ids))
-        update_query = update_query.where(self.queue_table.c.id.in_(ids))
+        update_query = update_query.where(self.queue.c.id.in_(ids))
 
         _LOG.debug("Query update: %s", update_query.compile(dialect=mysql.dialect()))
         self.connection.execute(update_query)
         self.connection.commit()
+
+        self._release_mutex()
 
     def lock_contribfiles(self) -> typing.List[typing.Tuple[str, int, str, bool, str]]:
         """If some contributions are already locked in queue for current pod,
@@ -238,22 +288,23 @@ class QueueManager:
         """
         if ingest_success:
             logging.debug("Mark contributions as 'succeed' in queue")
-            query = update(self.queue_table).values(succeed=1)
+            query = update(self.queue).values(succeed=1)
         else:
             logging.debug("Unlock contributions in queue")
-            query = update(self.queue_table).values(locking_pod=None)
+            query = update(self.queue).values(locking_pod=None)
 
-        query = query.where(self.queue_table.c.locking_pod == self.pod)
+        query = query.where(self.queue.c.locking_pod == self.pod)
 
         wait_sec = 1
         while True:
+            _LOG.debug("Query: %s", query)
+            self.connection.execute(query)
             try:
-                _LOG.debug("Query: %s", query)
-                self.connection.execute(query)
                 self.connection.commit()
                 break
             except Exception as e:
                 _LOG.critical("Retry failed query %s, exception: %s", query, e)
+                self.connection.rollback()
                 time.sleep(wait_sec)
                 # Sleep for longer and longer
                 wait_sec = increase_wait_time(wait_sec)
@@ -268,15 +319,15 @@ class QueueManager:
         """Return all contribution files in queue not successfully loaded for current database"""
         query = select(
             [
-                self.queue_table.c.database,
-                self.queue_table.c.chunk_id,
-                self.queue_table.c.filepath,
-                self.queue_table.c.is_overlap,
-                self.queue_table.c.table,
+                self.queue.c.database,
+                self.queue.c.chunk_id,
+                self.queue.c.filepath,
+                self.queue.c.is_overlap,
+                self.queue.c.table,
             ]
         )
-        query = query.where(self.queue_table.c.succeed.is_not(True))
-        query = query.where(self.queue_table.c.database == self.contribution_metadata.database)
+        query = query.where(self.queue.c.succeed.is_not(True))
+        query = query.where(self.queue.c.database == self.contribution_metadata.database)
         result = self.connection.execute(query)
         contribfiles = result.fetchall()
         return contribfiles

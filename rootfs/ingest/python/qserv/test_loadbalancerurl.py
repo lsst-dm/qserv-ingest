@@ -30,7 +30,7 @@
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-from .loadbalancerurl import LoadBalancedURL
+from .loadbalancerurl import LoadBalancedURL, LoadBalancerAlgorithm
 import logging
 
 
@@ -44,7 +44,8 @@ _LOG = logging.getLogger(__name__)
 def test_get_loadbalancer_url():
     path = "/lsst-dm/qserv-ingest/master/tests/data/cosmoDC2/"
     servers = ["https://server1", "https://server2", "https://server3"]
-    lb_url = LoadBalancedURL(path, servers)
+    lbAlgo = LoadBalancerAlgorithm(servers)
+    lb_url = LoadBalancedURL(path, lbAlgo)
     url = lb_url.get()
     assert url == "https://server1/lsst-dm/qserv-ingest/master/tests/data/cosmoDC2/"
     url = lb_url.get()
@@ -55,6 +56,7 @@ def test_new_loadbalancer_url():
     base_path = ""
     filepath = "/lsst/data/file.txt"
     servers = ["https://server1", "https://server2", "https://server3"]
-    lb_url = LoadBalancedURL(base_path, servers)
+    lbAlgo = LoadBalancerAlgorithm(servers)
+    lb_url = LoadBalancedURL(base_path, lbAlgo)
     new_url = LoadBalancedURL.new(lb_url, filepath)
     assert new_url.get() == f"https://server1{filepath}"

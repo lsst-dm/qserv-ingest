@@ -44,7 +44,7 @@ fi
 if [ $unittests = true ]; then
   # Build ingest image
   $DIR/build.sh
-  docker run -it -- "$INGEST_IMAGE" /ingest/bin/pytest.sh
+  docker run -- "$INGEST_IMAGE" /ingest/bin/pytest.sh
 fi
 if [ $mypy = true ]; then
   mypy --config-file $DIR/rootfs/ingest/python/mypy.ini $DIR/rootfs/ingest/python/

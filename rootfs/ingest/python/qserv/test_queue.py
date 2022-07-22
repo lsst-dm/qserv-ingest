@@ -28,15 +28,17 @@ Unit tests for queue.py
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
+import datetime
 import logging
 import os
+import sys
 import pytest
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
 from sqlalchemy import (MetaData, Table, Column, Integer, String,
-                        Boolean, create_engine, func, select)
+                        Boolean, DateTime, create_engine, func, select)
 from . import queue
 from . import metadata
 
@@ -61,7 +63,7 @@ class MockDataAccessLayer:
     engine = None
     conn_string = None
     db_meta = MetaData()
-    queue = Table('chunkfile_queue',
+    queue = Table('contribfile_queue',
                   db_meta,
                   Column('id', Integer(), primary_key=True),
                   Column('chunk_id', Integer()),
@@ -71,6 +73,12 @@ class MockDataAccessLayer:
                   Column('table', String(50)),
                   Column('locking_pod', String(255), nullable=True),
                   Column('succeed', Boolean())
+                  )
+
+    mutex = Table('mutex',
+                  db_meta,
+                  Column('pod', String(255), nullable=True),
+                  Column('latest_move', DateTime(), nullable=False)
                   )
 
     def __init__(self, conn_string):
@@ -128,6 +136,14 @@ class MockDataAccessLayer:
         self.connection.execute(ins, contrib_files)
         self.connection.commit()
 
+    def init_mutex(self):
+        delete = self.mutex.delete()
+        self.connection.execute(delete)
+        ins = self.mutex.insert()
+        mutex = {"pod": None, "latest_move": datetime.datetime.now()}
+        self.connection.execute(ins, mutex)
+        self.connection.commit()
+
     def log_queue(self) -> None:
         query = select(self.queue)
         rows = self.connection.execute(query)
@@ -153,6 +169,7 @@ def init_queue(dal):
     dal.create_schema()
     dal.empty_queue()
     dal.insert_contribfiles()
+    dal.init_mutex()
 
 
 @pytest.mark.usefixtures("init_schema")
@@ -174,8 +191,10 @@ def test_run_lock_queries():
     data_url = os.path.join(_CWD, "testdata", _DP01_DATABASE)
     contribution_metadata = metadata.ContributionMetadata(data_url)
     queue_manager = queue.QueueManager(_QUEUE_URL, contribution_metadata)
+    dal.log_queue()
     queue_manager._run_lock_queries(contribfiles_to_lock_count)
     count = dal.count_locked()
+    dal.log_queue()
     assert count == contribfiles_to_lock_count
 
 
@@ -220,4 +239,3 @@ def test_release_locked_contribfiles():
     count = dal.count_succeed()
     dal.log_queue()
     assert count == contribfiles_to_lock_count
-

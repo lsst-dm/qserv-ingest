@@ -47,7 +47,7 @@ DATABASE="$1"
 PASSWORD="$2"
 
 
-kubectl exec -it $INSTANCE-ingest-db-0 -- mysql -h localhost -u root -p"$PASSWORD" -e "DELETE FROM qservIngest.chunkfile_queue WHERE \`database\` LIKE '$DATABASE';"
+kubectl exec -it $INSTANCE-ingest-db-0 -- mysql -h localhost -u root -p"$PASSWORD" -e "DELETE FROM qservIngest.contribfile_queue WHERE \`database\` LIKE '$DATABASE';"
 time kubectl exec -it $INSTANCE-repl-ctl-0 -- curl http://localhost:$REPL_CTL_PORT/ingest/database/"$DATABASE"  \
    -X DELETE -H "Content-Type: application/json" \
    -d '{"admin_auth_key":""}'
