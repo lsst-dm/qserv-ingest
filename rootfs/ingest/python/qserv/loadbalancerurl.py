@@ -71,15 +71,13 @@ class LoadBalancedURL:
     loadBalancerAlgorithm: Optional[LoadBalancerAlgorithm]
     direct_url: str
 
-    def __init__(self, path: str, lbAlgo: LoadBalancerAlgorithm):
+    def __init__(self, path: str, lbAlgo: LoadBalancerAlgorithm = None):
         """Manage a load balanced URL for http:// protocole, also support access for file:// protocola
 
         Parameters:
         -----------
             path str: path of the url
             lbAlgo LoadBalancerAlgorithm: http(s) load balancer algorithm, not used for file:// access
-
-            TODO TODO + mypy
 
         Raises:
             ValueError: if path uses an unsupported protocol
