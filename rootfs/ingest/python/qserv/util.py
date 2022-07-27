@@ -32,14 +32,14 @@ Tools used by ingest algorithm
 import argparse
 import json
 import logging
+from typing import Any, Dict, List
 import yaml
 import time
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-from sqlalchemy import event
-from sqlalchemy.engine import Engine
+
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -47,19 +47,7 @@ from sqlalchemy.engine import Engine
 _LOG = logging.getLogger(__name__)
 
 
-@event.listens_for(Engine, "before_cursor_execute")
-def before_cursor_execute(conn, cursor, statement, parameters, context, executemany) -> None:
-    conn.info.setdefault("query_start_time", []).append(time.time())
-    _LOG.debug("Query: %s, %s", statement, statement)
-
-
-@event.listens_for(Engine, "after_cursor_execute")
-def after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
-    total = time.time() - conn.info["query_start_time"].pop(-1)
-    _LOG.debug("Query total time: %f", total)
-
-
-def add_default_arguments(parser: argparse.ArgumentParser):
+def add_default_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--config",
         help="Configuration file for ingest client",
@@ -70,7 +58,7 @@ def add_default_arguments(parser: argparse.ArgumentParser):
     parser.add_argument("--verbose", "-v", action="store_true", help="Use debug logging")
 
 
-def get_default_logger(verbose):
+def get_default_logger(verbose: bool) -> logging.Logger:
     """
     Create and returns default logger
     """
@@ -86,7 +74,7 @@ def get_default_logger(verbose):
     return logger
 
 
-def trailing_slash(url):
+def trailing_slash(url: str) -> str:
     if not url.endswith("/"):
         url += "/"
     return url
@@ -111,7 +99,8 @@ class IngestConfigAction(argparse.Action):
     Argparse action to read an ingest client configuration file
     """
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace, values: Any,
+                 option_string: str = None) -> None:
         try:
             yaml_data = yaml.safe_load(values)
             config = IngestConfig(yaml_data)
@@ -125,7 +114,8 @@ class BaseUrlAction(argparse.Action):
     Add trailing slash to url
     """
 
-    def __call__(self, parser, namespace, values, option_string):
+    def __call__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace, values: Any,
+                 option_string: str = None) -> None:
         x = trailing_slash(values)
         setattr(namespace, self.dest, x)
 
@@ -135,7 +125,8 @@ class DictAction(argparse.Action):
     Argparse action to attempt casting the values to floats and put into a dict
     """
 
-    def __call__(self, parser, namespace, values, option_string):
+    def __call__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace, values: Any,
+                 option_string: str = None) -> None:
         d = dict()
         for item in values:
             k, v = item.split("=")
@@ -149,7 +140,8 @@ class DictAction(argparse.Action):
 
 
 class JsonAction(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string):
+    def __call__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace, values: Any,
+                 option_string: str = None) -> None:
         with open(values, "r") as f:
             x = json.load(f)
         setattr(namespace, self.dest, x)
@@ -160,10 +152,11 @@ class FelisAction(argparse.Action):
     Argparse action to read a felis file into namespace
     """
 
-    def __call__(self, parser, namespace, values, option_string):
+    def __call__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace, values: Any,
+                 option_string: str = None) -> None:
         with open(values, "r") as f:
             tables = yaml.safe_load(f)["tables"]
-        schemas = dict()
+        schemas: Dict[str, List] = dict()
         for table in tables:
             tableName = table["name"]
             schemas[tableName] = list()
@@ -179,7 +172,29 @@ class FelisAction(argparse.Action):
         setattr(namespace, self.dest, schemas)
 
 
-def increase_wait_time(wait_sec):
+def increase_wait_time(wait_sec: int) -> int:
     if wait_sec < 10:
         wait_sec *= 2
     return wait_sec
+
+
+def check_raise(e: Exception, not_raise_msgs: List[str]) -> None:
+    """Raise not recognized exceptions, depending on their message
+
+    Parameters:
+    e: `Exception`
+        Exception
+    not_raise_msgs: List[str]
+        List of exception message which prevent raising exception
+
+    Raises:
+    e: `Exception`
+        Raised exception
+    """
+    raiseExc = True
+    for msg in not_raise_msgs:
+        if msg in str(e):
+            raiseExc = False
+            break
+    if raiseExc:
+        raise e

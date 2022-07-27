@@ -19,3 +19,6 @@ kubectl apply -f "$OPERATOR_DIR"/manifests/operator.yaml
 "$OPERATOR_DIR"/tests/tools/wait-operator-ready.sh
 kubectl apply -k "$OPERATOR_DIR"/manifests/base
 "$OPERATOR_DIR"/tests/tools/wait-qserv-ready.sh
+# Wait for replication controller initialization
+# see https://lsstc.slack.com/archives/G2JPZ3GC8/p1658864074354089
+sleep 20

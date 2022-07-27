@@ -33,7 +33,7 @@ User-friendly client library for Qserv replication service.
 from enum import Enum, auto
 import logging
 import time
-from typing import List, Tuple
+from typing import Dict, List, Tuple
 
 
 # ----------------------------
@@ -41,6 +41,7 @@ from typing import List, Tuple
 # ----------------------------
 from .contribution import Contribution
 from .exception import IngestError
+from .jsonparser import DatabaseStatus
 from .metadata import ContributionMetadata
 from .queue import QueueManager
 from .replicationclient import ReplicationClient
@@ -91,13 +92,16 @@ class Ingester:
         self.queue_manager = queue_manager
         self.repl_client = ReplicationClient(replication_url)
 
-    def check_supertransactions_success(self):
+    def check_supertransactions_success(self) -> None:
         """Check all super-transactions have ran successfully"""
         trans = self.repl_client.get_transactions_started(self.contrib_meta.database)
         _LOG.debug(f"IDs of transactions in STARTED state: {trans}")
         if len(trans) > 0:
             raise IngestError(f"Database publication prevented by started transactions: {trans}")
-        contributions = self.queue_manager.select_noningested_contribfiles()
+        if self.queue_manager is not None:
+            contributions = self.queue_manager.select_noningested_contribfiles()
+        else:
+            raise IngestError("Unitialized queue manager")
         if len(contributions) > 0:
             _LOG.error(f"Non ingested contributions: {contributions}")
             raise IngestError(
@@ -105,14 +109,14 @@ class Ingester:
             )
         _LOG.info("All contributions in queue successfully ingested")
 
-    def database_publish(self):
+    def database_publish(self) -> None:
         """
         Publish a Qserv database inside replication system
         """
         database = self.contrib_meta.database
         self.repl_client.database_publish(database)
 
-    def database_register_and_config(self, felis=None):
+    def database_register_and_config(self, felis: Dict = None) -> None:
         """
         Register a database, its tables and its configuration inside replication system
         using data_url/<database_name>.json as input data
@@ -121,22 +125,25 @@ class Ingester:
         self.repl_client.database_register_tables(self.contrib_meta.get_ordered_tables_json(), felis)
         self.repl_client.database_config(self.contrib_meta.database)
 
-    def get_database_status(self):
+    def get_database_status(self) -> DatabaseStatus:
         """
         Return the status of a Qserv catalog database
         """
         return self.repl_client.get_database_status(self.contrib_meta.database, self.contrib_meta.family)
 
-    def ingest(self, contribution_queue_fraction):
+    def ingest(self, contribution_queue_fraction: int) -> None:
         """
         Ingest contribution for a transaction
         """
-        self.queue_manager.set_transaction_size(contribution_queue_fraction)
+        if self.queue_manager is not None:
+            self.queue_manager.set_transaction_size(contribution_queue_fraction)
+        else:
+            raise IngestError("Unitialized queue manager")
         has_non_ingested_contributions = True
         while has_non_ingested_contributions:
             has_non_ingested_contributions = self._ingest_transaction()
 
-    def index(self, secondary=False):
+    def index(self, secondary: bool = False) -> None:
         """
         Index Qserv MySQL sharded tables
         or create secondary index
@@ -188,16 +195,22 @@ class Ingester:
         """Get contributions from a queue server for a given database
         then ingest it inside Qserv during a super-transation
 
-        Returns:
-        --------
+        Raises
+        ------
+        Raise exception if an error occurs during transaction
+
+        Returns
+        -------
         continue: `bool`
             0 if no more contribution to load,
-            1 if at least one contribution was loaded successfully
+            1 if super-transaction was performed successfully
         """
 
         _LOG.info("Start ingest transaction")
-
-        contribfiles_locked = self.queue_manager.lock_contribfiles()
+        if self.queue_manager is not None:
+            contribfiles_locked = self.queue_manager.lock_contribfiles()
+        else:
+            raise IngestError("Unitialized queue manager")
         if len(contribfiles_locked) == 0:
             return False
 
@@ -217,8 +230,10 @@ class Ingester:
         finally:
             if transaction_id:
                 self.repl_client.close_transaction(self.contrib_meta.database, transaction_id, ingest_success)
-                self.queue_manager.release_locked_contribfiles(ingest_success)
-
+                if self.queue_manager is not None:
+                    self.queue_manager.unlock_contribfiles(ingest_success)
+                else:
+                    raise IngestError("Unitialized queue manager")
         return True
 
     def _ingest_all_contributions(self, transaction_id: int, contributions: list[Contribution]) -> bool:
@@ -271,9 +286,8 @@ class Ingester:
 
         return True
 
-    def transaction_helper(self, action: TransactionAction, trans_id: int = None):
-        """
-        High-level method which help in managing transaction(s)
+    def transaction_helper(self, action: TransactionAction, trans_id: int = None) -> None:
+        """High-level method which help in managing transaction(s)
         """
         database = self.contrib_meta.database
         match action:

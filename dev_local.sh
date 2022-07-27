@@ -4,7 +4,7 @@
 
 # @author  Fabrice Jammes
 
-set -euxo pipefail
+set -euo pipefail
 
 DIR=$(cd "$(dirname "$0")"; pwd -P)
 . "$DIR/env.sh"
@@ -35,15 +35,21 @@ if [ $# -ne 0 ] ; then
     exit 2
 fi
 
+echo -n "Check telepresence version "
+if ! telepresence version | grep "Client: v2"; then
+  >&2 echo "ERROR: telepresence v2 is required"
+  exit 3
+fi
+
+telepresence connect
+
+
 echo "Running in development mode"
 MOUNTS="-v $DIR/rootfs/ingest:/ingest"
+NAMESPACE=$(kubectl get sa -o=jsonpath='{.items[0]..metadata.namespace}')
 
-docker pull "$INGEST_DEPS_IMAGE"
-echo "oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO"
-echo "   Welcome in DC2 ingest container"
-echo "oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO"
-telepresence --swap-deployment ingest-dev \
-    --docker-run -it \
-    $MOUNTS --rm \
-    -w $HOME \
-    "$INGEST_IMAGE" bash
+echo "oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO"
+echo "   Welcome in qserv-ingest developement container"
+echo "   Setup for using Qserv in namespace $NAMESPACE"
+echo "oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO"
+docker run --net=host --dns-search $NAMESPACE -it $MOUNTS --rm -w "$HOME" "$INGEST_IMAGE" bash

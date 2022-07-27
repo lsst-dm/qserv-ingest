@@ -41,7 +41,7 @@ import logging
 _LOG = logging.getLogger(__name__)
 
 
-def test_get_loadbalancer_url():
+def test_get_loadbalancer_url() -> None:
     path = "/lsst-dm/qserv-ingest/master/tests/data/cosmoDC2/"
     servers = ["https://server1", "https://server2", "https://server3"]
     lbAlgo = LoadBalancerAlgorithm(servers)
@@ -52,7 +52,7 @@ def test_get_loadbalancer_url():
     assert url == "https://server2/lsst-dm/qserv-ingest/master/tests/data/cosmoDC2/"
 
 
-def test_new_loadbalancer_url():
+def test_new_loadbalancer_url() -> None:
     base_path = ""
     filepath = "/lsst/data/file.txt"
     servers = ["https://server1", "https://server2", "https://server3"]

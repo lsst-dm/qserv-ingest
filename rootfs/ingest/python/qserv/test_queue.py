@@ -28,17 +28,23 @@ Unit tests for queue.py
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
+from collections.abc import Generator
 import datetime
 import logging
 import os
-import sys
+import time
+from typing import Any
 import pytest
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
 from sqlalchemy import (MetaData, Table, Column, Integer, String,
-                        Boolean, DateTime, create_engine, func, select)
+                        Boolean, DateTime, create_engine, func, select, update)
+from sqlalchemy.exc import StatementError
+import yaml
+
+from .util import IngestConfig
 from . import queue
 from . import metadata
 
@@ -50,17 +56,20 @@ _LOG = logging.getLogger(__name__)
 
 _CWD = os.path.dirname(os.path.abspath(__file__))
 
-_QUEUE_URL = 'sqlite:///testqservingest.db'
+_SCISQL_QUEUE_URL = 'sqlite:///testqservingest.db'
 
 _CASE01_DATASET = "case01"
 
+_CHUNK_QUEUE_FRACTION = 10
+
 _DP01_CONTRIBFILES_COUNT = 10
-_DP01_DATABASE = "dp01_dc2_catalogs"
+_DP01 = "dp01_dc2_catalogs"
+_DP02 = "dp02"
 
 
 class MockDataAccessLayer:
-    connection = None
-    engine = None
+    connection: Any
+    engine: Any
     conn_string = None
     db_meta = MetaData()
     queue = Table('contribfile_queue',
@@ -81,45 +90,44 @@ class MockDataAccessLayer:
                   Column('latest_move', DateTime(), nullable=False)
                   )
 
-    def __init__(self, conn_string):
+    def __init__(self, conn_string: str) -> None:
         self.engine = create_engine(conn_string or self.conn_string, future=True)
-        self.connection = self.engine.connect()
 
-    def __del__(self):
-        self.connection.close()
-
-    def create_schema(self):
+    def create_schema(self) -> None:
         self.db_meta.create_all(self.engine)
 
-    def empty_queue(self):
+    def empty_queue(self) -> None:
         delete = self.queue.delete()
-        self.connection.execute(delete)
-        self.connection.commit()
+        with self.engine.begin() as connection:
+            connection.execute(delete)
 
     def count_contribfiles(self) -> int:
         query = select([func.count("*")]).select_from(self.queue)
-        result = self.connection.execute(query)
-        contrib_count = next(result)[0]
-        result.close()
+        with self.engine.connect() as connection:
+            result = connection.execute(query)
+            contrib_count = next(result)[0]
+            result.close()
         return contrib_count
 
     def count_locked(self) -> int:
         query = select([func.count("*")]).select_from(self.queue)
         query = query.where(self.queue.c.locking_pod.is_not(None))
-        result = self.connection.execute(query)
-        contrib_locked_count = next(result)[0]
-        result.close()
+        with self.engine.connect() as connection:
+            result = connection.execute(query)
+            contrib_locked_count = next(result)[0]
+            result.close()
         return contrib_locked_count
 
     def count_succeed(self) -> int:
         query = select([func.count("*")]).select_from(self.queue)
         query = query.where(self.queue.c.succeed.is_(True))
-        result = self.connection.execute(query)
-        contrib_locked_count = next(result)[0]
-        result.close()
+        with self.engine.connect() as connection:
+            result = connection.execute(query)
+            contrib_locked_count = next(result)[0]
+            result.close()
         return contrib_locked_count
 
-    def insert_contribfiles(self):
+    def insert_contribfiles(self) -> None:
         ins = self.queue.insert()
         db = "dp01_dc2_catalogs"
         tbl = "object"
@@ -133,39 +141,40 @@ class MockDataAccessLayer:
             contrib_file = {"chunk_id": 200 + i, "database": db, "filepath": f"/file{i}.txt",
                             "is_overlap": True, "table": tbl, "succeed": False}
             contrib_files.append(contrib_file)
-        self.connection.execute(ins, contrib_files)
-        self.connection.commit()
+        with self.engine.begin() as connection:
+            connection.execute(ins, contrib_files)
 
-    def init_mutex(self):
+    def init_mutex(self) -> None:
         delete = self.mutex.delete()
-        self.connection.execute(delete)
-        ins = self.mutex.insert()
-        mutex = {"pod": None, "latest_move": datetime.datetime.now()}
-        self.connection.execute(ins, mutex)
-        self.connection.commit()
+        with self.engine.begin() as connection:
+            connection.execute(delete)
+            ins = self.mutex.insert()
+            mutex = {"pod": None, "latest_move": datetime.datetime.now()}
+            connection.execute(ins, mutex)
 
     def log_queue(self) -> None:
-        query = select(self.queue)
-        rows = self.connection.execute(query)
-        for row in rows:
-            _LOG.info("%s", row)
-        rows.close()
+        query = select([self.queue])
+        with self.engine.connect() as connection:
+            rows = connection.execute(query)
+            for row in rows:
+                _LOG.info("%s", row)
+            rows.close()
 
 
 @pytest.fixture
-def dal():
-    dal = MockDataAccessLayer(_QUEUE_URL)
+def dal() -> Generator[MockDataAccessLayer, None, None]:
+    dal = MockDataAccessLayer(_SCISQL_QUEUE_URL)
     yield dal
 
 
 @pytest.fixture
-def init_schema(dal):
+def init_schema(dal: MockDataAccessLayer) -> None:
     dal.create_schema()
     dal.empty_queue()
 
 
 @pytest.fixture
-def init_queue(dal):
+def init_queue(dal: MockDataAccessLayer) -> None:
     dal.create_schema()
     dal.empty_queue()
     dal.insert_contribfiles()
@@ -173,24 +182,24 @@ def init_queue(dal):
 
 
 @pytest.mark.usefixtures("init_schema")
-def test_insert_contribfiles():
+def test_insert_contribfiles() -> None:
     contribfiles_count = 37
-    dal = MockDataAccessLayer(_QUEUE_URL)
+    dal = MockDataAccessLayer(_SCISQL_QUEUE_URL)
     data_url = os.path.join(_CWD, "testdata", _CASE01_DATASET)
     contribution_metadata = metadata.ContributionMetadata(data_url)
-    queue_manager = queue.QueueManager(_QUEUE_URL, contribution_metadata)
+    queue_manager = queue.QueueManager(_SCISQL_QUEUE_URL, contribution_metadata)
     queue_manager.insert_contribfiles()
     count = dal.count_contribfiles()
     assert count == contribfiles_count
 
 
 @pytest.mark.usefixtures("init_queue")
-def test_run_lock_queries():
+def test_run_lock_queries() -> None:
     contribfiles_to_lock_count = 3
-    dal = MockDataAccessLayer(_QUEUE_URL)
-    data_url = os.path.join(_CWD, "testdata", _DP01_DATABASE)
+    dal = MockDataAccessLayer(_SCISQL_QUEUE_URL)
+    data_url = os.path.join(_CWD, "testdata", _DP01)
     contribution_metadata = metadata.ContributionMetadata(data_url)
-    queue_manager = queue.QueueManager(_QUEUE_URL, contribution_metadata)
+    queue_manager = queue.QueueManager(_SCISQL_QUEUE_URL, contribution_metadata)
     dal.log_queue()
     queue_manager._run_lock_queries(contribfiles_to_lock_count)
     count = dal.count_locked()
@@ -199,43 +208,128 @@ def test_run_lock_queries():
 
 
 @pytest.mark.usefixtures("init_queue")
-def test_count_contribfiles():
-    data_url = os.path.join(_CWD, "testdata", _DP01_DATABASE)
+def test_count_contribfiles() -> None:
+    data_url = os.path.join(_CWD, "testdata", _DP01)
     contribution_metadata = metadata.ContributionMetadata(data_url)
-    queue_manager = queue.QueueManager(_QUEUE_URL, contribution_metadata)
+    queue_manager = queue.QueueManager(_SCISQL_QUEUE_URL, contribution_metadata)
     i = queue_manager._count_contribfiles()
     assert i == _DP01_CONTRIBFILES_COUNT
 
 
 @pytest.mark.usefixtures("init_queue")
-def test_select_noningested_contribfiles():
-    data_url = os.path.join(_CWD, "testdata", _DP01_DATABASE)
+def test_select_noningested_contribfiles() -> None:
+    data_url = os.path.join(_CWD, "testdata", _DP01)
     contribution_metadata = metadata.ContributionMetadata(data_url)
-    queue_manager = queue.QueueManager(_QUEUE_URL, contribution_metadata)
+    queue_manager = queue.QueueManager(_SCISQL_QUEUE_URL, contribution_metadata)
     contribfiles = queue_manager.select_noningested_contribfiles()
     assert len(contribfiles) == _DP01_CONTRIBFILES_COUNT
 
 
 @pytest.mark.usefixtures("init_queue")
-def test_lock_contribfiles():
-    dal = MockDataAccessLayer(_QUEUE_URL)
+def test_lock_contribfiles() -> None:
+    dal = MockDataAccessLayer(_SCISQL_QUEUE_URL)
     contribfiles_to_lock_count = 4
-    data_url = os.path.join(_CWD, "testdata", _DP01_DATABASE)
+    data_url = os.path.join(_CWD, "testdata", _DP01)
     contribution_metadata = metadata.ContributionMetadata(data_url)
-    queue_manager = queue.QueueManager(_QUEUE_URL, contribution_metadata)
+    queue_manager = queue.QueueManager(_SCISQL_QUEUE_URL, contribution_metadata)
     queue_manager._contribfiles_to_lock_number = 4
     queue_manager.lock_contribfiles()
     count = dal.count_locked()
     assert count == contribfiles_to_lock_count
 
 
-def test_release_locked_contribfiles():
-    dal = MockDataAccessLayer(_QUEUE_URL)
+def test_unlock_contribfiles() -> None:
+    dal = MockDataAccessLayer(_SCISQL_QUEUE_URL)
     contribfiles_to_lock_count = 4
-    data_url = os.path.join(_CWD, "testdata", _DP01_DATABASE)
+    data_url = os.path.join(_CWD, "testdata", _DP01)
     contribution_metadata = metadata.ContributionMetadata(data_url)
-    queue_manager = queue.QueueManager(_QUEUE_URL, contribution_metadata)
-    queue_manager.release_locked_contribfiles(True)
+    queue_manager = queue.QueueManager(_SCISQL_QUEUE_URL, contribution_metadata)
+    queue_manager.unlock_contribfiles(True)
     count = dal.count_succeed()
     dal.log_queue()
     assert count == contribfiles_to_lock_count
+
+
+@pytest.mark.dev
+def test_send_query() -> None:
+    data_url = os.path.join(_CWD, "testdata", _DP01)
+    contribution_metadata = metadata.ContributionMetadata(data_url)
+    queue_manager = queue.QueueManager(_SCISQL_QUEUE_URL, contribution_metadata)
+    query = update(queue_manager.queue).values(succeed="NOT A BOOLEAN")
+    with pytest.raises(StatementError) as e:
+        queue_manager._safe_execute(query, 4)
+    _LOG.error("Expected error: %s", e)
+
+@pytest.mark.scale
+def test_scale_lock_contribfiles() -> None:
+    """Used for scale testing purpose, not for unit tests
+
+    Must be run from inside k8s, against an existing Qserv instances
+
+    Warning: Work in progress
+    """
+    config_file = os.path.join(_CWD, "testdata", _DP02, "ingest.yaml")
+    with open(config_file, "r") as values:
+        yaml_data = yaml.safe_load(values)
+
+    config = IngestConfig(yaml_data)
+
+    data_url = os.path.join(_CWD, "testdata", "dp02")
+    contribution_metadata = metadata.ContributionMetadata(data_url)
+    queue_manager = queue.QueueManager(config.queue_url, contribution_metadata)
+
+    logging.debug("(Re-)initialize all contributions in queue")
+    query = update(queue_manager.queue).values(succeed=None, locking_pod=None)
+
+    queue_manager._safe_execute(query, 0)
+    queue_manager._init_mutex()
+
+    queue_manager.set_transaction_size(_CHUNK_QUEUE_FRACTION)
+    start_time = time.time()
+    for i in range(_CHUNK_QUEUE_FRACTION):
+        pod_start_time = time.time()
+        queue_manager.pod = f'POD{i}'
+        queue_manager.lock_contribfiles()
+        pod_total = time.time() - pod_start_time
+        _LOG.info("-- Contribfiles locked for pod %s %f", queue_manager.pod, pod_total)
+    total = time.time() - start_time
+    _LOG.info("-- Total locking time %f", total)
+
+    dal = MockDataAccessLayer(config.queue_url)
+    count = dal.count_succeed()
+    _LOG.debug("Succeed contrib_file in queue: %s", count)
+
+
+@pytest.mark.scale
+def test_scale_unlock_contribfiles() -> None:
+    """Used for scale testing purpose, not for unit tests
+
+    Must be run from inside k8s, against an existing Qserv instances
+
+    Warning: Work in progress
+    """
+
+    config_file = os.path.join(_CWD, "testdata", _DP02, "ingest.yaml")
+    with open(config_file, "r") as values:
+        yaml_data = yaml.safe_load(values)
+
+    config = IngestConfig(yaml_data)
+
+    data_url = os.path.join(_CWD, "testdata", "dp02")
+    contribution_metadata = metadata.ContributionMetadata(data_url)
+    queue_manager = queue.QueueManager(config.queue_url, contribution_metadata)
+    start_time = time.time()
+    for i in range(_CHUNK_QUEUE_FRACTION):
+        pod_start_time = time.time()
+        queue_manager.pod = f'POD{i}'
+        queue_manager.unlock_contribfiles(True)
+        pod_total = time.time() - pod_start_time
+        _LOG.info("-- Contribfiles unlocked for pod %s %f", queue_manager.pod, pod_total)
+    total = time.time() - start_time
+    _LOG.info("-- Total unlocking time %f", total)
+
+    _LOG.debug("Contribfile unlocked")
+
+    dal = MockDataAccessLayer(config.queue_url)
+    count = dal.count_succeed()
+    _LOG.debug("Succeed contrib_file in queue: %s", count)

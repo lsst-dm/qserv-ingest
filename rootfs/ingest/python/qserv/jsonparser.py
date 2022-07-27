@@ -31,7 +31,7 @@ Parse JSON responses from replication service
 # -------------------------------
 from enum import Enum
 import logging
-from typing import Dict, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 # ----------------------------
 # Imports for other modules --
@@ -57,6 +57,7 @@ class ContributionState(Enum):
     LOAD_FAILED = "LOAD_FAILED"
 
     @classmethod
+    # type: ignore
     def from_str(cls, label: str):
         return ContributionState(label)
 
@@ -156,17 +157,6 @@ def filter_transactions(responseJson: Dict, database: str, states: List[Transact
     return transaction_ids
 
 
-def get_indexes(responseJson, existing_indexes: Dict[str, set] = dict()):
-    for worker, data in responseJson["workers"].items():
-        table = list(data.keys())[0]
-        for idx_data in data[table]:
-            try:
-                existing_indexes[table].add(idx_data)
-            except KeyError:
-                existing_indexes[table] = set(idx_data)
-    return existing_indexes
-
-
 def get_chunk_location(responseJson: dict) -> Tuple[str, int]:
     """Retrieve chunk location (worker host and port)
     inside json response issued by replication service
@@ -200,7 +190,28 @@ def get_regular_table_locations(responseJson: dict) -> List[Tuple[str, int]]:
     return locations
 
 
-def parse_database_status(responseJson, database, family):
+def parse_database_status(responseJson: dict, database: str, family: str) -> DatabaseStatus:
+    """Retrieve database status inside JSON response from replication controller
+
+    Parameters
+    ----------
+    responseJson: `dict`
+        Response to a replication controller request, in json format
+    database: `str`
+        Database name
+    family: `str`
+        Family name of the database
+
+    Raises
+    ------
+    ValueError:
+        Raised if JSON response does not contain database name and family
+
+    Returns
+    -------
+    status: `DatabaseStatus`
+        Ingest status of the database
+    """
     jsonpath_expr = parse(
         '$.config.databases[?(database="{}" & family_name="{}")].is_published'.format(database, family)
     )
@@ -218,12 +229,12 @@ def parse_database_status(responseJson, database, family):
 
 
 def raise_error(responseJson: dict, retry_attempts: int = -1, max_retry_attempts: int = 0) -> bool:
-    """Check JSON response for error
+    """Check JSON response from replication controller for error
 
     Parameters
     ----------
     responseJson: `dict`
-        Response of a replication controller query, in json format
+        Response to a replication controller request, in json format
     retry_attempts: `(int, optional)`
         Number of current retry attempts. Defaults to -1.
     max_retry_attempts: `(int, optional)`
@@ -247,7 +258,7 @@ def raise_error(responseJson: dict, retry_attempts: int = -1, max_retry_attempts
     is_error_retryable = False
     if not responseJson["success"]:
         _LOG.critical(responseJson["error"])
-        error_ext = ""
+        error_ext: Dict[str, Any] = dict()
         if "error_ext" in responseJson:
             _LOG.critical(responseJson["error_ext"])
             error_ext = responseJson["error_ext"]
@@ -258,7 +269,7 @@ def raise_error(responseJson: dict, retry_attempts: int = -1, max_retry_attempts
     return is_error_retryable
 
 
-def _check_retry(error_ext):
+def _check_retry(error_ext: Dict[str, Any]) -> bool:
     if "retry_allowed" in error_ext and error_ext["retry_allowed"] != 0:
         retry = True
     else:

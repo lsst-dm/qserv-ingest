@@ -42,7 +42,7 @@ import os
 _CWD = os.path.dirname(os.path.abspath(__file__))
 
 
-def test_dircmp():
+def test_dircmp() -> None:
     """Check the function which compare files in two directories"""
     dir1 = os.path.join(_CWD, "testdata", "dbbench-difffiles")
     dir2 = os.path.join(_CWD, "testdata", "dbbench-expected")

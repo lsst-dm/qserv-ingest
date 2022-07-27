@@ -1,6 +1,8 @@
 
 ## Scale up
 
+!!!Test UPDATE with and without indexes, can it screw up update of succeed field??
+
 - Comment all method
 - use mypy, black
 - test on IDF

@@ -95,7 +95,7 @@ class Contribution:
         self.worker_url = f"http://{worker_host}:{worker_port}"
         self.finished = False
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Contribution({self.__dict__})"
 
     def _build_payload(self, transaction_id: int) -> dict:

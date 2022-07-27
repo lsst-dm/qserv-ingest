@@ -44,7 +44,7 @@ _CWD = os.path.dirname(os.path.abspath(__file__))
 _LOG = logging.getLogger(__name__)
 
 
-def test_get_ordered_tables_json():
+def test_get_ordered_tables_json() -> None:
     data_url = os.path.join(_CWD, "testdata", "dp01_dc2_catalogs")
     contribution_metadata = metadata.ContributionMetadata(data_url)
     tables_json_data = contribution_metadata.get_ordered_tables_json()

@@ -36,6 +36,7 @@ import pytest
 # Imports for other modules --
 # ----------------------------
 import requests
+from requests import HTTPError
 from . import http
 
 # ---------------------------------
@@ -47,22 +48,31 @@ _LOG = logging.getLogger(__name__)
 _CWD = os.path.dirname(os.path.abspath(__file__))
 
 
-def test_file_exists():
+def test_file_exists() -> None:
     """Check if a file exists on a remote HTTP server"""
     assert http.file_exists("https://www.k8s-school.fr/team/index.html")
     assert not http.file_exists("https://www.k8s-school.fr/team/false.html")
 
 
-def test_json_get():
+def test_json_get() -> None:
     data = http.json_get(_CWD, "servers.json")
     assert data["http_servers"][0] == "https://server1"
     assert data["http_servers"][2] == "https://server3"
 
 
-def test_retry():
+def test_errorcode() -> None:
+    """Check behaviour for error 404
+    """
+    _http = http.Http()
+    with pytest.raises(HTTPError) as e:
+        _http.get(url="https://www.in2p3.cnrs.fr/notfound", payload={}, auth=False)
+    assert e.value.args[0] == "404 Client Error: Not Found for url: https://www.in2p3.cnrs.fr/notfound"
+
+
+def test_retry() -> None:
     """Check if a retry occurs for a non-existing DNS entry
     This might occurs if k8s DNS fails intermittently
     """
     _http = http.Http()
-    with pytest.raises(requests.ConnectionError) as e:
-        _http.get(url="http://server.not-exists", payload=None, auth=False)
+    with pytest.raises(requests.ConnectionError):
+        _http.get(url="http://server.not-exists", payload={}, auth=False)

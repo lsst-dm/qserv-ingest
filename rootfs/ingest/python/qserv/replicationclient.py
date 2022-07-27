@@ -40,7 +40,7 @@ import urllib.parse
 # ----------------------------
 from . import jsonparser
 from .http import Http
-from .util import increase_wait_time, trailing_slash
+from .util import trailing_slash
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -57,7 +57,7 @@ class ReplicationClient:
     Use chunk metadata and connection to concurrent queue manager
     """
 
-    def __init__(self, repl_url):
+    def __init__(self, repl_url: str) -> None:
 
         self.repl_url = trailing_slash(repl_url)
 
@@ -70,7 +70,7 @@ class ReplicationClient:
 
         self.index_url = urllib.parse.urljoin(self.repl_url, "replication/sql/index")
 
-    def abort_transactions(self, database):
+    def abort_transactions(self, database: str) -> None:
         """
         Abort all started transactions for a given database
         """
@@ -79,7 +79,7 @@ class ReplicationClient:
             self.close_transaction(database, transaction_id, success)
             _LOG.info("Abort transaction: %s", transaction_id)
 
-    def build_secondary_index(self, database):
+    def build_secondary_index(self, database: str) -> None:
         url = urllib.parse.urljoin(self.repl_url, "ingest/index/secondary")
         _LOG.info("Create secondary index")
         payload = {
@@ -110,7 +110,7 @@ class ReplicationClient:
         for trans in responseJson["databases"][database]["transactions"]:
             _LOG.debug("Close transaction (id: %s state: %s)", trans["id"], trans["state"])
 
-    def _check_version(self):
+    def _check_version(self) -> None:
         url = urllib.parse.urljoin(self.repl_url, "meta/version")
         responseJson = self.http.get(url, timeout=self.timeout_short)
         jsonparser.raise_error(responseJson)
@@ -120,7 +120,7 @@ class ReplicationClient:
             )
         _LOG.info("Replication service version: v%s", _VERSION)
 
-    def database_config(self, database):
+    def database_config(self, database: str) -> None:
         """
         Configure a database inside replication system
         """
@@ -134,7 +134,7 @@ class ReplicationClient:
         responseJson = self.http.put(url, json, timeout=self.timeout_long)
         jsonparser.raise_error(responseJson)
 
-    def database_publish(self, database):
+    def database_publish(self, database: str) -> None:
         """
         Publish a database inside replication system
         """
@@ -144,7 +144,7 @@ class ReplicationClient:
         responseJson = self.http.put(url)
         jsonparser.raise_error(responseJson)
 
-    def database_register(self, json_db):
+    def database_register(self, json_db: Dict) -> None:
         """
         Register a database inside replication system
         using data_url/<database_name>.json as input data
@@ -155,12 +155,12 @@ class ReplicationClient:
         responseJson = self.http.post(url, payload, timeout=self.timeout_long)
         jsonparser.raise_error(responseJson)
 
-    def database_register_tables(self, tables_json_data, felis):
+    def database_register_tables(self, tables_json_data: List[Dict], felis: Dict = None) -> None:
         """
         Register a database inside replication system
         using data_url/<database_name>.json as input data
         """
-        if felis:
+        if felis is not None and felis:
             _LOG.info("Loaded Felis schema for tables %s", felis.keys())
 
         url = urllib.parse.urljoin(self.repl_url, "/ingest/table/")
@@ -243,18 +243,7 @@ class ReplicationClient:
 
         return locations
 
-    def get_current_indexes(self, database, tables: list):
-        for t in tables:
-            params = {"database": database, "overlap": 1, "table": t}
-            responseJson = self.http.get(self.index_url, params, timeout=self.timeout_short)
-            jsonparser.raise_error(responseJson)
-            indexes: Dict[str, set] = dict()
-            jsonparser.get_indexes(responseJson, indexes)
-        _LOG.info("Indexes %s", indexes)
-        jsonparser.raise_error(responseJson)
-        return indexes
-
-    def _get_transactions(self, states, database):
+    def _get_transactions(self, states: List[jsonparser.TransactionState], database: str) -> List[int]:
         """
         Return transactions ids
         """
@@ -265,24 +254,24 @@ class ReplicationClient:
 
         return transaction_ids
 
-    def get_transactions_started(self, database):
+    def get_transactions_started(self, database: str)  -> List[int]:
         states = [jsonparser.TransactionState.STARTED]
         return self._get_transactions(states, database)
 
-    def get_transactions_not_finished(self, database):
+    def get_transactions_not_finished(self, database: str) -> List[int]:
         states = [
             jsonparser.TransactionState.ABORTED,
             jsonparser.TransactionState.STARTED,
         ]
         return self._get_transactions(states, database)
 
-    def index_all_tables(self, json_indexes: Any):
+    def index_all_tables(self, json_indexes: List[Dict[str, Any]]) -> None:
         for json_idx in json_indexes:
             _LOG.info(f"Create index: {json_idx}")
             responseJson = self.http.post(self.index_url, json_idx)
             jsonparser.raise_error(responseJson)
 
-    def start_transaction(self, database):
+    def start_transaction(self, database: str) -> int:
         url = urllib.parse.urljoin(self.repl_url, "ingest/trans")
         payload = {"database": database, "context": {"pod": socket.gethostname()}}
         responseJson = self.http.post(url, payload, timeout=self.timeout_short)
@@ -291,6 +280,6 @@ class ReplicationClient:
         # For catching the super transaction ID
         # Want to print responseJson["databases"]["hsc_test_w_2020_14_00"]["transactions"]
         current_db = responseJson["databases"][database]
-        transaction_id = current_db["transactions"][0]["id"]
-        _LOG.debug(f"transaction ID: {transaction_id}")
+        transaction_id = int(current_db["transactions"][0]["id"])
+        _LOG.debug("transaction ID: %i", {transaction_id})
         return transaction_id

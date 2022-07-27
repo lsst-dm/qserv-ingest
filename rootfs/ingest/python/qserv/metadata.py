@@ -28,6 +28,7 @@ Manage metadata related to input data
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
+from collections.abc import Generator
 from dataclasses import dataclass
 import logging
 from typing import Any, Dict, List
@@ -80,13 +81,14 @@ class TableContributionsSpec:
     chunks_overlap: List[int]
     """ Chunks ids for overlap files for partioned tables, empty for non-partitioned tables """
 
-    def get_contrib(self):
+    def get_contrib(self) -> Generator[Dict[str, Any], None, None]:
         """Generator for contribution specifications for a given table and a given path
 
         Yields
         ------
             Iterator[List[dict()]]: Iterator on each contribution specifications for a table
         """
+        data: Dict[str, Any]
         for file in self.files:
             data = {
                 "chunk_id": None,
@@ -139,7 +141,7 @@ class TableSpec:
     schema_file: str
     is_director: bool
     is_partitioned: bool
-    json_indexes: List[str]
+    json_indexes: List[Dict[str, Any]]
     json_schema: Dict
     name: str
 
@@ -223,7 +225,7 @@ class ContributionMetadata:
         self.family = "layout_{}_{}".format(self.json_db["num_stripes"], self.json_db["num_sub_stripes"])
         self._init_tables()
 
-    def get_table_contribs_spec(self):
+    def get_table_contribs_spec(self) -> Generator[TableContributionsSpec, None, None]:
         """Generator for contribution specifications for the whole database
 
         Retrieve information about input contribution files
@@ -242,14 +244,14 @@ class ContributionMetadata:
         """
         return urllib.parse.urljoin(self.metadata_url, path)
 
-    def get_tables_names(self):
+    def get_tables_names(self) -> List[str]:
         table_names = []
         for t in self.tables:
             table_names.append(t.name)
         return table_names
 
-    def get_json_indexes(self):
-        json_indexes: List[str] = []
+    def get_json_indexes(self) -> List[Dict[str, Any]]:
+        json_indexes: List[Dict] = []
         for tbl in self.tables:
             json_indexes.extend(tbl.json_indexes)
         return json_indexes
@@ -269,7 +271,7 @@ class ContributionMetadata:
             schema_files.append(t.json_schema)
         return schema_files
 
-    def _init_tables(self):
+    def _init_tables(self) -> None:
         self.tables = []
         self._has_extra_overlaps = False
         for table_meta in self.metadata["tables"]:
