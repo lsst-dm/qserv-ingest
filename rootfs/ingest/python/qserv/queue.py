@@ -43,7 +43,6 @@ from .metadata import ContributionMetadata
 import sqlalchemy
 from sqlalchemy import MetaData, Table, event, update
 from sqlalchemy.exc import OperationalError, StatementError
-from sqlalchemy.dialects import mysql
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.sql import select, func
 from . import util
@@ -106,13 +105,17 @@ class QueueManager:
         _LOG.debug("Contributions queue size: %s", contributions_count)
         self._contribfiles_to_lock_number = int(contributions_count / contributions_queue_fraction) + 1
 
-    def _count_contribfiles(self) -> int:
+    def _count_contribfiles(self, not_succeed: bool = False) -> int:
         """
         Count contributions for current database
-           if loaded is 'True' count contributions which are not ingested
+           if not_succeed is 'True' count contributions which are not ingested
            else count all contributions.
         """
         query = select([func.count("*")]).select_from(self.queue)
+
+        if not_succeed is True:
+            query = query.where(self.queue.c.succeed.is_not(True))
+
         query = query.where(self.queue.c.database == self.contribution_metadata.database)
         with self.engine.connect() as connection:
             result = connection.execute(query)
@@ -126,6 +129,18 @@ class QueueManager:
         else:
             _LOG.warning("No table to load")
             self.current_table = None
+
+    def all_succeed(self) -> bool:
+        """Check all contribution files have beed ingested successfully for current database
+
+        Returns:
+        all_succeed: `bool`
+            True if all contribution files have beed ingested successfully, else False
+        """
+        if self._count_contribfiles(not_succeed=True) == 0:
+            return True
+        else:
+            return False
 
     def _select_locked_contribfiles(self) -> typing.List[typing.Tuple[str, int, str, bool, str]]:
         query = select(
@@ -208,7 +223,11 @@ class QueueManager:
         release_mutex_query = release_mutex_query.where(self.mutex.c.pod == self.pod)
         self._safe_execute(release_mutex_query, _MAX_RETRY_ATTEMPTS)
 
-    def _init_mutex(self) -> None:
+    def init_mutex(self) -> None:
+        """Initialize mutex in queue database
+           Queue database has a table `mutex` which contain only one row. This row is used to enable
+           only one pod to lock contribution file in queue at a time and need to be initialized at ingest startup.
+        """
         release_mutex_query = update(self.mutex).values(
             pod=None,
             latest_move=datetime.datetime.now()

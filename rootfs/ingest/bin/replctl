@@ -106,6 +106,7 @@ if __name__ == "__main__":
         logger.debug("Queue")
         queue_manager = QueueManager(args.config.queue_url, contribution_metadata)
         queue_manager.insert_contribfiles()
+        queue_manager.init_mutex()
     elif args.task == Task.REGISTER:
         ingester = Ingester(contribution_metadata, args.config.replication_url)
         database_status = ingester.get_database_status()

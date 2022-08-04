@@ -207,15 +207,28 @@ class Ingester:
         """
 
         _LOG.info("Start ingest transaction")
-        if self.queue_manager is not None:
-            contribfiles_locked = self.queue_manager.lock_contribfiles()
-        else:
-            raise IngestError("Unitialized queue manager")
-        if len(contribfiles_locked) == 0:
-            return False
+        continue_ingest: bool
 
-        transaction_id = None
-        ingest_success = False
+        if self.queue_manager is None:
+            raise IngestError("Unitialized queue manager")
+        while True:
+            contribfiles_locked = self.queue_manager.lock_contribfiles()
+            # Remaining contribution files to ingest
+            if len(contribfiles_locked) != 0:
+                break
+            # No more contribution file to ingest
+            # All contribution files have been ingested successfully
+            elif self.queue_manager.all_succeed():
+                continue_ingest = False
+                return continue_ingest
+            # No more contribution file to ingest
+            # Waiting to recover possibly failed transactions
+            else:
+                _LOG.info("Waiting for all contributions files to be in succeed state")
+                time.sleep(10)
+
+        transaction_id: int
+        ingest_success: bool = False
         try:
             transaction_id = self.repl_client.start_transaction(self.contrib_meta.database)
 
@@ -230,11 +243,9 @@ class Ingester:
         finally:
             if transaction_id:
                 self.repl_client.close_transaction(self.contrib_meta.database, transaction_id, ingest_success)
-                if self.queue_manager is not None:
-                    self.queue_manager.unlock_contribfiles(ingest_success)
-                else:
-                    raise IngestError("Unitialized queue manager")
-        return True
+                self.queue_manager.unlock_contribfiles(ingest_success)
+        continue_ingest = True
+        return continue_ingest
 
     def _ingest_all_contributions(self, transaction_id: int, contributions: list[Contribution]) -> bool:
         """Ingest all contribution for a given transaction

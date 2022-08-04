@@ -40,7 +40,7 @@ import pytest
 # Imports for other modules --
 # ----------------------------
 from sqlalchemy import (MetaData, Table, Column, Integer, String,
-                        Boolean, DateTime, create_engine, func, select, update)
+                        Boolean, DateTime, create_engine, event, func, select, update)
 from sqlalchemy.exc import StatementError
 import yaml
 
@@ -93,6 +93,12 @@ class MockDataAccessLayer:
     def __init__(self, conn_string: str) -> None:
         self.engine = create_engine(conn_string or self.conn_string, future=True)
 
+        @event.listens_for(self.engine, "before_cursor_execute")
+        # type: ignore
+        def before_cursor_execute(conn, cursor, statement, parameters, context, executemany) -> None:
+            _LOG.debug("MOCK DataAccessLayer query: %s", statement)
+            _LOG.debug("Parameters:%s", parameters)
+
     def create_schema(self) -> None:
         self.db_meta.create_all(self.engine)
 
@@ -127,6 +133,11 @@ class MockDataAccessLayer:
             result.close()
         return contrib_locked_count
 
+    def update_all_succeed(self) -> None:
+        query = update(self.queue).values(succeed=True)
+        with self.engine.begin() as connection:
+            connection.execute(query)
+
     def insert_contribfiles(self) -> None:
         ins = self.queue.insert()
         db = "dp01_dc2_catalogs"
@@ -134,12 +145,12 @@ class MockDataAccessLayer:
         contrib_files = []
         for i in range(_DP01_CONTRIBFILES_COUNT):
             contrib_file = {"chunk_id": 100 + i, "database": db, "filepath": f"/file{i}.txt",
-                            "is_overlap": True, "table": tbl, "succeed": False}
+                            "is_overlap": False, "table": tbl, "succeed": False}
             contrib_files.append(contrib_file)
         db = "mydb"
         for i in range(15):
             contrib_file = {"chunk_id": 200 + i, "database": db, "filepath": f"/file{i}.txt",
-                            "is_overlap": True, "table": tbl, "succeed": False}
+                            "is_overlap": False, "table": tbl, "succeed": False}
             contrib_files.append(contrib_file)
         with self.engine.begin() as connection:
             connection.execute(ins, contrib_files)
@@ -251,6 +262,19 @@ def test_unlock_contribfiles() -> None:
 
 
 @pytest.mark.dev
+def test_all_succeed() -> None:
+    dal = MockDataAccessLayer(_SCISQL_QUEUE_URL)
+    data_url = os.path.join(_CWD, "testdata", _DP01)
+    contribution_metadata = metadata.ContributionMetadata(data_url)
+    queue_manager = queue.QueueManager(_SCISQL_QUEUE_URL, contribution_metadata)
+    all_succeed = queue_manager.all_succeed()
+    assert all_succeed is False
+    dal.update_all_succeed()
+    all_succeed = queue_manager.all_succeed()
+    dal.log_queue()
+    assert all_succeed is True
+
+
 def test_send_query() -> None:
     data_url = os.path.join(_CWD, "testdata", _DP01)
     contribution_metadata = metadata.ContributionMetadata(data_url)
@@ -259,6 +283,7 @@ def test_send_query() -> None:
     with pytest.raises(StatementError) as e:
         queue_manager._safe_execute(query, 4)
     _LOG.error("Expected error: %s", e)
+
 
 @pytest.mark.scale
 def test_scale_lock_contribfiles() -> None:
@@ -282,7 +307,7 @@ def test_scale_lock_contribfiles() -> None:
     query = update(queue_manager.queue).values(succeed=None, locking_pod=None)
 
     queue_manager._safe_execute(query, 0)
-    queue_manager._init_mutex()
+    queue_manager.init_mutex()
 
     queue_manager.set_transaction_size(_CHUNK_QUEUE_FRACTION)
     start_time = time.time()

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Run docker container containing DC2 ingest tools 
+# Run docker container containing DC2 ingest tools
 
 # @author  Fabrice Jammes
 
@@ -43,6 +43,8 @@ fi
 
 telepresence connect
 
+DEV_IMAGE="qserv/ingest-deps"
+docker build --target ingest-deps -t "$DEV_IMAGE" "$DIR"
 
 echo "Running in development mode"
 MOUNTS="-v $DIR/rootfs/ingest:/ingest"
@@ -52,4 +54,4 @@ echo "oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO"
 echo "   Welcome in qserv-ingest developement container"
 echo "   Setup for using Qserv in namespace $NAMESPACE"
 echo "oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO"
-docker run --net=host --dns-search $NAMESPACE -it $MOUNTS --rm -w "$HOME" "$INGEST_IMAGE" bash
+docker run --net=host --dns-search $NAMESPACE -it $MOUNTS --rm -w "$HOME" "$DEV_IMAGE" bash
