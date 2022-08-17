@@ -60,7 +60,7 @@ def authorize() -> str:
         with open(os.path.expanduser(AUTH_PATH), "r") as f:
             authKey = f.read().strip()
     except IOError:
-        _LOG.debug("Cannot find %s", AUTH_PATH)
+        _LOG.warning("Cannot find %s", AUTH_PATH)
         authKey = getpass.getpass()
     return authKey
 
@@ -152,7 +152,7 @@ class Http:
         if not response_json["success"]:
             _LOG.critical("%s %s", url, response_json["error"])
             raise ReplicationControllerError("Error in JSON response (GET)", url, response_json["error"])
-        _LOG.info("GET: success")
+        _LOG.debug("GET: success")
         return response_json
 
     def post(self, url: str, payload: Dict[str, Any] = dict(),
@@ -185,7 +185,7 @@ class Http:
         if not response_json["success"]:
             _LOG.critical("%s %s", url, response_json["error"])
             raise ReplicationControllerError("Error in JSON response (PUT)", url, response_json["error"])
-        _LOG.info("PUT: success")
+        _LOG.debug("PUT: success")
         return response_json
 
     def delete(self, url: str, timeout: int = None) -> Dict:
@@ -196,5 +196,5 @@ class Http:
         if not response_json["success"]:
             _LOG.critical("%s %s", url, response_json["error"])
             raise ReplicationControllerError("Error in JSON response (DELETE)", url, response_json["error"])
-        _LOG.info("DELETE: success")
+        _LOG.debug("DELETE: success")
         return response_json

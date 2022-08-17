@@ -268,7 +268,7 @@ class Ingester:
             bool: True if ingest has ran successfully
         """
         loop = True
-        _LOG.debug(
+        _LOG.info(
             "%s contributions to ingest during transaction %s",
             len(contributions),
             transaction_id,
@@ -296,8 +296,8 @@ class Ingester:
             if contribs_unfinished_count == 0:
                 loop = False
             else:
-                _LOG.debug(
-                    "Processing %s contributions for transaction %s",
+                _LOG.info(
+                    "In progress contributions for transaction %s: %s",
                     contribs_unfinished_count,
                     transaction_id,
                 )

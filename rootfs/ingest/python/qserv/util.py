@@ -56,18 +56,27 @@ def add_default_arguments(parser: argparse.ArgumentParser) -> None:
         action=IngestConfigAction,
         metavar="FILE",
     )
-    parser.add_argument("--verbose", "-v", action="store_true", help="Use debug logging")
+    parser.add_argument('-v', '--verbose', default=0, action='count',
+                        help='More verbose output, can use several times.')
 
 
-def get_default_logger(verbose: bool) -> logging.Logger:
+def configure_logger(level: int) -> logging.Logger:
+    """Create, configure and returns logger
+
+    Parameters
+    ----------
+    level: `int`
+        logging level, 0: WARNING, 1: INFO, 2:DEBUG
+
+    Returns
+    -------
+    logger: `logging.Logger`
+        a configured logger which logs on standard output
     """
-    Create and returns default logger
-    """
+    levels = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
     logger = logging.getLogger()
-    if verbose:
-        logger.setLevel(logging.DEBUG)
-    else:
-        logger.setLevel(logging.INFO)
+    level = levels.get(level, logging.DEBUG)
+    logger.setLevel(level)
     streamHandler = logging.StreamHandler()
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     streamHandler.setFormatter(formatter)

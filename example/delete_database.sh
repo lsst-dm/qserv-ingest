@@ -1,5 +1,5 @@
 #!/bin/bash
-# Get the number of remaining elements in ingest chunk queue
+# Delete a database from Qserv
 
 # Database names:
 # - cosmoDC2_v1_1_4_image_overlap

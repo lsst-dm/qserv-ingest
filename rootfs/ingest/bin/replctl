@@ -95,7 +95,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    logger = util.get_default_logger(args.verbose)
+    logger = util.configure_logger(args.verbose)
 
     logger.debug("Ingest configuration: %s", args.config.__dict__)
     logger.debug("Task: %s", args.task)

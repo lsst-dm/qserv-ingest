@@ -185,7 +185,8 @@ class Contribution:
         # see: https://confluence.lsstcorp.org/display/DM/Ingest%3A+9.5.3.+Asynchronous+Protocol
         match contrib_monitor.status:
             case ContributionState.IN_PROGRESS:
-                _LOG.debug("_ingest_chunk: request %s in progress", self.request_id)
+                # _LOG.debug("_ingest_chunk: request %s in progress", self.request_id)
+                pass
             case ContributionState.FINISHED:
                 contrib_finished = True
             case (
@@ -194,21 +195,26 @@ class Contribution:
                 | ContributionState.READ_FAILED
                 | ContributionState.LOAD_FAILED
             ):
-                errmsg = ""
+                noretry_errmsg = ""
                 if not contrib_monitor.retry_allowed:
-                    errmsg = "and is not retriable"
+                    noretry_errmsg = "and is not retriable"
                 elif self.retry_attempts >= MAX_RETRY_ATTEMPTS:
-                    errmsg = "and has exceeded maximum number of ingest attempts"
-                if len(errmsg) != 0:
+                    noretry_errmsg = "and has exceeded maximum number of ingest attempts"
+                msg = f"Contribution {self} is in status {contrib_monitor.status} "
+                + f'with error: "{contrib_monitor.error}", '
+                + f"system error: {contrib_monitor.system_error}, "
+                + f"http error: {contrib_monitor.http_error}"
+                if len(noretry_errmsg) != 0:
                     raise IngestError(
-                        f"Contribution {self} is in status {contrib_monitor.status} "
-                        + f'with error: "{contrib_monitor.error}", '
-                        + f"system error: {contrib_monitor.system_error}, "
-                        + f"http error: {contrib_monitor.http_error} {errmsg}"
+                        msg + f" {noretry_errmsg}"
                     )
+                else:
+                    _LOG.warning(msg)
                 self.retry_attempts += 1
                 self.request_id = None
             case ContributionState.CANCELLED:
                 raise IngestError(f"Contribution {self} ingest has been cancelled by a third-party")
+            case _:
+                raise IngestError(f"Contribution {self} is in an unmanaged state: {contrib_monitor.status}")
 
         return contrib_finished
