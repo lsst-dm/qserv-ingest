@@ -35,7 +35,6 @@ import logging
 import time
 from typing import Dict, List, Tuple
 
-
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
@@ -45,6 +44,7 @@ from .jsonparser import DatabaseStatus
 from .metadata import ContributionMetadata
 from .queue import QueueManager
 from .replicationclient import ReplicationClient
+from . import util
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -116,14 +116,21 @@ class Ingester:
         database = self.contrib_meta.database
         self.repl_client.database_publish(database)
 
-    def database_register_and_config(self, felis: Dict = None) -> None:
-        """
-        Register a database, its tables and its configuration inside replication system
-        using data_url/<database_name>.json as input data
+    def database_register_and_config(self, replication_config: util.ReplicationConfig,
+                                     felis: Dict = None) -> None:
+        """Register a database, its tables and its configuration inside replication/ingest system
+           using data_url/<database_name>.json as input data
+
+        Parameters
+        ----------
+        replication_config: `util.ReplicationConfig`
+            Configuration parameter for the database inside replication/ingest system
+        felis: `Dict, optional`
+            Felis schema for tables. Defaults to None.
         """
         self.repl_client.database_register(self.contrib_meta.json_db)
         self.repl_client.database_register_tables(self.contrib_meta.get_ordered_tables_json(), felis)
-        self.repl_client.database_config(self.contrib_meta.database)
+        self.repl_client.database_config(self.contrib_meta.database, replication_config)
 
     def get_database_status(self) -> DatabaseStatus:
         """

@@ -30,11 +30,11 @@ Tools used by ingest algorithm
 #  Imports of standard modules --
 # -------------------------------
 import argparse
+from dataclasses import dataclass
 import json
 import logging
 from typing import Any, Dict, List
 import yaml
-import time
 
 # ----------------------------
 # Imports for other modules --
@@ -92,6 +92,37 @@ class IngestConfig:
         self.query_url = yaml["ingest"]["qserv"]["query_url"]
         self.queue_url = yaml["ingest"]["qserv"]["queue_url"]
         self.replication_url = yaml["ingest"]["qserv"]["replication_url"]
+        self.replication_config = ReplicationConfig()
+
+
+@dataclass
+class ReplicationConfig:
+    """Configuration parameters for replication/ingest system
+    See https://confluence.lsstcorp.org/display/DM/Ingest%3A+11.1.8.1.+Setting+configuration+parameters
+
+    Parameters
+    ----------
+    cainfo : `str`
+        This attribute directly maps to https://curl.se/libcurl/c/CURLOPT_PROXY_CAINFO.html.
+        Putting the empty string as a value of the parameter will effectively turn this option off
+        as if it has never been configured for the database.
+    ssl_verifypeer: `int`
+        This attribute directly maps to https://curl.se/libcurl/c/CURLOPT_PROXY_SSL_VERIFYPEER.html.
+        Numeric values of the parameter are treated as boolean variables,
+        where 0 represents false and any other values represent true.
+    low_speed_limit: `int`
+        This attribute directly maps to https://curl.se/libcurl/c/CURLOPT_LOW_SPEED_LIMIT.html
+        Putting 0  as a value of the parameter will effectively turn this option off
+        as if it has never been configured for the database.
+    low_speed_time: `int`
+        This attribute directly maps to https://curl.se/libcurl/c/CURLOPT_LOW_SPEED_TIME.html
+        Putting 0  as a value of the parameter will effectively turn this option off
+        as if it has never been configured for the database.
+    """
+    cainfo: str = "/etc/pki/tls/certs/ca-bundle.crt"
+    ssl_verifypeer: int = 1
+    low_speed_limit: int = 60
+    low_speed_time: int = 120
 
 
 class IngestConfigAction(argparse.Action):

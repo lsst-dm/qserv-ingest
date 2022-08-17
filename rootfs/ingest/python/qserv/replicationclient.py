@@ -40,7 +40,7 @@ import urllib.parse
 # ----------------------------
 from . import jsonparser
 from .http import Http
-from .util import trailing_slash
+from . import util
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -59,7 +59,7 @@ class ReplicationClient:
 
     def __init__(self, repl_url: str) -> None:
 
-        self.repl_url = trailing_slash(repl_url)
+        self.repl_url = util.trailing_slash(repl_url)
 
         self.http = Http()
 
@@ -120,15 +120,25 @@ class ReplicationClient:
             )
         _LOG.info("Replication service version: v%s", _VERSION)
 
-    def database_config(self, database: str) -> None:
+    def database_config(self, database: str, replication_config: util.ReplicationConfig) -> None:
+        """Set replication system configuration for a given database
+        https://confluence.lsstcorp.org/display/DM/Ingest%3A+11.1.8.1.+Setting+configuration+parameters
+
+        Parameters
+        ----------
+        database: `str`
+            Database name
+        replication_config: `util.ReplicationConfig`
+            Configuration parameters for the database inside replication/ingest system
         """
-        Configure a database inside replication system
-        """
+
         url = urllib.parse.urljoin(self.repl_url, "/ingest/config/")
         json = {
             "database": database,
-            "CAINFO": "/etc/pki/tls/certs/ca-bundle.crt",
-            "SSL_VERIFYPEER": 1,
+            "CAINFO": replication_config.cainfo,
+            "SSL_VERIFYPEER": replication_config.ssl_verifypeer,
+            "LOW_SPEED_LIMIT": replication_config.low_speed_limit,
+            "LOW_SPEED_TIME": replication_config.low_speed_time,
         }
         _LOG.debug("Configure database inside replication system, url: %s, json: %s", url, json)
         responseJson = self.http.put(url, json, timeout=self.timeout_long)
