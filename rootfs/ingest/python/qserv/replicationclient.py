@@ -170,8 +170,8 @@ class ReplicationClient:
         Register a database inside replication system
         using data_url/<database_name>.json as input data
         """
-        if felis is not None and felis:
-            _LOG.info("Loaded Felis schema for tables %s", felis.keys())
+        if felis is not None:
+            _LOG.info("Load Felis schema for tables %s", felis.keys())
 
         url = urllib.parse.urljoin(self.repl_url, "/ingest/table/")
 
@@ -184,7 +184,7 @@ class ReplicationClient:
             if felis is not None and json_data["table"] in felis:
                 schema = felis[json_data["table"]]
                 json_data["schema"] = schema + json_data["schema"]
-            _LOG.debug("Starting a table registration request: %s with %s", url, json_data)
+            _LOG.debug("Start a table registration request: %s with %s", url, json_data)
             responseJson = self.http.post(url, json_data, timeout=self.timeout_long)
             jsonparser.raise_error(responseJson)
 

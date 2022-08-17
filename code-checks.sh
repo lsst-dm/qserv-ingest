@@ -47,7 +47,7 @@ if [ $unittests = true ]; then
   docker run -- "$INGEST_IMAGE" /ingest/bin/pytest.sh
 fi
 if [ $mypy = true ]; then
-  mypy --config-file $DIR/rootfs/ingest/python/mypy.ini $DIR/rootfs/ingest/python/
+  mypy --config-file $DIR/rootfs/ingest/python/mypy.ini $DIR/rootfs/ingest/bin/replctl $DIR/rootfs/ingest/python/
   # Command below require mypy to be installed in qserv-ingest
   # docker run -it -- "$INGEST_IMAGE" mypy --config-file /ingest/python/mypy.ini /ingest/python/
 fi

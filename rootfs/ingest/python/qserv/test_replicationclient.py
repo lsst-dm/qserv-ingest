@@ -28,14 +28,18 @@ Tests for util modules
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
+import logging
+import os
+from pathlib import Path
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-import argparse
-import logging
-from . import util
-import os
+import requests
+import pytest
+from . import http
+from . import metadata
+from . import replicationclient
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -45,26 +49,27 @@ _CWD = os.path.dirname(os.path.abspath(__file__))
 _LOG = logging.getLogger(__name__)
 
 
-def test_ingestconfig() -> None:
-    """Check the function which compare files in two directories"""
+def test_database_register_tables() -> None:
+    """Test function database_register_tables
 
-    parser = argparse.ArgumentParser(description="Test util module")
-    util.add_default_arguments(parser)
+    TODO add mock replication server for testing
+    database_register_tables() method
+    """
 
-    configfile = os.path.join(_CWD, "testdata", "dp02", "ingest.yaml")
-    args = parser.parse_args(['--config', configfile])
+    data_url = os.path.join(_CWD, "testdata", "dp01_dc2_catalogs")
+    contribution_metadata = metadata.ContributionMetadata(data_url)
+    tables_json_data = contribution_metadata.get_ordered_tables_json()
 
-    _LOG.debug(args.config.replication_config)
+    # Create empty credential file if not present
+    # TODO use http.AUTH_PATH instead of hard-coded value
+    auth_dir = os.path.join(Path.home(), ".lsst")
+    Path(auth_dir).mkdir(parents=True, exist_ok=True)
+    auth_file = os.path.join(auth_dir, "qserv")
+    Path(auth_file).touch()
 
-    assert args.config.replication_config.cainfo == '/etc/pki/tls/certs/ca-bundle.crt'
-    assert args.config.replication_config.ssl_verifypeer == 1
-    assert args.config.replication_config.low_speed_limit == 60
-    assert args.config.replication_config.low_speed_time == 120
-
-    configfile = os.path.join(_CWD, "testdata", "dp02", "ingest.replication.yaml")
-    args = parser.parse_args(['--config', configfile])
-
-    assert args.config.replication_config.cainfo == '/etc/pki/tls/certs/ca-bundle.crt'
-    assert args.config.replication_config.ssl_verifypeer == 1
-    assert args.config.replication_config.low_speed_limit == 10
-    assert args.config.replication_config.low_speed_time == 3600
+    _LOG.debug("Credentials: %s", http.AUTH_PATH)
+    with pytest.raises(requests.exceptions.ConnectionError) as e:
+        repl_client = replicationclient.ReplicationClient("http://no_url/")
+        # TODO add mock replication server for method below
+        repl_client.database_register_tables(tables_json_data, None)
+    _LOG.error("Expected error: %s", e)

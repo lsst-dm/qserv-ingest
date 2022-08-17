@@ -116,7 +116,8 @@ class Ingester:
         database = self.contrib_meta.database
         self.repl_client.database_publish(database)
 
-    def database_register_and_config(self, replication_config: util.ReplicationConfig,
+    def database_register_and_config(self,
+                                     replication_config: util.ReplicationConfig,
                                      felis: Dict = None) -> None:
         """Register a database, its tables and its configuration inside replication/ingest system
            using data_url/<database_name>.json as input data
@@ -124,7 +125,7 @@ class Ingester:
         Parameters
         ----------
         replication_config: `util.ReplicationConfig`
-            Configuration parameter for the database inside replication/ingest system
+            Configuration parameters for the database inside replication/ingest system
         felis: `Dict, optional`
             Felis schema for tables. Defaults to None.
         """

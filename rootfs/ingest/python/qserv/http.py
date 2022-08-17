@@ -35,7 +35,6 @@ import json
 import logging
 import os
 from typing import Any, Dict
-from urllib.error import HTTPError
 import urllib.parse
 
 # ----------------------------
