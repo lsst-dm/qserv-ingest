@@ -32,6 +32,7 @@ Index table columns using replication service to Qserv
 # -------------------------------
 import argparse
 from enum import Enum, auto
+import os
 import sys
 
 # ----------------------------
@@ -56,7 +57,8 @@ class Task(str, Enum):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create Qserv indexes (tables or secondary) "
-                                     "using Qserv replication service")
+                                     "using Qserv replication service" +
+                                     "Log level can be set using QSERV_INGEST_VERBOSE (values: 0 to 2)")
     util.add_default_arguments(parser)
     subparsers = parser.add_subparsers(dest='task')
 
@@ -95,7 +97,11 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    logger = util.configure_logger(args.verbose)
+    verbose = os.getenv('QSERV_INGEST_VERBOSE')
+    if verbose is None:
+        verbose = args.verbose
+
+    logger = util.configure_logger(verbose)
 
     logger.debug("Ingest configuration: %s", args.config.__dict__)
     logger.debug("Task: %s", args.task)

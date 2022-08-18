@@ -57,7 +57,8 @@ def add_default_arguments(parser: argparse.ArgumentParser) -> None:
         metavar="FILE",
     )
     parser.add_argument('-v', '--verbose', default=0, action='count',
-                        help='More verbose output, can use several times.')
+                        help="More verbose output, can use several times. " +
+                        "Overridden by QSERV_INGEST_VERBOSE environment variable")
 
 
 def configure_logger(level: int) -> logging.Logger:

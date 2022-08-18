@@ -26,12 +26,17 @@ spec:
       value: 10
     - name: backoffLimit
       value: 5
+    - name: verbose
+      value: "1"
   templates:
   - name: ingest-step
     inputs:
       parameters:
       - name: script
     container:
+      env:
+      - name: QSERV_INGEST_VERBOSE
+        value: "{{workflow.parameters.verbose}}"
       command: ["/bin/sh"]
       args: ["-c", "{{inputs.parameters.script}}"]
       image: "{{workflow.parameters.image}}"
@@ -61,6 +66,9 @@ spec:
             spec:
               containers:
               - name: ingest
+                env:
+                - name: QSERV_INGEST_VERBOSE
+                  value: "{{workflow.parameters.verbose}}"
                 command:
                 - ingest-chunks.sh
                 args:
