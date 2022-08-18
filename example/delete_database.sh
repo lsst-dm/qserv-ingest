@@ -18,7 +18,7 @@ DIR=$(cd "$(dirname "$0")"; pwd -P)
 usage() {
   cat << EOD
 
-Usage: `basename $0` [options] database password
+Usage: `basename $0` [options] database
 
   Available options:
     -h          this message
@@ -38,16 +38,17 @@ while getopts h c ; do
 done
 shift `expr $OPTIND - 1`
 
-if [ $# -ne 2 ] ; then
+if [ $# -ne 1 ] ; then
     usage
     exit 2
 fi
 
 DATABASE="$1"
-PASSWORD="$2"
+DB_PASSWORD=""
 
+DB_USER="qsingest"
 
-kubectl exec -it $INSTANCE-ingest-db-0 -- mysql -h localhost -u root -p"$PASSWORD" -e "DELETE FROM qservIngest.contribfile_queue WHERE \`database\` LIKE '$DATABASE';"
+kubectl exec -it $INSTANCE-ingest-db-0 -- mysql -h localhost -u "$DB_USER" -p"$DB_PASSWORD" -e "DELETE FROM qservIngest.contribfile_queue WHERE \`database\` LIKE '$DATABASE';"
 time kubectl exec -it $INSTANCE-repl-ctl-0 -- curl http://localhost:$REPL_CTL_PORT/ingest/database/"$DATABASE"  \
    -X DELETE -H "Content-Type: application/json" \
    -d '{"admin_auth_key":""}'

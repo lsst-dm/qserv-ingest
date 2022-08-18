@@ -214,7 +214,7 @@ class Ingester:
             1 if super-transaction was performed successfully
         """
 
-        _LOG.info("Start ingest transaction")
+
         continue_ingest: bool
 
         if self.queue_manager is None:
@@ -239,7 +239,7 @@ class Ingester:
         ingest_success: bool = False
         try:
             transaction_id = self.repl_client.start_transaction(self.contrib_meta.database)
-
+            _LOG.info("Start ingest transaction %s", transaction_id)
             contributions = self._build_contributions(contribfiles_locked)
 
             ingest_success = self._ingest_all_contributions(transaction_id, contributions)
@@ -250,6 +250,10 @@ class Ingester:
             raise (e)
         finally:
             if transaction_id:
+                if ingest_success:
+                    _LOG.info("Close ingest transaction %s", transaction_id)
+                else:
+                    _LOG.warn("Abort ingest transaction %s", transaction_id)
                 self.repl_client.close_transaction(self.contrib_meta.database, transaction_id, ingest_success)
                 self.queue_manager.unlock_contribfiles(ingest_success)
         continue_ingest = True

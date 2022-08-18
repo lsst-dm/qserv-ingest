@@ -27,7 +27,7 @@ spec:
     - name: backoffLimit
       value: 5
     - name: verbose
-      value: "1"
+      value: 1
   templates:
   - name: ingest-step
     inputs:

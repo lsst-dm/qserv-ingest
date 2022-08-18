@@ -55,6 +55,7 @@ def add_default_arguments(parser: argparse.ArgumentParser) -> None:
         type=argparse.FileType("r"),
         action=IngestConfigAction,
         metavar="FILE",
+        required=True
     )
     parser.add_argument('-v', '--verbose', default=0, action='count',
                         help="More verbose output, can use several times. " +
@@ -76,8 +77,8 @@ def configure_logger(level: int) -> logging.Logger:
     """
     levels = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
     logger = logging.getLogger()
-    level = levels.get(level, logging.DEBUG)
-    logger.setLevel(level)
+    loglevel = levels.get(level, logging.DEBUG)
+    logger.setLevel(loglevel)
     streamHandler = logging.StreamHandler()
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     streamHandler.setFormatter(formatter)
