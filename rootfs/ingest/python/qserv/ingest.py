@@ -278,32 +278,41 @@ class Ingester:
             transaction_id,
         )
         while loop:
-            contribs_unfinished_count = 0
+            contribs_started_count = 0
+            contribs_notfinished_count = 0
+            contribs_prevfinished_count = 0
+            contribs_justfinished_count = 0
             for _, c in enumerate(contributions):
                 current_time = time.strftime("%H:%M:%S", time.localtime())
                 if c.finished:
-                    pass
+                    contribs_prevfinished_count += 1
                 elif c.request_id is None:
                     # Ingest to start
                     _LOG.debug("Contribution %s ingest started at %s", c, current_time)
                     c.start_async(transaction_id)
-                    contribs_unfinished_count += 1
+                    contribs_started_count += 1
                 else:
                     _LOG.debug("Contribution %s ingest monitored at %s", c, current_time)
                     c.finished = c.monitor()
                     if c.finished:
                         # Ingest successfully loaded (i.e. in FINISHED state)
                         _LOG.debug("Contribution %s successfully loaded", c)
+                        contribs_justfinished_count += 1
                     else:
-                        contribs_unfinished_count += 1
+                        contribs_notfinished_count += 1
 
+            contribs_unfinished_count = contribs_notfinished_count + contribs_started_count
             if contribs_unfinished_count == 0:
                 loop = False
             else:
                 _LOG.info(
-                    "In progress contributions for transaction %s: %s",
-                    contribs_unfinished_count,
+                    "Contributions for transaction %s, RECENTLY STARTED: %s, NOT FINISHED: %s," +
+                    "RECENTLY FINISHED: %s, FINISHED: %s",
                     transaction_id,
+                    contribs_started_count,
+                    contribs_notfinished_count,
+                    contribs_justfinished_count,
+                    contribs_prevfinished_count
                 )
                 time.sleep(5)
 
