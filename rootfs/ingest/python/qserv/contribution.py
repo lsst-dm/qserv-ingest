@@ -200,10 +200,10 @@ class Contribution:
                     noretry_errmsg = "and is not retriable"
                 elif self.retry_attempts >= MAX_RETRY_ATTEMPTS:
                     noretry_errmsg = "and has exceeded maximum number of ingest attempts"
-                msg = f"Contribution {self} is in status {contrib_monitor.status} "
-                + f'with error: "{contrib_monitor.error}", '
-                + f"system error: {contrib_monitor.system_error}, "
-                + f"http error: {contrib_monitor.http_error}"
+                msg = (f"Contribution {self} is in status {contrib_monitor.status} "
+                       f"with error: {contrib_monitor.error}, "
+                       f"system error: {contrib_monitor.system_error}, "
+                       f"http error: {contrib_monitor.http_error}")
                 if len(noretry_errmsg) != 0:
                     raise IngestError(
                         msg + f" {noretry_errmsg}"

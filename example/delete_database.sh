@@ -44,11 +44,11 @@ if [ $# -ne 1 ] ; then
 fi
 
 DATABASE="$1"
-DB_PASSWORD=""
 
 DB_USER="qsingest"
 
-kubectl exec -it $INSTANCE-ingest-db-0 -- mysql -h localhost -u "$DB_USER" -p"$DB_PASSWORD" -e "DELETE FROM qservIngest.contribfile_queue WHERE \`database\` LIKE '$DATABASE';"
+POD="$INSTANCE-ingest-db-0"
+kubectl exec -it "$POD" -- mysql -h "$POD" -u "$DB_USER" -e "DELETE FROM qservIngest.contribfile_queue WHERE \`database\` LIKE '$DATABASE';"
 time kubectl exec -it $INSTANCE-repl-ctl-0 -- curl http://localhost:$REPL_CTL_PORT/ingest/database/"$DATABASE"  \
    -X DELETE -H "Content-Type: application/json" \
    -d '{"admin_auth_key":""}'

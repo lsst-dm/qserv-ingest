@@ -221,7 +221,7 @@ class ReplicationClient:
         jsonparser.raise_error(responseJson)
 
         host, port = jsonparser.get_chunk_location(responseJson)
-        _LOG.info("Location for chunk %d: %s %d", chunk_id, host, port)
+        _LOG.info("Location for chunk %d: %s:%d", chunk_id, host, port)
 
         return (host, port)
 
@@ -249,7 +249,7 @@ class ReplicationClient:
         jsonparser.raise_error(responseJson)
 
         locations = jsonparser.get_regular_table_locations(responseJson)
-        _LOG.info("Locations for regular tables for database %d: %d", database, locations)
+        _LOG.info("Locations for regular tables for database %s: %s", database, locations)
 
         return locations
 
