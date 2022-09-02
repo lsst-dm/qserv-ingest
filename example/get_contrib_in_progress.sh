@@ -15,8 +15,6 @@ List contributions in 'IN_PROGRESS' state for a database
 EOD
 }
 
-kind=false
-
 # get the options
 while getopts h c ; do
     case $c in
@@ -44,3 +42,4 @@ query="SELECT id,transaction_id,worker,\`table\`,chunk,is_overlap,create_time,st
   WHERE \`database\`='$DATABASE' AND status='IN_PROGRESS';"
 kubectl exec -it  qserv-repl-db-0 -c repl-db -- \
     mysql --host=qserv-repl-db-0 --user=qsreplica  qservReplica -e "$query"
+

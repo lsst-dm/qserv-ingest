@@ -204,7 +204,7 @@ class Contribution:
                        f"with error: {contrib_monitor.error}, "
                        f"system error: {contrib_monitor.system_error}, "
                        f"http error: {contrib_monitor.http_error}")
-                if len(noretry_errmsg) != 0:
+                if noretry_errmsg:
                     raise IngestError(
                         msg + f" {noretry_errmsg}"
                     )

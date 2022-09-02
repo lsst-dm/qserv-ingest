@@ -15,8 +15,6 @@ List 15 contributions in 'READ_FAILED' state for a database
 EOD
 }
 
-kind=false
-
 # get the options
 while getopts h c ; do
     case $c in
@@ -40,3 +38,4 @@ query="SELECT id, url, transaction_id,worker,http_error,system_error,error \
   WHERE \`database\`='$DATABASE' AND status='READ_FAILED' $LIMIT;"
 kubectl exec -it  qserv-repl-db-0 -c repl-db -- \
     mysql --host=qserv-repl-db-0 --user=qsreplica  qservReplica -e "$query"
+

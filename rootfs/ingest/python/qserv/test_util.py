@@ -54,7 +54,7 @@ def test_ingestconfig() -> None:
     configfile = os.path.join(_CWD, "testdata", "dp02", "ingest.yaml")
     args = parser.parse_args(['--config', configfile])
 
-    _LOG.debug(args.config.replication_config)
+    _LOG.debug("Replication configuration: %s", args.config.replication_config)
 
     assert args.config.replication_config.cainfo == '/etc/pki/tls/certs/ca-bundle.crt'
     assert args.config.replication_config.ssl_verifypeer == 1

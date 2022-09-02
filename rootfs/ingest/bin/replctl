@@ -99,7 +99,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     env_verbose = os.getenv('QSERV_INGEST_VERBOSE')
-    if env_verbose is not None and len(env_verbose) != 0:
+    if env_verbose:
         try:
             verbose = int(env_verbose)
         except ValueError:

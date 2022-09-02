@@ -201,7 +201,7 @@ class Ingester:
 
     def _ingest_transaction(self) -> bool:
         """Get contributions from a queue server for a given database
-        then ingest it inside Qserv during a super-transation
+        then ingest it inside Qserv during a super-transaction
 
         Raises
         ------

@@ -36,7 +36,7 @@ if [ $# -ne 0 ] ; then
 fi
 
 echo -n "Check telepresence version "
-if ! telepresence version | grep "Client: v2"; then
+if ! telepresence version | grep -q "Client: v2"; then
   >&2 echo "ERROR: telepresence v2 is required"
   exit 3
 fi

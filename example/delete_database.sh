@@ -27,8 +27,6 @@ Delete a database from Qserv
 EOD
 }
 
-kind=false
-
 # get the options
 while getopts h c ; do
     case $c in
