@@ -88,18 +88,18 @@ def json_get(base_url: str, filename: str) -> Dict:
     ----------
     base_url: `str`
         JSON file location
-    filename `str`
+    filename: `str`
         JSON file name
+
+    Returns
+    -------
+    json_data: `dict`
+        JSON data represented as a dictionary
 
     Raises
     ------
     IngestError:
         Raise is URI scheme is not in http://, https://, file://
-
-    Returns
-    -------
-    Dict:
-        JSON data loaded inside a dictionnary
     """
     str_url = urllib.parse.urljoin(util.trailing_slash(base_url), filename)
     url = urllib.parse.urlsplit(str_url, scheme="file")

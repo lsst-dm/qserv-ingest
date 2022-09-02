@@ -72,7 +72,7 @@ class LoadBalancedURL:
     direct_url: str
 
     def __init__(self, path: str, lbAlgo: LoadBalancerAlgorithm = None):
-        """Manage a load balanced URL for http:// protocole, also support access for file:// protocola
+        """Manage a load balanced URL for http:// protocol, also support access for file:// protocol
 
         Parameters:
         -----------

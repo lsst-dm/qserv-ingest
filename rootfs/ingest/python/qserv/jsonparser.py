@@ -195,22 +195,22 @@ def parse_database_status(responseJson: dict, database: str, family: str) -> Dat
 
     Parameters
     ----------
-    responseJson: `dict`
+    responseJson : `dict`
         Response to a replication controller request, in json format
-    database: `str`
+    database : `str`
         Database name
-    family: `str`
+    family : `str`
         Family name of the database
-
-    Raises
-    ------
-    ValueError:
-        Raised if JSON response does not contain database name and family
 
     Returns
     -------
-    status: `DatabaseStatus`
+    status : `DatabaseStatus`
         Ingest status of the database
+
+    Raises
+    ------
+    ValueError
+        Raised if JSON response does not contain database name and family
     """
     jsonpath_expr = parse(
         '$.config.databases[?(database="{}" & family_name="{}")].is_published'.format(database, family)

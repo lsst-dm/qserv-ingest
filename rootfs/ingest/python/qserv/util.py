@@ -247,14 +247,16 @@ def increase_wait_time(wait_sec: int) -> int:
 def check_raise(e: Exception, not_raise_msgs: List[str]) -> None:
     """Raise not recognized exceptions, depending on their message
 
-    Parameters:
+    Parameters
+    ----------
     e: `Exception`
         Exception
     not_raise_msgs: List[str]
         List of exception message which prevent raising exception
 
-    Raises:
-    e: `Exception`
+    Raises
+    ------
+    Exception
         Raised exception
     """
     raiseExc = True

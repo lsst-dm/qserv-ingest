@@ -126,7 +126,7 @@ class Ingester:
         ----------
         replication_config: `util.ReplicationConfig`
             Configuration parameters for the database inside replication/ingest system
-        felis: `Dict, optional`
+        felis: `dict`, optional
             Felis schema for tables. Defaults to None.
         """
         self.repl_client.database_register(self.contrib_meta.json_db)
@@ -203,15 +203,15 @@ class Ingester:
         """Get contributions from a queue server for a given database
         then ingest it inside Qserv during a super-transaction
 
-        Raises
-        ------
-        Raise exception if an error occurs during transaction
-
         Returns
         -------
         continue: `bool`
             0 if no more contribution to load,
             1 if super-transaction was performed successfully
+
+        Raises
+        ------
+        Raise exception if an error occurs during transaction
         """
 
 
