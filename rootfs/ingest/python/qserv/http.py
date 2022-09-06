@@ -34,7 +34,7 @@ import getpass
 import json
 import logging
 import os
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 import urllib.parse
 
 # ----------------------------
@@ -50,19 +50,9 @@ from . import util
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
-AUTH_PATH = "~/.lsst/qserv"
+DEFAULT_AUTH_PATH = "~/.lsst/qserv"
 
 _LOG = logging.getLogger(__name__)
-
-
-def authorize() -> str:
-    try:
-        with open(os.path.expanduser(AUTH_PATH), "r") as f:
-            authKey = f.read().strip()
-    except IOError:
-        _LOG.warning("Cannot find %s", AUTH_PATH)
-        authKey = getpass.getpass()
-    return authKey
 
 
 def download_file(url: str, dest: str) -> None:
@@ -134,18 +124,32 @@ def _get_retry_object(retries: int = 5, backoff_factor: float = 0.2) -> Retry:
 class Http:
     """Manage http connections"""
 
-    def __init__(self) -> None:
+    def __init__(self, auth_path: Optional[str] = None) -> None:
         """Set http connections retry/timeout errors"""
         adapter = HTTPAdapter(max_retries=_get_retry_object())
         # Session is only used for the GET method
         self.http = requests.Session()
         self.http.mount("https://", adapter)
         self.http.mount("http://", adapter)
+        self.authKey = self._authenticate(auth_path)
 
-    def get(self, url: str, payload: Dict[str, Any] = dict(), auth: bool = True, timeout: int = None) -> Dict:
+    def _authenticate(self, auth_path: Optional[str]) -> str:
+        if not auth_path:
+            auth_path = DEFAULT_AUTH_PATH
+        try:
+            with open(os.path.expanduser(auth_path), "r") as f:
+                authKey = f.read().strip()
+        except IOError:
+            _LOG.warning("Cannot find %s", auth_path)
+            authKey = getpass.getpass()
+        return authKey
+
+    def get(self, url: str,
+            payload: Dict[str, Any] = dict(),
+            auth: bool = True,
+            timeout: Optional[int] = None) -> Dict:
         if auth is True:
-            authKey = authorize()
-            payload["auth_key"] = authKey
+            payload["auth_key"] = self.authKey
         r = self.http.get(url, json=payload, timeout=timeout)
         r.raise_for_status()
         response_json = r.json()
@@ -158,8 +162,7 @@ class Http:
     def post(self, url: str, payload: Dict[str, Any] = dict(),
              auth: bool = True, timeout: int = None) -> Dict:
         if auth is True:
-            authKey = authorize()
-            payload["auth_key"] = authKey
+            payload["auth_key"] = self.authKey
         try:
             r = requests.post(url, json=payload, timeout=timeout)
         except (requests.exceptions.RequestException, ConnectionResetError) as e:
@@ -175,10 +178,9 @@ class Http:
         return response_json
 
     def put(self, url: str, payload: Dict[str, Any] = dict(), timeout: int = None) -> Dict:
-        authKey = authorize()
         if not payload:
             payload = {}
-        payload["auth_key"] = authKey
+        payload["auth_key"] = self.authKey
         r = requests.put(url, json=payload, timeout=timeout)
         r.raise_for_status()
         response_json = r.json()
@@ -189,8 +191,7 @@ class Http:
         return response_json
 
     def delete(self, url: str, timeout: int = None) -> Dict:
-        authKey = authorize()
-        r = requests.delete(url, json={"auth_key": authKey}, timeout=timeout)
+        r = requests.delete(url, json={"auth_key": self.authKey}, timeout=timeout)
         r.raise_for_status()
         response_json = r.json()
         if not response_json["success"]:

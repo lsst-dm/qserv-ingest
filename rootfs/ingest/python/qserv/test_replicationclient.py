@@ -31,6 +31,7 @@ Tests for util modules
 import logging
 import os
 from pathlib import Path
+import tempfile
 
 # ----------------------------
 # Imports for other modules --
@@ -60,16 +61,11 @@ def test_database_register_tables() -> None:
     contribution_metadata = metadata.ContributionMetadata(data_url)
     tables_json_data = contribution_metadata.get_ordered_tables_json()
 
-    # Create empty credential file if not present
-    # TODO use http.AUTH_PATH instead of hard-coded value
-    auth_dir = os.path.join(Path.home(), ".lsst")
-    Path(auth_dir).mkdir(parents=True, exist_ok=True)
-    auth_file = os.path.join(auth_dir, "qserv")
-    Path(auth_file).touch()
+    _, auth_path = tempfile.mkstemp()
 
-    _LOG.debug("Credentials: %s", http.AUTH_PATH)
+    _LOG.debug("Credentials: %s", http.DEFAULT_AUTH_PATH)
     with pytest.raises(requests.exceptions.ConnectionError) as e:
-        repl_client = replicationclient.ReplicationClient("http://no_url/")
+        repl_client = replicationclient.ReplicationClient("http://no_url/", auth_path)
         # TODO add mock replication server for method below
         repl_client.database_register_tables(tables_json_data, None)
     _LOG.error("Expected error: %s", e)

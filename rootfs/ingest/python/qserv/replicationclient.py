@@ -39,7 +39,7 @@ import urllib.parse
 # Imports for other modules --
 # ----------------------------
 from . import jsonparser
-from .http import Http
+from .http import Http, DEFAULT_AUTH_PATH
 from . import util
 
 # ---------------------------------
@@ -56,7 +56,7 @@ class ReplicationClient:
     Use chunk metadata and connection to concurrent queue manager
     """
 
-    def __init__(self, repl_url: str) -> None:
+    def __init__(self, repl_url: str, auth_path: str = DEFAULT_AUTH_PATH) -> None:
 
         self.repl_url = util.trailing_slash(repl_url)
 
