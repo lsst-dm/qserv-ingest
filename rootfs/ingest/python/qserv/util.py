@@ -249,9 +249,9 @@ def check_raise(e: Exception, not_raise_msgs: List[str]) -> None:
 
     Parameters
     ----------
-    e: `Exception`
+    e : `Exception`
         Exception
-    not_raise_msgs: List[str]
+    not_raise_msgs : `List[str]`
         List of exception message which prevent raising exception
 
     Raises

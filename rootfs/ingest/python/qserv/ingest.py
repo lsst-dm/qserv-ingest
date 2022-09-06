@@ -33,7 +33,7 @@ User-friendly client library for Qserv replication service.
 from enum import Enum, auto
 import logging
 import time
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
 # ----------------------------
 # Imports for other modules --
@@ -49,7 +49,6 @@ from . import util
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
-AUTH_PATH = "~/.lsst/qserv"
 _LOG = logging.getLogger(__name__)
 
 # Max attempts to retry ingesting a file on replication service retriable error
@@ -118,7 +117,7 @@ class Ingester:
 
     def database_register_and_config(self,
                                      replication_config: util.ReplicationConfig,
-                                     felis: Dict = None) -> None:
+                                     felis: Optional[Dict] = None) -> None:
         """Register a database, its tables and its configuration inside replication/ingest system
            using data_url/<database_name>.json as input data
 

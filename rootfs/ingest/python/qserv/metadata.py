@@ -129,10 +129,10 @@ class TableSpec:
 
     Parameters:
     -----------
-        metadata_url: str
-            Url of metadata, used to access tables' json configuration files for R-I service
-        table_meta: Dict
-            metadata for a table
+    metadata_url : `str`
+        url of metadata, used to access tables' json configuration files for R-I service
+    table_meta : `Dict`
+        metadata for a table
     """
 
     contrib_specs: List[TableContributionsSpec]

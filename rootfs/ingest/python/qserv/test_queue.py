@@ -108,19 +108,19 @@ class MockDataAccessLayer:
             connection.execute(delete)
 
     def count_contribfiles(self) -> int:
-        query = select([func.count("*")]).select_from(self.queue)
+        query = select([func.count()]).select_from(self.queue)
         with self.engine.connect() as connection:
             result = connection.execute(query)
-            contrib_count = next(result)[0]
+            contrib_count = result.scalar()
             result.close()
         return contrib_count
 
     def count_locked(self) -> int:
-        query = select([func.count("*")]).select_from(self.queue)
+        query = select([func.count()]).select_from(self.queue)
         query = query.where(self.queue.c.locking_pod.is_not(None))
         with self.engine.connect() as connection:
             result = connection.execute(query)
-            contrib_locked_count = next(result)[0]
+            contrib_locked_count = result.scalar()
             result.close()
         return contrib_locked_count
 
@@ -129,7 +129,7 @@ class MockDataAccessLayer:
         query = query.where(self.queue.c.succeed.is_(True))
         with self.engine.connect() as connection:
             result = connection.execute(query)
-            contrib_locked_count = next(result)[0]
+            contrib_locked_count = result.scalar()
             result.close()
         return contrib_locked_count
 

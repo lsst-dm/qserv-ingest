@@ -133,8 +133,9 @@ class QueueManager:
     def all_succeed(self) -> bool:
         """Check all contribution files have beed ingested successfully for current database
 
-        Returns:
-        all_succeed: `bool`
+        Returns
+        -------
+        all_succeed : `bool`
             True if all contribution files have beed ingested successfully, else False
         """
         if self._count_contribfiles(not_succeed=True) == 0:
@@ -348,12 +349,12 @@ class QueueManager:
 
         Parameters
         ----------
-            connection: `Any`
-                Sqlalchemy connection
-            query: `Any`:
-                Sql query
-            max_retry: int
-                Maximum num of retry attempts
+        connection : `Any`
+            Sqlalchemy connection
+        query : `Any`
+            Sql query
+        max_retry : `int`
+            Maximum num of retry attempts
         """
         wait_sec = 1
         retry_count = 0

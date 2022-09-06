@@ -74,13 +74,16 @@ class LoadBalancedURL:
     def __init__(self, path: str, lbAlgo: LoadBalancerAlgorithm = None):
         """Manage a load balanced URL for http:// protocol, also support access for file:// protocol
 
-        Parameters:
-        -----------
-            path str: path of the url
-            lbAlgo LoadBalancerAlgorithm: http(s) load balancer algorithm, not used for file:// access
+        Parameters
+        ----------
+            path : `str`
+                path of the url
+            lbAlgo : `LoadBalancerAlgorithm`
+                http(s) load balancer algorithm, not used for file:// access
 
-        Raises:
-            ValueError: if path uses an unsupported protocol
+        Raises
+        ------
+            ValueError if path uses an unsupported protocol
         """
 
         if lbAlgo is not None and len(lbAlgo.loadbalancers) != 0:

@@ -45,7 +45,6 @@ from . import util
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
-AUTH_PATH = "~/.lsst/qserv"
 _LOG = logging.getLogger(__name__)
 _VERSION = 8
 
