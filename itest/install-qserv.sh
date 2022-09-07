@@ -6,14 +6,14 @@
 
 set -euxo pipefail
 
-OPERATOR_VERSION="tickets/DM-35399"
+OPERATOR_VERSION="main"
 OPERATOR_DIR="/tmp/qserv-operator"
 if [ -d "$OPERATOR_DIR" ]; then
   rm -rf "$OPERATOR_DIR"
 fi
 
-git clone https://github.com/lsst/qserv-operator "$OPERATOR_DIR"
-git -C "$OPERATOR_DIR" checkout "$OPERATOR_VERSION"
+git clone https://github.com/lsst/qserv-operator --branch "$OPERATOR_VERSION" \
+  --single-branch --depth=1 "$OPERATOR_DIR"
 "$OPERATOR_DIR"/prereq-install.sh
 kubectl apply -f "$OPERATOR_DIR"/manifests/operator.yaml
 "$OPERATOR_DIR"/tests/tools/wait-operator-ready.sh
