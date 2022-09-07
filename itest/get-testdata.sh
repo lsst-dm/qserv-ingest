@@ -42,12 +42,13 @@ QSERV_REPO_URL="https://github.com/lsst/qserv"
 if [ ! -d "$QSERV_SRC_DIR" ]
 then
   git clone "$QSERV_REPO_URL" --branch "$QSERV_BRANCH" --single-branch --depth=1 "$QSERV_SRC_DIR"
+  cd "$QSERV_SRC_DIR"
 else
+  cd "$QSERV_SRC_DIR"
   git pull
   git checkout "$QSERV_BRANCH"
 fi
 
-cd "$QSERV_SRC_DIR"
 git submodule update --init
 
 # Install qserv cli
