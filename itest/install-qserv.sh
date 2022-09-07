@@ -6,13 +6,24 @@
 
 set -euxo pipefail
 
-OPERATOR_VERSION="main"
+OPERATOR_VERSION="tickets/DM-36130"
 OPERATOR_DIR="/tmp/qserv-operator"
 if [ -d "$OPERATOR_DIR" ]; then
   rm -rf "$OPERATOR_DIR"
 fi
 
-git clone https://github.com/lsst/qserv-operator --branch "$OPERATOR_VERSION" \
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+REPO_URL="https://github.com/lsst/qserv-operator"
+
+# Retrieve same qserv-operator branch if it exists, else use qserv-operator main branch
+if git ls-remote --exit-code --heads "$REPO_URL" "$BRANCH"
+then
+    OPERATOR_VERSION="$BRANCH"
+else
+    OPERATOR_VERSION="main"
+fi
+
+git clone "$REPO_URL" --branch "$OPERATOR_VERSION" \
   --single-branch --depth=1 "$OPERATOR_DIR"
 "$OPERATOR_DIR"/prereq-install.sh
 kubectl apply -f "$OPERATOR_DIR"/manifests/operator.yaml
