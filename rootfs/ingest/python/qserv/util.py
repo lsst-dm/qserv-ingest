@@ -30,17 +30,17 @@ Tools used by ingest algorithm
 #  Imports of standard modules --
 # -------------------------------
 import argparse
-import io
+from dataclasses import dataclass, fields
+import dataclasses
 import json
 import logging
+from typing import Any, Dict, List
 import yaml
-import time
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-from sqlalchemy import event
-from sqlalchemy.engine import Engine
+
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -48,38 +48,37 @@ from sqlalchemy.engine import Engine
 _LOG = logging.getLogger(__name__)
 
 
-@event.listens_for(Engine, "before_cursor_execute")
-def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
-    conn.info.setdefault("query_start_time", []).append(time.time())
-    _LOG.debug("Query: %s", statement)
-
-
-@event.listens_for(Engine, "after_cursor_execute")
-def after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
-    total = time.time() - conn.info["query_start_time"].pop(-1)
-    _LOG.debug("Query total time: %f", total)
-
-
-def add_default_arguments(parser: argparse.ArgumentParser):
+def add_default_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--config",
         help="Configuration file for ingest client",
         type=argparse.FileType("r"),
         action=IngestConfigAction,
         metavar="FILE",
+        required=True
     )
-    parser.add_argument("--verbose", "-v", action="store_true", help="Use debug logging")
+    parser.add_argument('-v', '--verbose', default=0, action='count',
+                        help="More verbose output, can use several times. " +
+                        "Overridden by QSERV_INGEST_VERBOSE environment variable")
 
 
-def get_default_logger(verbose):
+def configure_logger(level: int) -> logging.Logger:
+    """Create, configure and returns logger
+
+    Parameters
+    ----------
+    level: `int`
+        logging level, 0: WARNING, 1: INFO, 2:DEBUG
+
+    Returns
+    -------
+    logger: `logging.Logger`
+        a configured logger which logs on standard output
     """
-    Create and returns default logger
-    """
+    levels = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
     logger = logging.getLogger()
-    if verbose:
-        logger.setLevel(logging.DEBUG)
-    else:
-        logger.setLevel(logging.INFO)
+    loglevel = levels.get(level, logging.DEBUG)
+    logger.setLevel(loglevel)
     streamHandler = logging.StreamHandler()
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     streamHandler.setFormatter(formatter)
@@ -87,7 +86,7 @@ def get_default_logger(verbose):
     return logger
 
 
-def trailing_slash(url):
+def trailing_slash(url: str) -> str:
     if not url.endswith("/"):
         url += "/"
     return url
@@ -99,12 +98,66 @@ class IngestConfig:
     """
 
     def __init__(self, yaml: dict):
-        self.servers = yaml["ingest"]["input"]["servers"]
-        self.path = yaml["ingest"]["input"]["path"]
-        self.data_url = yaml["ingest"]["qserv"]["queue_url"]
-        self.query_url = yaml["ingest"]["qserv"]["query_url"]
-        self.queue_url = yaml["ingest"]["qserv"]["queue_url"]
-        self.replication_url = yaml["ingest"]["qserv"]["replication_url"]
+
+        ingest_dict = yaml["ingest"]
+
+        self.servers = ingest_dict["input"]["servers"]
+        self.path = ingest_dict["input"]["path"]
+        self.data_url = ingest_dict["qserv"]["queue_url"]
+        self.query_url = ingest_dict["qserv"]["query_url"]
+        self.queue_url = ingest_dict["qserv"]["queue_url"]
+        self.replication_url = ingest_dict["qserv"]["replication_url"]
+        replication = ingest_dict.get("replication")
+        if replication is not None:
+            self.replication_config = ReplicationConfig(replication.get("cainfo"),
+                                                        replication.get("ssl_verifypeer"),
+                                                        replication.get("low_speed_limit"),
+                                                        replication.get("low_speed_time"))
+        else:
+            self.replication_config = ReplicationConfig()
+
+
+@dataclass
+class ReplicationConfig:
+    """Configuration parameters for replication/ingest system
+    See https://confluence.lsstcorp.org/display/DM/Ingest%3A+11.1.8.1.+Setting+configuration+parameters
+
+    Default value for all parameters are kept, in case `None` value is used in constructor
+
+    Parameters
+    ----------
+    cainfo : `str`
+        This attribute directly maps to https://curl.se/libcurl/c/CURLOPT_PROXY_CAINFO.html.
+        Putting the empty string as a value of the parameter will effectively turn this option off
+        as if it has never been configured for the database.
+        Default value: "/etc/pki/tls/certs/ca-bundle.crt"
+    ssl_verifypeer: `int`
+        This attribute directly maps to https://curl.se/libcurl/c/CURLOPT_PROXY_SSL_VERIFYPEER.html.
+        Numeric values of the parameter are treated as boolean variables,
+        where 0 represents false and any other values represent true.
+        Default value: 1
+    low_speed_limit: `int`
+        This attribute directly maps to https://curl.se/libcurl/c/CURLOPT_LOW_SPEED_LIMIT.html
+        Putting 0  as a value of the parameter will effectively turn this option off
+        as if it has never been configured for the database.
+        Default value: 60
+    low_speed_time: `int`
+        This attribute directly maps to https://curl.se/libcurl/c/CURLOPT_LOW_SPEED_TIME.html
+        Putting 0  as a value of the parameter will effectively turn this option off
+        as if it has never been configured for the database.
+        Default value: 120
+    """
+    cainfo: str = "/etc/pki/tls/certs/ca-bundle.crt"
+    ssl_verifypeer: int = 1
+    low_speed_limit: int = 60
+    low_speed_time: int = 120
+
+    def __post_init__(self) -> None:
+        """Set default value for all parameters, in case `None` value is used in constructor
+        """
+        for field in fields(self):
+            if not isinstance(field.default, dataclasses._MISSING_TYPE) and getattr(self, field.name) is None:
+                setattr(self, field.name, field.default)
 
 
 class IngestConfigAction(argparse.Action):
@@ -112,7 +165,8 @@ class IngestConfigAction(argparse.Action):
     Argparse action to read an ingest client configuration file
     """
 
-    def __call__(self, parser, namespace, values, option_string=None):
+    def __call__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace, values: Any,
+                 option_string: str = None) -> None:
         try:
             yaml_data = yaml.safe_load(values)
             config = IngestConfig(yaml_data)
@@ -126,7 +180,8 @@ class BaseUrlAction(argparse.Action):
     Add trailing slash to url
     """
 
-    def __call__(self, parser, namespace, values, option_string):
+    def __call__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace, values: Any,
+                 option_string: str = None) -> None:
         x = trailing_slash(values)
         setattr(namespace, self.dest, x)
 
@@ -136,7 +191,8 @@ class DictAction(argparse.Action):
     Argparse action to attempt casting the values to floats and put into a dict
     """
 
-    def __call__(self, parser, namespace, values, option_string):
+    def __call__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace, values: Any,
+                 option_string: str = None) -> None:
         d = dict()
         for item in values:
             k, v = item.split("=")
@@ -150,7 +206,8 @@ class DictAction(argparse.Action):
 
 
 class JsonAction(argparse.Action):
-    def __call__(self, parser, namespace, values, option_string):
+    def __call__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace, values: Any,
+                 option_string: str = None) -> None:
         with open(values, "r") as f:
             x = json.load(f)
         setattr(namespace, self.dest, x)
@@ -161,10 +218,11 @@ class FelisAction(argparse.Action):
     Argparse action to read a felis file into namespace
     """
 
-    def __call__(self, parser, namespace, values, option_string):
+    def __call__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace, values: Any,
+                 option_string: str = None) -> None:
         with open(values, "r") as f:
             tables = yaml.safe_load(f)["tables"]
-        schemas = dict()
+        schemas: Dict[str, List] = dict()
         for table in tables:
             tableName = table["name"]
             schemas[tableName] = list()
@@ -180,7 +238,31 @@ class FelisAction(argparse.Action):
         setattr(namespace, self.dest, schemas)
 
 
-def increase_wait_time(wait_sec):
+def increase_wait_time(wait_sec: int) -> int:
     if wait_sec < 10:
         wait_sec *= 2
     return wait_sec
+
+
+def check_raise(e: Exception, not_raise_msgs: List[str]) -> None:
+    """Raise not recognized exceptions, depending on their message
+
+    Parameters
+    ----------
+    e : `Exception`
+        Exception
+    not_raise_msgs : `List[str]`
+        List of exception message which prevent raising exception
+
+    Raises
+    ------
+    Exception
+        Raised exception
+    """
+    raiseExc = True
+    for msg in not_raise_msgs:
+        if msg in str(e):
+            raiseExc = False
+            break
+    if raiseExc:
+        raise e

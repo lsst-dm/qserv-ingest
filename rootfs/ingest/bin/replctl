@@ -32,6 +32,8 @@ Index table columns using replication service to Qserv
 # -------------------------------
 import argparse
 from enum import Enum, auto
+import logging
+import os
 import sys
 
 # ----------------------------
@@ -56,7 +58,8 @@ class Task(str, Enum):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create Qserv indexes (tables or secondary) "
-                                     "using Qserv replication service")
+                                     "using Qserv replication service. " +
+                                     "Log level can be set using QSERV_INGEST_VERBOSE (values: 0 to 2)")
     util.add_default_arguments(parser)
     subparsers = parser.add_subparsers(dest='task')
 
@@ -95,45 +98,56 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    logger = util.get_default_logger(args.verbose)
+    env_verbose = os.getenv('QSERV_INGEST_VERBOSE')
+    if env_verbose:
+        try:
+            verbose = int(env_verbose)
+        except ValueError:
+            logging.fatal('Non integer environment variable QSERV_INGEST_VERBOSE: %s', env_verbose)
+            sys.exit(1)
+    else:
+        verbose = args.verbose
+
+    logger = util.configure_logger(verbose)
 
     logger.debug("Ingest configuration: %s", args.config.__dict__)
     logger.debug("Task: %s", args.task)
 
-    chunk_metadata = ContributionMetadata(args.config.path, args.config.servers)
+    contribution_metadata = ContributionMetadata(args.config.path, args.config.servers)
 
     if args.task == Task.QUEUE:
         logger.debug("Queue")
-        queue_manager = QueueManager(args.config.queue_url, chunk_metadata)
+        queue_manager = QueueManager(args.config.queue_url, contribution_metadata)
         queue_manager.insert_contribfiles()
+        queue_manager.init_mutex()
     elif args.task == Task.REGISTER:
-        ingester = Ingester(chunk_metadata, args.config.replication_url)
+        ingester = Ingester(contribution_metadata, args.config.replication_url)
         database_status = ingester.get_database_status()
         if database_status == DatabaseStatus.NOT_REGISTERED:
-            ingester.database_register_and_config(args.felis)
+            ingester.database_register_and_config(args.config.replication_config, args.felis)
         elif database_status == DatabaseStatus.REGISTERED_NOT_PUBLISHED:
             logger.warn("Skip current database registration: database has been registered previously")
         elif database_status == DatabaseStatus.PUBLISHED:
             logger.fatal("Fail current database registration: database has been published previously")
             sys.exit(1)
     elif args.task == Task.INGEST:
-        queue_manager = QueueManager(args.config.queue_url, chunk_metadata)
-        ingester = Ingester(chunk_metadata, args.config.replication_url, queue_manager)
+        queue_manager = QueueManager(args.config.queue_url, contribution_metadata)
+        ingester = Ingester(contribution_metadata, args.config.replication_url, queue_manager)
         if args.check:
             ingester.check_supertransactions_success()
         else:
             ingester.ingest(args.chunk_queue_fraction)
     elif args.task == Task.PUBLISH:
-        ingester = Ingester(chunk_metadata, args.config.replication_url)
+        ingester = Ingester(contribution_metadata, args.config.replication_url)
         ingester.database_publish()
     elif args.task == Task.INDEX:
-        ingester = Ingester(chunk_metadata, args.config.replication_url)
+        ingester = Ingester(contribution_metadata, args.config.replication_url)
         ingester.index(args.secondary)
     elif args.task == Task.VALIDATE:
-        validator = Validator(chunk_metadata, args.config.query_url, True)
+        validator = Validator(contribution_metadata, args.config.query_url, True)
         validator.query()
     elif args.task == Task.BENCHMARK:
-        validator = Validator(chunk_metadata, args.config.query_url)
+        validator = Validator(contribution_metadata, args.config.query_url)
         if validator.benchmark():
             logger.info("Query results are identical to those expected")
         else:

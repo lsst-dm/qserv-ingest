@@ -48,14 +48,7 @@ _FAMILY = "layout_340_3"
 _DATADIR = os.path.join(_CWD, "testdata")
 
 
-def test_get_indexes():
-
-    response_json = http.json_get(_DATADIR, "indexes.json")
-    indexes = jsonparser.get_indexes(response_json)
-    print(indexes)
-
-
-def test_contribution_monitor():
+def test_contribution_monitor() -> None:
 
     response_json = http.json_get(_DATADIR, "response_file_async.json")
     contrib_monitor = jsonparser.ContributionMonitor(response_json)
@@ -70,7 +63,7 @@ def test_contribution_monitor():
     assert contrib_monitor.retry_allowed is False
 
 
-def test_parse_not_finished_transaction():
+def test_parse_not_finished_transaction() -> None:
 
     jsonstring = (
         '{"databases": {"cosmoDC2_v1_1_4_image": {"num_chunks": 5, "transactions": ['
@@ -95,7 +88,7 @@ def test_parse_not_finished_transaction():
     assert len(transactions) == 2
 
 
-def test_parse_database_status():
+def test_parse_database_status() -> None:
     response_json = http.json_get(_CWD, "replicationconfig.json")
     status = jsonparser.parse_database_status(response_json, _DATABASE, _FAMILY)
     assert status == jsonparser.DatabaseStatus.REGISTERED_NOT_PUBLISHED

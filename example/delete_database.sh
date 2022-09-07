@@ -1,5 +1,5 @@
 #!/bin/bash
-# Get the number of remaining elements in ingest chunk queue
+# Delete a database from Qserv
 
 # Database names:
 # - cosmoDC2_v1_1_4_image_overlap
@@ -18,7 +18,7 @@ DIR=$(cd "$(dirname "$0")"; pwd -P)
 usage() {
   cat << EOD
 
-Usage: `basename $0` [options] database password
+Usage: `basename $0` [options] database
 
   Available options:
     -h          this message
@@ -26,8 +26,6 @@ Usage: `basename $0` [options] database password
 Delete a database from Qserv
 EOD
 }
-
-kind=false
 
 # get the options
 while getopts h c ; do
@@ -38,16 +36,17 @@ while getopts h c ; do
 done
 shift `expr $OPTIND - 1`
 
-if [ $# -ne 2 ] ; then
+if [ $# -ne 1 ] ; then
     usage
     exit 2
 fi
 
 DATABASE="$1"
-PASSWORD="$2"
 
+DB_USER="qsingest"
 
-kubectl exec -it $INSTANCE-ingest-db-0 -- mysql -h localhost -u root -p"$PASSWORD" -e "DELETE FROM qservIngest.chunkfile_queue WHERE \`database\` LIKE '$DATABASE';"
+POD="$INSTANCE-ingest-db-0"
+kubectl exec -it "$POD" -- mysql -h "$POD" -u "$DB_USER" -e "DELETE FROM qservIngest.contribfile_queue WHERE \`database\` LIKE '$DATABASE';"
 time kubectl exec -it $INSTANCE-repl-ctl-0 -- curl http://localhost:$REPL_CTL_PORT/ingest/database/"$DATABASE"  \
    -X DELETE -H "Content-Type: application/json" \
    -d '{"admin_auth_key":""}'

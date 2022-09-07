@@ -1,3 +1,17 @@
+
+## Scale up
+
+!!!Test UPDATE with and without indexes, can it screw up update of succeed field??
+
+- Comment all method
+- use mypy, black
+- test on IDF
+
+Implement SELECT FOR UPDATE + autocommit=0
+See:
+- https://stackoverflow.com/a/18144869/2784039
+- https://dba.stackexchange.com/questions/311242/mysql-concurrent-updates
+
 ##
 
 Get chunk location once!

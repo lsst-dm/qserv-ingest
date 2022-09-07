@@ -28,8 +28,8 @@ Manage metadata related to input data
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
+from collections.abc import Generator
 from dataclasses import dataclass
-import json
 import logging
 from typing import Any, Dict, List
 import urllib.parse
@@ -39,7 +39,7 @@ import urllib.parse
 # Imports for other modules --
 # ----------------------------
 from .http import json_get
-from .loadbalancerurl import LoadBalancedURL
+from .loadbalancerurl import LoadBalancerAlgorithm, LoadBalancedURL
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -66,6 +66,9 @@ class TableContributionsSpec:
     base_path: str
     """ Base path """
 
+    database: str
+    """ Database name """
+
     table: str
     """ Table name """
 
@@ -78,16 +81,18 @@ class TableContributionsSpec:
     chunks_overlap: List[int]
     """ Chunks ids for overlap files for partioned tables, empty for non-partitioned tables """
 
-    def get_contrib(self):
+    def get_contrib(self) -> Generator[Dict[str, Any], None, None]:
         """Generator for contribution specifications for a given table and a given path
 
         Yields
         ------
             Iterator[List[dict()]]: Iterator on each contribution specifications for a table
         """
+        data: Dict[str, Any]
         for file in self.files:
             data = {
                 "chunk_id": None,
+                "database": self.database,
                 "filepath": self._filepath(file),
                 "is_overlap": None,
                 "table": self.table,
@@ -97,6 +102,7 @@ class TableContributionsSpec:
         for id in self.chunks:
             data = {
                 "chunk_id": id,
+                "database": self.database,
                 "filepath": self._filepath(f"chunk_{id}.txt"),
                 "is_overlap": False,
                 "table": self.table,
@@ -106,6 +112,7 @@ class TableContributionsSpec:
         for id in self.chunks_overlap:
             data = {
                 "chunk_id": id,
+                "database": self.database,
                 "filepath": self._filepath(f"chunk_{id}_overlap.txt"),
                 "is_overlap": True,
                 "table": self.table,
@@ -118,14 +125,23 @@ class TableContributionsSpec:
 
 
 class TableSpec:
-    """Contain table specifications for a given database"""
+    """Contain table specifications
+
+    Parameters:
+    -----------
+    metadata_url : `str`
+        url of metadata, used to access tables' json configuration files for R-I service
+    table_meta : `Dict`
+        metadata for a table
+    """
 
     contrib_specs: List[TableContributionsSpec]
     data: List[Any]
+    database: str
     schema_file: str
     is_director: bool
     is_partitioned: bool
-    json_indexes: List[str]
+    json_indexes: List[Dict[str, Any]]
     json_schema: Dict
     name: str
 
@@ -134,10 +150,9 @@ class TableSpec:
         schema_file = table_meta["schema"]
         self.json_schema = json_get(metadata_url, schema_file)
         self.name = self.json_schema["table"]
+        self.database = self.json_schema["database"]
         self.is_partitioned = self.json_schema["is_partitioned"] == 1
-        self.is_director = (
-            "director_table" in self.json_schema and len(self.json_schema["director_table"]) == 0
-        )
+        self.is_director = self._is_director()
         idx_files = table_meta["indexes"]
         self.json_indexes = []
         for f in idx_files:
@@ -153,14 +168,25 @@ class TableSpec:
                 chunks = d[_CHUNKS]
                 # Only director tables can have (extra) overlaps
                 if self.is_director:
-                    # chunk ids for overlaps migh be different of regular chunk ids
+                    # chunk ids for overlaps might be different of regular chunk ids
                     if d.get(_OVERLAPS):
                         chunks_overlap = d[_OVERLAPS]
                     else:
                         chunks_overlap = d[_CHUNKS]
             else:
                 files = d[_FILES]
-            self.contrib_specs.append(TableContributionsSpec(path, self.name, files, chunks, chunks_overlap))
+            self.contrib_specs.append(TableContributionsSpec(path, self.database, self.name, files,
+                                                             chunks, chunks_overlap))
+
+    def _is_director(self) -> bool:
+        is_director: bool = False
+        director_table = self.json_schema.get("director_table")
+        if director_table is not None:
+            if len(director_table) == 0:
+                is_director = True
+        elif self.json_schema.get("is_partitioned") == 1:
+            is_director = True
+        return is_director
 
 
 class ContributionMetadata:
@@ -187,7 +213,8 @@ class ContributionMetadata:
         """
 
         # Get scheme configuration
-        self.lb_url = LoadBalancedURL(path, loadbalancers)
+        lbAlgo = LoadBalancerAlgorithm(loadbalancers)
+        self.lb_url = LoadBalancedURL(path, lbAlgo)
 
         self.metadata_url = self.lb_url.direct_url
         self.metadata = json_get(self.metadata_url, _METADATA_FILENAME)
@@ -198,7 +225,7 @@ class ContributionMetadata:
         self.family = "layout_{}_{}".format(self.json_db["num_stripes"], self.json_db["num_sub_stripes"])
         self._init_tables()
 
-    def get_table_contribs_spec(self):
+    def get_table_contribs_spec(self) -> Generator[TableContributionsSpec, None, None]:
         """Generator for contribution specifications for the whole database
 
         Retrieve information about input contribution files
@@ -217,14 +244,14 @@ class ContributionMetadata:
         """
         return urllib.parse.urljoin(self.metadata_url, path)
 
-    def get_tables_names(self):
+    def get_tables_names(self) -> List[str]:
         table_names = []
         for t in self.tables:
             table_names.append(t.name)
         return table_names
 
-    def get_json_indexes(self):
-        json_indexes: List[str] = []
+    def get_json_indexes(self) -> List[Dict[str, Any]]:
+        json_indexes: List[Dict] = []
         for tbl in self.tables:
             json_indexes.extend(tbl.json_indexes)
         return json_indexes
@@ -244,7 +271,7 @@ class ContributionMetadata:
             schema_files.append(t.json_schema)
         return schema_files
 
-    def _init_tables(self):
+    def _init_tables(self) -> None:
         self.tables = []
         self._has_extra_overlaps = False
         for table_meta in self.metadata["tables"]:

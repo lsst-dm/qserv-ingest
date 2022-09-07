@@ -55,4 +55,4 @@ if [ ! -d "$CFG_PATH" ]; then
 fi
 
 kubectl apply -k "$CFG_PATH"
-argo submit --serviceaccount=argo-workflow -p image="$INGEST_IMAGE" --entrypoint $entrypoint -vvv $DIR/manifests/workflow.yaml
+argo submit --serviceaccount=argo-workflow -p image="$INGEST_IMAGE" -p verbose=1 --entrypoint $entrypoint -vvv $DIR/manifests/workflow.yaml

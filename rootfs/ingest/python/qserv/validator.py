@@ -43,7 +43,7 @@ from typing import IO
 # ----------------------------
 import sqlalchemy
 from sqlalchemy import MetaData
-from sqlalchemy.engine.url import make_url
+from sqlalchemy.engine.url import make_url, URL
 from sqlalchemy.sql import select, func
 
 # ----------------------------
@@ -112,9 +112,9 @@ class Validator:
         if sqlEngine:
             self._initSqlEngine()
 
-    def _initSqlEngine(self):
+    def _initSqlEngine(self) -> None:
         database = self.contribution_metadata.database
-        qserv_url = make_url(self.query_url)
+        qserv_url: URL = make_url(self.query_url)
         if not qserv_url.database and qserv_url.drivername == "mysql":
             qserv_db_url = qserv_url.set(drivername="mariadb+mariadbconnector", database=database)
         else:
@@ -130,7 +130,7 @@ class Validator:
         self.tables = db_meta.sorted_tables
         _LOG.info("Database: %s, tables: %s", database, self.tables)
 
-    def query(self):
+    def query(self) -> None:
         """
         Lauch simple queries against Qserv database
         using sqlalchemy

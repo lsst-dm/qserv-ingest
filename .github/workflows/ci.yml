@@ -9,7 +9,7 @@ on:
 jobs:
   build:
     name: Build image
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -31,13 +31,16 @@ jobs:
           mkdir -p artifacts
           docker save "${{ env.IMAGE }}" > artifacts/image.tar
           echo "${{ env.IMAGE }}" > artifacts/image-tag
+      - name: Launch unit tests
+        run: |
+          ./code-checks.sh -u
       - uses: actions/upload-artifact@v2
         with:
           name: image
           path: artifacts
   image-analysis:
     name: Analyze image
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     needs: build
     steps:
       - name: Download image
@@ -60,7 +63,7 @@ jobs:
           sarif_file: results.sarif
   integration:
     name: Run integration test on qserv-ingest
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: build
     steps:
       - name: apparmor
@@ -108,7 +111,7 @@ jobs:
         run: ./itest/run-tests.sh
   push:
     name: Push Qserv ingest image to registry
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: integration
     steps:
       - name: Download qserv-ingest image

@@ -34,8 +34,7 @@ import getpass
 import json
 import logging
 import os
-from typing import Dict
-from urllib.error import HTTPError
+from typing import Any, Dict, Optional
 import urllib.parse
 
 # ----------------------------
@@ -51,19 +50,9 @@ from . import util
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
-AUTH_PATH = "~/.lsst/qserv"
+DEFAULT_AUTH_PATH = "~/.lsst/qserv"
 
 _LOG = logging.getLogger(__name__)
-
-
-def authorize():
-    try:
-        with open(os.path.expanduser(AUTH_PATH), "r") as f:
-            authKey = f.read().strip()
-    except IOError:
-        _LOG.debug("Cannot find %s", AUTH_PATH)
-        authKey = getpass.getpass()
-    return authKey
 
 
 def download_file(url: str, dest: str) -> None:
@@ -82,9 +71,25 @@ def file_exists(url: str) -> bool:
     return response.status_code == 200
 
 
-def json_get(base_url, filename):
-    """
-    Load json file at a given URL
+def json_get(base_url: str, filename: str) -> Dict:
+    """Load a JSON file located at a given URL
+
+    Parameters
+    ----------
+    base_url: `str`
+        JSON file location
+    filename: `str`
+        JSON file name
+
+    Returns
+    -------
+    json_data: `dict`
+        JSON data represented as a dictionary
+
+    Raises
+    ------
+    IngestError:
+        Raise is URI scheme is not in http://, https://, file://
     """
     str_url = urllib.parse.urljoin(util.trailing_slash(base_url), filename)
     url = urllib.parse.urlsplit(str_url, scheme="file")
@@ -98,7 +103,7 @@ def json_get(base_url, filename):
         raise IngestError("Unsupported URI scheme for ", url)
 
 
-def _get_retry_object(retries=5, backoff_factor=0.2) -> Retry:
+def _get_retry_object(retries: int = 5, backoff_factor: float = 0.2) -> Retry:
     """Create an instance of :obj:`urllib3.util.Retry`.
 
     With default arguments (5 retries with 0.2 backoff factor), urllib3 will sleep
@@ -110,7 +115,7 @@ def _get_retry_object(retries=5, backoff_factor=0.2) -> Retry:
         total=retries,
         read=retries,
         connect=retries,
-        method_whitelist=["GET"],
+        allowed_methods=["GET"],
         backoff_factor=backoff_factor,
         status_forcelist=[429, 500, 502, 503, 504],
     )
@@ -119,34 +124,45 @@ def _get_retry_object(retries=5, backoff_factor=0.2) -> Retry:
 class Http:
     """Manage http connections"""
 
-    def __init__(self):
+    def __init__(self, auth_path: Optional[str] = None) -> None:
         """Set http connections retry/timeout errors"""
         adapter = HTTPAdapter(max_retries=_get_retry_object())
         # Session is only used for the GET method
         self.http = requests.Session()
         self.http.mount("https://", adapter)
         self.http.mount("http://", adapter)
+        self.authKey = self._authenticate(auth_path)
 
-    def get(self, url, payload=dict(), auth=True, timeout=None) -> dict:
+    def _authenticate(self, auth_path: Optional[str]) -> str:
+        if not auth_path:
+            auth_path = DEFAULT_AUTH_PATH
+        try:
+            with open(os.path.expanduser(auth_path), "r") as f:
+                authKey = f.read().strip()
+        except IOError:
+            _LOG.warning("Cannot find %s", auth_path)
+            authKey = getpass.getpass()
+        return authKey
+
+    def get(self, url: str,
+            payload: Dict[str, Any] = dict(),
+            auth: bool = True,
+            timeout: Optional[int] = None) -> Dict:
         if auth is True:
-            authKey = authorize()
-            payload["auth_key"] = authKey
+            payload["auth_key"] = self.authKey
         r = self.http.get(url, json=payload, timeout=timeout)
-        if r.status_code != 200:
-            raise HTTPError(
-                url, r.status_code, "HTTP %s Error for url (GET): %s" % (r.status_code, url), r, None
-            )
+        r.raise_for_status()
         response_json = r.json()
         if not response_json["success"]:
             _LOG.critical("%s %s", url, response_json["error"])
             raise ReplicationControllerError("Error in JSON response (GET)", url, response_json["error"])
-        _LOG.info("GET: success")
+        _LOG.debug("GET: success")
         return response_json
 
-    def post(self, url, payload, auth=True, timeout=None) -> Dict:
+    def post(self, url: str, payload: Dict[str, Any] = dict(),
+             auth: bool = True, timeout: int = None) -> Dict:
         if auth is True:
-            authKey = authorize()
-            payload["auth_key"] = authKey
+            payload["auth_key"] = self.authKey
         try:
             r = requests.post(url, json=payload, timeout=timeout)
         except (requests.exceptions.RequestException, ConnectionResetError) as e:
@@ -156,41 +172,30 @@ class Http:
                 *e.args,
             )
             raise e
-        if r.status_code != 200:
-            raise HTTPError(
-                url, r.status_code, f"HTTP {r.status_code} Error for url (POST): {url}", None, None
-            )
+        r.raise_for_status()
         response_json = r.json()
         _LOG.debug("POST %s: success", url)
         return response_json
 
-    def put(self, url, payload=None, timeout=None) -> Dict:
-        authKey = authorize()
+    def put(self, url: str, payload: Dict[str, Any] = dict(), timeout: int = None) -> Dict:
         if not payload:
             payload = {}
-        payload["auth_key"] = authKey
+        payload["auth_key"] = self.authKey
         r = requests.put(url, json=payload, timeout=timeout)
-        if r.status_code != 200:
-            raise HTTPError(
-                url, r.status_code, f"HTTP {r.status_code} Error for url (PUT): {url}", None, None
-            )
+        r.raise_for_status()
         response_json = r.json()
         if not response_json["success"]:
             _LOG.critical("%s %s", url, response_json["error"])
             raise ReplicationControllerError("Error in JSON response (PUT)", url, response_json["error"])
-        _LOG.info("PUT: success")
+        _LOG.debug("PUT: success")
         return response_json
 
-    def delete(self, url, timeout=None):
-        authKey = authorize()
-        r = requests.delete(url, json={"auth_key": authKey}, timeout=timeout)
-        if r.status_code != 200:
-            raise HTTPError(
-                url, r.status_code, f"HTTP {r.status_code} Error for url (DELETE): {url}", r, None
-            )
+    def delete(self, url: str, timeout: int = None) -> Dict:
+        r = requests.delete(url, json={"auth_key": self.authKey}, timeout=timeout)
+        r.raise_for_status()
         response_json = r.json()
         if not response_json["success"]:
             _LOG.critical("%s %s", url, response_json["error"])
             raise ReplicationControllerError("Error in JSON response (DELETE)", url, response_json["error"])
-        _LOG.info("DELETE: success")
+        _LOG.debug("DELETE: success")
         return response_json

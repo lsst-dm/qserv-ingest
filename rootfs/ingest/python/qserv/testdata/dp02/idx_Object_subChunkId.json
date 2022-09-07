@@ -1,0 +1,15 @@
+{
+    "database": "dp02_dc2_catalogs",
+    "table": "Object",
+    "index": "idx_subChunkId",
+    "spec": "DEFAULT",
+    "comment": "The index is needed for optimized materialization of sub-chunks",
+    "columns": [
+        {
+            "column": "subChunkId",
+            "length": 0,
+            "ascending": 1
+        }
+    ],
+    "auth_key": ""
+}

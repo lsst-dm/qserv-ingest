@@ -33,22 +33,22 @@ User-friendly client library for Qserv replication service.
 from enum import Enum, auto
 import logging
 import time
-from typing import List, Tuple
-
+from typing import Dict, List, Optional, Tuple
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
 from .contribution import Contribution
 from .exception import IngestError
+from .jsonparser import DatabaseStatus
 from .metadata import ContributionMetadata
 from .queue import QueueManager
 from .replicationclient import ReplicationClient
+from . import util
 
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
-AUTH_PATH = "~/.lsst/qserv"
 _LOG = logging.getLogger(__name__)
 
 # Max attempts to retry ingesting a file on replication service retriable error
@@ -91,13 +91,16 @@ class Ingester:
         self.queue_manager = queue_manager
         self.repl_client = ReplicationClient(replication_url)
 
-    def check_supertransactions_success(self):
+    def check_supertransactions_success(self) -> None:
         """Check all super-transactions have ran successfully"""
         trans = self.repl_client.get_transactions_started(self.contrib_meta.database)
         _LOG.debug(f"IDs of transactions in STARTED state: {trans}")
         if len(trans) > 0:
             raise IngestError(f"Database publication prevented by started transactions: {trans}")
-        contributions = self.queue_manager.select_noningested_contributions()
+        if self.queue_manager is not None:
+            contributions = self.queue_manager.select_noningested_contribfiles()
+        else:
+            raise IngestError("Unitialized queue manager")
         if len(contributions) > 0:
             _LOG.error(f"Non ingested contributions: {contributions}")
             raise IngestError(
@@ -105,38 +108,49 @@ class Ingester:
             )
         _LOG.info("All contributions in queue successfully ingested")
 
-    def database_publish(self):
+    def database_publish(self) -> None:
         """
         Publish a Qserv database inside replication system
         """
         database = self.contrib_meta.database
         self.repl_client.database_publish(database)
 
-    def database_register_and_config(self, felis=None):
-        """
-        Register a database, its tables and its configuration inside replication system
-        using data_url/<database_name>.json as input data
+    def database_register_and_config(self,
+                                     replication_config: util.ReplicationConfig,
+                                     felis: Optional[Dict] = None) -> None:
+        """Register a database, its tables and its configuration inside replication/ingest system
+           using data_url/<database_name>.json as input data
+
+        Parameters
+        ----------
+        replication_config: `util.ReplicationConfig`
+            Configuration parameters for the database inside replication/ingest system
+        felis: `dict`, optional
+            Felis schema for tables. Defaults to None.
         """
         self.repl_client.database_register(self.contrib_meta.json_db)
         self.repl_client.database_register_tables(self.contrib_meta.get_ordered_tables_json(), felis)
-        self.repl_client.database_config(self.contrib_meta.database)
+        self.repl_client.database_config(self.contrib_meta.database, replication_config)
 
-    def get_database_status(self):
+    def get_database_status(self) -> DatabaseStatus:
         """
         Return the status of a Qserv catalog database
         """
         return self.repl_client.get_database_status(self.contrib_meta.database, self.contrib_meta.family)
 
-    def ingest(self, contribution_queue_fraction):
+    def ingest(self, contribution_queue_fraction: int) -> None:
         """
         Ingest contribution for a transaction
         """
-        self.queue_manager.set_transaction_size(contribution_queue_fraction)
+        if self.queue_manager is not None:
+            self.queue_manager.set_transaction_size(contribution_queue_fraction)
+        else:
+            raise IngestError("Unitialized queue manager")
         has_non_ingested_contributions = True
         while has_non_ingested_contributions:
             has_non_ingested_contributions = self._ingest_transaction()
 
-    def index(self, secondary=False):
+    def index(self, secondary: bool = False) -> None:
         """
         Index Qserv MySQL sharded tables
         or create secondary index
@@ -186,27 +200,45 @@ class Ingester:
 
     def _ingest_transaction(self) -> bool:
         """Get contributions from a queue server for a given database
-        then ingest it inside Qserv,
-        during a super-transation
+        then ingest it inside Qserv during a super-transaction
 
-        Returns:
-        --------
+        Returns
+        -------
         continue: `bool`
             0 if no more contribution to load,
-            1 if at least one contribution was loaded successfully
+            1 if super-transaction was performed successfully
+
+        Raises
+        ------
+        Raise exception if an error occurs during transaction
         """
 
-        _LOG.info("Start ingest transaction")
 
-        contribfiles_locked = self.queue_manager.lock_contribfiles()
-        if len(contribfiles_locked) == 0:
-            return False
+        continue_ingest: bool
 
-        transaction_id = None
-        ingest_success = False
+        if self.queue_manager is None:
+            raise IngestError("Unitialized queue manager")
+        while True:
+            contribfiles_locked = self.queue_manager.lock_contribfiles()
+            # Remaining contribution files to ingest
+            if len(contribfiles_locked) != 0:
+                break
+            # No more contribution file to ingest
+            # All contribution files have been ingested successfully
+            elif self.queue_manager.all_succeed():
+                continue_ingest = False
+                return continue_ingest
+            # No more contribution file to ingest
+            # Waiting to recover possibly failed transactions
+            else:
+                _LOG.info("Waiting for all contributions files to be in succeed state")
+                time.sleep(10)
+
+        transaction_id: int
+        ingest_success: bool = False
         try:
             transaction_id = self.repl_client.start_transaction(self.contrib_meta.database)
-
+            _LOG.info("Start ingest transaction %s", transaction_id)
             contributions = self._build_contributions(contribfiles_locked)
 
             ingest_success = self._ingest_all_contributions(transaction_id, contributions)
@@ -217,10 +249,14 @@ class Ingester:
             raise (e)
         finally:
             if transaction_id:
+                if ingest_success:
+                    _LOG.info("Close ingest transaction %s", transaction_id)
+                else:
+                    _LOG.warn("Abort ingest transaction %s", transaction_id)
                 self.repl_client.close_transaction(self.contrib_meta.database, transaction_id, ingest_success)
-                self.queue_manager.release_locked_contributions(ingest_success)
-
-        return True
+                self.queue_manager.unlock_contribfiles(ingest_success)
+        continue_ingest = True
+        return continue_ingest
 
     def _ingest_all_contributions(self, transaction_id: int, contributions: list[Contribution]) -> bool:
         """Ingest all contribution for a given transaction
@@ -235,46 +271,54 @@ class Ingester:
             bool: True if ingest has ran successfully
         """
         loop = True
-        _LOG.debug(
+        _LOG.info(
             "%s contributions to ingest during transaction %s",
             len(contributions),
             transaction_id,
         )
         while loop:
-            contribs_unfinished_count = 0
+            contribs_started_count = 0
+            contribs_notfinished_count = 0
+            contribs_prevfinished_count = 0
+            contribs_justfinished_count = 0
             for _, c in enumerate(contributions):
                 current_time = time.strftime("%H:%M:%S", time.localtime())
                 if c.finished:
-                    pass
+                    contribs_prevfinished_count += 1
                 elif c.request_id is None:
                     # Ingest to start
                     _LOG.debug("Contribution %s ingest started at %s", c, current_time)
                     c.start_async(transaction_id)
-                    contribs_unfinished_count += 1
+                    contribs_started_count += 1
                 else:
                     _LOG.debug("Contribution %s ingest monitored at %s", c, current_time)
                     c.finished = c.monitor()
                     if c.finished:
                         # Ingest successfully loaded (i.e. in FINISHED state)
                         _LOG.debug("Contribution %s successfully loaded", c)
+                        contribs_justfinished_count += 1
                     else:
-                        contribs_unfinished_count += 1
+                        contribs_notfinished_count += 1
 
+            contribs_unfinished_count = contribs_notfinished_count + contribs_started_count
             if contribs_unfinished_count == 0:
                 loop = False
             else:
-                _LOG.debug(
-                    "Processing %s contributions for transaction %s",
-                    contribs_unfinished_count,
+                _LOG.info(
+                    "Contributions for transaction %s, RECENTLY STARTED: %s, NOT FINISHED: %s," +
+                    "RECENTLY FINISHED: %s, FINISHED: %s",
                     transaction_id,
+                    contribs_started_count,
+                    contribs_notfinished_count,
+                    contribs_justfinished_count,
+                    contribs_prevfinished_count
                 )
                 time.sleep(5)
 
         return True
 
-    def transaction_helper(self, action: TransactionAction, trans_id: int = None):
-        """
-        High-level method which help in managing transaction(s)
+    def transaction_helper(self, action: TransactionAction, trans_id: int = None) -> None:
+        """High-level method which help in managing transaction(s)
         """
         database = self.contrib_meta.database
         match action:

@@ -5,7 +5,7 @@ ingest:
         # Use file:// as first element in list when using local data
         servers:
             - http://dataserver
-            - http://dataserver
+            - http://dataserver.default
         # Path on server where input data is available
         path: datasets/case01/
     qserv:

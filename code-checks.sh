@@ -41,12 +41,11 @@ if [ $# -ne 0 ] ; then
     exit 2
 fi
 
-# Build ingest image
-$DIR/build.sh
-
 if [ $unittests = true ]; then
-  docker run -it -- "$INGEST_IMAGE" /ingest/bin/pytest.sh
+  # Build ingest image
+  $DIR/build.sh
+  docker run -- "$INGEST_IMAGE" /ingest/bin/pytest.sh
 fi
 if [ $mypy = true ]; then
-  docker run -it -- "$INGEST_IMAGE" mypy --config-file /ingest/python/mypy.ini /ingest/python/
+  mypy --config-file $DIR/rootfs/ingest/python/mypy.ini $DIR/rootfs/ingest/bin/replctl $DIR/rootfs/ingest/python/
 fi

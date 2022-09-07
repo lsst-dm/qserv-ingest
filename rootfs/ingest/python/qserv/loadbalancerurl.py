@@ -30,7 +30,7 @@ Manage metadata related to input data
 # -------------------------------
 from __future__ import annotations
 import logging
-from typing import List
+from typing import List, Optional
 import urllib.parse
 
 # ----------------------------
@@ -43,50 +43,78 @@ import urllib.parse
 _LOG = logging.getLogger(__name__)
 
 
+class LoadBalancerAlgorithm:
+    """Load balancing algorithm for accessing http servers
+    """
+    count: int
+    loadbalancers: List[str]
+
+    def __init__(self, loadbalancers: List[str]):
+        self.count = 0
+        self.loadbalancers = loadbalancers
+
+    def get(self) -> Optional[str]:
+        loadbalancers_count = len(self.loadbalancers)
+        if loadbalancers_count == 0:
+            url = None
+        else:
+            url = self.loadbalancers[self.count % loadbalancers_count]
+            self.count += 1
+        return url
+
+
 class LoadBalancedURL:
     """Manage http(s) load balanced URL
     Also file file:// protocol, and use it as default if no scheme is provided
     """
 
-    count = 0
+    loadBalancerAlgorithm: Optional[LoadBalancerAlgorithm]
+    direct_url: str
 
-    def __init__(self, path: str, loadbalancers: List[str] = []):
-        """Manage a load balanced URL
+    def __init__(self, path: str, lbAlgo: LoadBalancerAlgorithm = None):
+        """Manage a load balanced URL for http:// protocol, also support access for file:// protocol
 
-        Args:
-            path (str): path of the url
-            loadbalancers (List[str], optional): List of http(s) load balancer urls. Defaults to [].
+        Parameters
+        ----------
+            path : `str`
+                path of the url
+            lbAlgo : `LoadBalancerAlgorithm`
+                http(s) load balancer algorithm, not used for file:// access
 
-        Raises:
-            ValueError: if path uses an unsupported protocol
+        Raises
+        ------
+            ValueError if path uses an unsupported protocol
         """
 
-        if len(loadbalancers) != 0:
-            self.direct_url = urllib.parse.urljoin(loadbalancers[0], path)
+        if lbAlgo is not None and len(lbAlgo.loadbalancers) != 0:
+            self.direct_url = urllib.parse.urljoin(lbAlgo.loadbalancers[0], path)
         else:
             self.direct_url = path
 
         url = urllib.parse.urlsplit(self.direct_url, scheme="file")
+        self.counter = lbAlgo
         self.url_path = url.path
-        self.loadbalancers = []
+        self.loadBalancerAlgorithm = None
         if url.scheme in ["http", "https"]:
-            self.loadbalancers = loadbalancers
-        elif url.scheme != "file":
-            raise ValueError("Unsupported scheme for URL: %s, %s", path, loadbalancers)
+            self.loadBalancerAlgorithm = lbAlgo
+        elif url.scheme == "file":
+            self.loadBalancerAlgorithm = lbAlgo
+        else:
+            raise ValueError("Unsupported scheme for URL: %s, %s", path, lbAlgo)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"LoadBalancedURL({self.__dict__})"
 
     def get(self) -> str:
-        loadbalancers_count = len(self.loadbalancers)
-        if loadbalancers_count == 0:
+        if self.loadBalancerAlgorithm is not None:
+            lbUrl = self.loadBalancerAlgorithm.get()
+        if self.loadBalancerAlgorithm is None or lbUrl is None:
             url = self.direct_url
         else:
-            url = urllib.parse.urljoin(self.loadbalancers[self.count % loadbalancers_count], self.url_path)
-            self.count += 1
+            url = urllib.parse.urljoin(lbUrl, self.url_path)
         return url
 
     @classmethod
     def new(cls, lb_url: LoadBalancedURL, filepath: str) -> LoadBalancedURL:
         url_path = lb_url.url_path.rstrip("/") + "/" + filepath.strip("/")
-        return cls(url_path, lb_url.loadbalancers)
+        return cls(url_path, lb_url.loadBalancerAlgorithm)
