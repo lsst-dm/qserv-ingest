@@ -36,17 +36,16 @@ fi
 
 OUT_DIR=$1
 
-QSERV_BRANCH="main"
 QSERV_REPO_URL="https://github.com/lsst/qserv"
 # Clone qserv source code
+# Or use current local qserv source
 if [ ! -d "$QSERV_SRC_DIR" ]
 then
+  QSERV_BRANCH="main"
   git clone "$QSERV_REPO_URL" --branch "$QSERV_BRANCH" --single-branch --depth=1 "$QSERV_SRC_DIR"
   cd "$QSERV_SRC_DIR"
 else
   cd "$QSERV_SRC_DIR"
-  git pull
-  git checkout "$QSERV_BRANCH"
 fi
 
 git submodule update --init
@@ -68,16 +67,8 @@ if [ "$USER_ID" -eq 1000 ]; then
   USER_OPT="--user=qserv"
 fi
 qserv build -j8 $USER_OPT --unit-test
-qserv prepare-data
-
-
-CONTAINER_NAME="${USER}_testdata"
-
 mkdir -p "$OUT_DIR"
-cd -
-docker run --name ${CONTAINER_NAME} --mount src=${USER}_itest_exe,dst=/qserv/data/,type=volume \
-  --mount src="$OUT_DIR",dst=/home/ubuntu,type=bind --rm --network=${NETWORK_NAME} \
-  -- ubuntu sh -c "cp -r /qserv/data/datasets.tgz /home/ubuntu/ && chown $UID:$GID /home/ubuntu/datasets.tgz"
+qserv prepare-data --outdir="$OUT_DIR"
 
 echo "Dataset archive is available in $OUT_DIR/datasets.tgz"
 echo "Unzip it inside qserv-ingest/itest/datasets to use it"
