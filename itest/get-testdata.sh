@@ -36,13 +36,18 @@ fi
 
 OUT_DIR=$1
 
+QSERV_BRANCH="main"
+QSERV_REPO_URL="https://github.com/lsst/qserv"
 # Clone qserv source code
-if [ ! -d "$QSERV_SRC_DIR" ]; then
-  git clone https://github.com/lsst/qserv "$QSERV_SRC_DIR"
+if [ ! -d "$QSERV_SRC_DIR" ]
+then
+  git clone "$QSERV_REPO_URL" --branch "$QSERV_BRANCH" --single-branch --depth=1 "$QSERV_SRC_DIR"
+else
+  git pull
+  git checkout "$QSERV_BRANCH"
 fi
 
 cd "$QSERV_SRC_DIR"
-git checkout "2022.6.2-rc1-19-g5e52f0365"
 git submodule update --init
 
 # Install qserv cli
