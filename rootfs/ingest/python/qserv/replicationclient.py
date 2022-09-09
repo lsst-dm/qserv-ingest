@@ -290,5 +290,5 @@ class ReplicationClient:
         # Want to print responseJson["databases"]["hsc_test_w_2020_14_00"]["transactions"]
         current_db = responseJson["databases"][database]
         transaction_id = int(current_db["transactions"][0]["id"])
-        _LOG.debug("transaction ID: %i", {transaction_id})
+        _LOG.debug("transaction ID: %i", transaction_id)
         return transaction_id

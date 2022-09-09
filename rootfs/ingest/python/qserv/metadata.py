@@ -31,7 +31,7 @@ Manage metadata related to input data
 from collections.abc import Generator
 from dataclasses import dataclass
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 import urllib.parse
 
 
@@ -41,15 +41,49 @@ import urllib.parse
 from .http import json_get
 from .loadbalancerurl import LoadBalancerAlgorithm, LoadBalancedURL
 
+CSV = 'csv'
+TSV = 'tsv'
+TXT = 'txt'
+EXT_LIST: List[str] = [CSV, TSV, TXT]
+"""List of supported input data file extensions
+"""
+
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
-_CHUNKS = "chunks"
-_FILES = "files"
-_METADATA_FILENAME = "metadata.json"
-_OVERLAPS = "overlaps"
-
+_CHUNKS: str = "chunks"
+_FILES: str = "files"
+_METADATA_FILENAME: str = "metadata.json"
+_OVERLAPS: str = "overlaps"
 _LOG = logging.getLogger(__name__)
+
+
+class FileFormat(object):
+    """Define input data file format for mariadb 'LOAD DATA INFILE' statement
+    see https://mariadb.com/kb/en/load-data-infile/
+
+    Parameters
+    ----------
+    fields_enclosed_by : `Optional[str]`
+        Set mariadb "FIELDS ENCLOSED BY" option,
+        default to 'None' and then use replication service default
+    fields_escaped_by : `Optional[str]`
+        Set mariadb "FIELDS ESCAPED BY" option,
+        default to 'None' and then use replication service default
+    fields_terminated_by: `Optional[str]`
+        Set mariadb "FIELDS TERMINATED BY" option,
+        default to 'None' and then use replication service default
+    lines_terminated_by: `Optional[str]`
+        Set mariadb "LINES TERMINATED BY" option,
+        default to 'None' and then use replication service default
+    """
+
+    def __init__(self, fields_enclosed_by: Optional[str] = None, fields_escaped_by: Optional[str] = None,
+                 fields_terminated_by: Optional[str] = None, lines_terminated_by: Optional[str] = None):
+        self.fields_enclosed_by = fields_enclosed_by
+        self.fields_escaped_by = fields_escaped_by
+        self.fields_terminated_by = fields_terminated_by
+        self.lines_terminated_by = lines_terminated_by
 
 
 @dataclass
@@ -135,30 +169,21 @@ class TableSpec:
         metadata for a table
     """
 
-    contrib_specs: List[TableContributionsSpec]
-    data: List[Any]
-    database: str
-    schema_file: str
-    is_director: bool
-    is_partitioned: bool
-    json_indexes: List[Dict[str, Any]]
-    json_schema: Dict
-    name: str
-
     def __init__(self, metadata_url: str, table_meta: Dict):
-        self.data = table_meta["data"]
-        schema_file = table_meta["schema"]
-        self.json_schema = json_get(metadata_url, schema_file)
-        self.name = self.json_schema["table"]
-        self.database = self.json_schema["database"]
-        self.is_partitioned = self.json_schema["is_partitioned"] == 1
-        self.is_director = self._is_director()
-        idx_files = table_meta["indexes"]
-        self.json_indexes = []
+
+        self.data: List[Any] = table_meta["data"]
+        schema_file: str = table_meta["schema"]
+        self.json_schema: Dict[Any, Any] = json_get(metadata_url, schema_file)
+        self.name: str = self.json_schema["table"]
+        self.database: str = self.json_schema["database"]
+        self.is_partitioned: bool = self.json_schema["is_partitioned"] == 1
+        self.is_director: bool = self._is_director()
+        idx_files: List(str) = table_meta.get("indexes", [])
+        self.json_indexes: List[Dict[str, Any]] = []
         for f in idx_files:
             self.json_indexes.append(json_get(metadata_url, f))
 
-        self.contrib_specs = []
+        self.contrib_specs: List[TableContributionsSpec] = []
         for d in self.data:
             path = d["directory"]
             chunks = []
@@ -194,8 +219,6 @@ class ContributionMetadata:
     database, tables and contribution files
     """
 
-    tables: List[TableSpec]
-
     def __init__(self, path: str, loadbalancers: List[str] = []):
         """Retrieve and store metadata located at 'path' and describing:
              - database
@@ -212,6 +235,9 @@ class ContributionMetadata:
             List of http(s) load balancer urls providing access to metadata. Defaults to [].
         """
 
+        self.fileformats: Dict[str, FileFormat] = {}
+        self.tables: List[TableSpec]
+
         # Get scheme configuration
         lbAlgo = LoadBalancerAlgorithm(loadbalancers)
         self.lb_url = LoadBalancedURL(path, lbAlgo)
@@ -224,6 +250,7 @@ class ContributionMetadata:
         self.database = self.json_db["database"]
         self.family = "layout_{}_{}".format(self.json_db["num_stripes"], self.json_db["num_sub_stripes"])
         self._init_tables()
+        self._init_fileformats()
 
     def get_table_contribs_spec(self) -> Generator[TableContributionsSpec, None, None]:
         """Generator for contribution specifications for the whole database
@@ -280,3 +307,21 @@ class ContributionMetadata:
                 self.tables.insert(0, table)
             else:
                 self.tables.append(table)
+
+    def _init_fileformats(self) -> None:
+        format = self.metadata.get('formats')
+        if format:
+            for ext in EXT_LIST:
+                format_spec = format.get(ext)
+                if format_spec:
+                    self.fileformats[ext] = FileFormat(**format_spec)
+
+        for ext in EXT_LIST:
+            if self.fileformats.get(ext) is None:
+                if ext == CSV:
+                    fields_terminated_by = ','
+                elif ext == TSV:
+                    fields_terminated_by = '\\t'
+                else:
+                    fields_terminated_by = None
+                self.fileformats[ext] = FileFormat(fields_terminated_by=fields_terminated_by)

@@ -1,5 +1,13 @@
 {
    "database":"database.json",
+   "formats":{
+      "txt":{
+         "fields_terminated_by":"\\t",
+         "fields_enclosed_by":"",
+         "fields_escaped_by":"\\\\",
+         "lines_terminated_by":"\\n"
+      }
+   },
    "tables":[
       {
          "schema":"Object.json",

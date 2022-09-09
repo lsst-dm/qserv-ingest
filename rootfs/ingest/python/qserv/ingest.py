@@ -90,6 +90,7 @@ class Ingester:
         self.contrib_meta = contribution_metadata
         self.queue_manager = queue_manager
         self.repl_client = ReplicationClient(replication_url)
+        Contribution.fileformats = contribution_metadata.fileformats
 
     def check_supertransactions_success(self) -> None:
         """Check all super-transactions have ran successfully"""
@@ -212,7 +213,6 @@ class Ingester:
         ------
         Raise exception if an error occurs during transaction
         """
-
 
         continue_ingest: bool
 

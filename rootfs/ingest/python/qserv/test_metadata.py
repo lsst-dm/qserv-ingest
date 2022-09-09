@@ -121,6 +121,39 @@ def test_get_table_names() -> None:
     assert table_names == ["object", "position", "forced_photometry", "reference", "truth_match"]
 
 
+def test_init_fileformats() -> None:
+    data_url = os.path.join(_CWD, "testdata", "dp01_dc2_catalogs")
+    contribution_metadata = metadata.ContributionMetadata(data_url)
+
+    ff: metadata.FileFormat
+    ff = contribution_metadata.fileformats[metadata.CSV]
+    assert ff.fields_enclosed_by is None
+    assert ff.fields_escaped_by is None
+    assert ff.lines_terminated_by is None
+    ff = contribution_metadata.fileformats[metadata.TSV]
+    assert ff.fields_enclosed_by is None
+    assert ff.fields_escaped_by is None
+    assert ff.lines_terminated_by is None
+    ff = contribution_metadata.fileformats[metadata.TXT]
+    assert ff.fields_enclosed_by is None
+    assert ff.fields_escaped_by is None
+    assert ff.lines_terminated_by is None
+
+    data_url = os.path.join(_CWD, "testdata", "case01")
+    contribution_metadata = metadata.ContributionMetadata(data_url)
+
+    ff = contribution_metadata.fileformats[metadata.CSV]
+    assert ff.fields_enclosed_by is None
+    assert ff.fields_escaped_by is None
+    assert ff.lines_terminated_by is None
+
+    ff = contribution_metadata.fileformats[metadata.TXT]
+    assert ff.fields_enclosed_by == ""
+    assert ff.fields_escaped_by == "\\\\"
+    assert ff.fields_terminated_by == "\\t"
+    assert ff.lines_terminated_by == "\\n"
+
+
 def test_is_director() -> None:
     data_url = os.path.join(_CWD, "testdata", "dp02")
     contribution_metadata = metadata.ContributionMetadata(data_url)

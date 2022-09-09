@@ -31,6 +31,7 @@ Helper for ingest contribution management
 # -------------------------------
 import logging
 import time
+from typing import Dict, Optional
 import urllib.parse
 
 # ----------------------------
@@ -39,8 +40,9 @@ import urllib.parse
 from .exception import IngestError
 from .http import Http
 from .jsonparser import ContributionState, ContributionMonitor, raise_error
-from .metadata import LoadBalancedURL
+from .metadata import FileFormat, LoadBalancedURL
 from .util import increase_wait_time
+from . import metadata
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -58,8 +60,7 @@ class Contribution:
     http://<worker_host:worker_port>/ingest/file-async
 
     """
-
-    is_overlap: int
+    fileformats: Optional[Dict[str, FileFormat]] = None
 
     def __init__(
         self,
@@ -71,6 +72,8 @@ class Contribution:
         is_overlap: bool,
         load_balanced_base_url: LoadBalancedURL,
     ):
+        self.is_overlap: int
+        self.ext: str = ""
         self.chunk_id = chunk_id
         if chunk_id is None:
             # regular tables
@@ -82,12 +85,15 @@ class Contribution:
         else:
             # partitioned tables
             self.is_overlap = int(is_overlap)
-        if filepath.endswith(".tsv"):
-            self.column_separator = "\\t"
-        elif filepath.endswith(".csv") or filepath.endswith(".txt"):
-            self.column_separator = ","
-        else:
-            raise IngestError("Unsupported data format for regular table" "only *.csv and .tsv are supported")
+
+        for ext in metadata.EXT_LIST:
+            if filepath.endswith(ext):
+                self.ext = ext
+
+        if len(self.ext) == 0:
+            raise IngestError("Unsupported data format for regular table "
+                              f"only {metadata.EXT_LIST} are supported")
+
         self.load_balanced_url = LoadBalancedURL.new(load_balanced_base_url, filepath)
         self.request_id = None
         self.retry_attempts = 0
@@ -102,11 +108,23 @@ class Contribution:
         payload = {
             "transaction_id": transaction_id,
             "table": self.table,
-            "column_separator": self.column_separator,
             "chunk": self.chunk_id,
             "overlap": self.is_overlap,
             "url": self.load_balanced_url.get(),
         }
+
+        if Contribution.fileformats is not None:
+            ff: FileFormat = Contribution.fileformats.get(self.ext)
+            if ff is not None:
+                if ff.fields_enclosed_by is not None:
+                    payload["fields_enclosed_by"] = ff.fields_enclosed_by
+                if ff.fields_escaped_by is not None:
+                    payload["fields_escaped_by"] = ff.fields_escaped_by
+                if ff.fields_terminated_by is not None:
+                    payload["fields_terminated_by"] = ff.fields_terminated_by
+                if ff.lines_terminated_by is not None:
+                    payload["lines_terminated_by"] = ff.lines_terminated_by
+
         return payload
 
     def start_async(self, transaction_id: int) -> None:

@@ -39,7 +39,7 @@ ENV_FILE="$INGEST_DIR"/env.sh
 cp "$INGEST_DIR"/env.example.sh "$ENV_FILE"
 sed -i "s/^INGEST_RELEASE=.*$/INGEST_RELEASE=''/" "$ENV_FILE"
 
-TEST_CASES="base case01"
+TEST_CASES="base case01 case03"
 for test_case in $TEST_CASES; do
 
   "$INGEST_DIR"/argo-submit.sh -t "$test_case"

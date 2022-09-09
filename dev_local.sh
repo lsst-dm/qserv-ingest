@@ -36,7 +36,8 @@ if [ $# -ne 0 ] ; then
 fi
 
 echo -n "Check telepresence version "
-if ! telepresence version | grep -q "Client: v2"; then
+if [ ! telepresence version | grep -q "Client: v2" ]
+then
   >&2 echo "ERROR: telepresence v2 is required"
   exit 3
 fi
@@ -54,4 +55,4 @@ echo "oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO"
 echo "   Welcome in qserv-ingest developement container"
 echo "   Setup for using Qserv in namespace $NAMESPACE"
 echo "oOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoOoO"
-docker run --net=host --dns-search $NAMESPACE -it $MOUNTS --rm -w "$HOME" "$DEV_IMAGE" bash
+docker run --net=host --name qserv-ingest --dns-search $NAMESPACE -it $MOUNTS --rm -w "$HOME" "$DEV_IMAGE" bash

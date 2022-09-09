@@ -29,17 +29,20 @@ Test Contribution class
 #  Imports of standard modules --
 # -------------------------------
 import logging
+import os
 from typing import Dict, TypedDict
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
 from .contribution import Contribution
+from . import metadata
 from .loadbalancerurl import LoadBalancerAlgorithm, LoadBalancedURL
 
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
+_CWD = os.path.dirname(os.path.abspath(__file__))
 _LOG = logging.getLogger(__name__)
 
 _PATH = "/lsst/data/"
@@ -92,28 +95,44 @@ def test_build_payload() -> None:
         "is_overlap": True,
         "load_balanced_base_url": LoadBalancedURL(_PATH, lbAlgo),
     }
-    c1 = Contribution(**params)
-    payload1 = c1._build_payload(transaction_id)
+
+    c = Contribution(**params)
+    payload = c._build_payload(transaction_id)
+
+    assert payload['url'] == 'https://server1/lsst/data/step1_1/chunk_1_overlap.txt'
+    assert payload['url'] == 'https://server1/lsst/data/step1_1/chunk_1_overlap.txt'
 
     params['filepath'] = "step2_2/chunk_2_overlap.txt"
     params['load_balanced_base_url'] = LoadBalancedURL(_PATH, lbAlgo)
-    c2 = Contribution(**params)
-    payload2 = c2._build_payload(transaction_id)
+    c = Contribution(**params)
+    payload = c._build_payload(transaction_id)
+
+    assert payload['url'] == 'https://server2/lsst/data/step2_2/chunk_2_overlap.txt'
 
     params['filepath'] = "step3_3/chunk_3_overlap.txt"
     params['load_balanced_base_url'] = LoadBalancedURL(_PATH, lbAlgo)
-    c3 = Contribution(**params)
-    payload3 = c3._build_payload(transaction_id)
+    c = Contribution(**params)
+    payload = c._build_payload(transaction_id)
+
+    assert payload['url'] == 'https://server3/lsst/data/step3_3/chunk_3_overlap.txt'
 
     params['filepath'] = "step4_4/chunk_4_overlap.txt"
     params['load_balanced_base_url'] = LoadBalancedURL(_PATH, lbAlgo)
-    c4 = Contribution(**params)
-    payload4 = c4._build_payload(transaction_id)
+    c = Contribution(**params)
+    payload = c._build_payload(transaction_id)
 
-    assert payload1['url'] == 'https://server1/lsst/data/step1_1/chunk_1_overlap.txt'
-    assert payload2['url'] == 'https://server2/lsst/data/step2_2/chunk_2_overlap.txt'
-    assert payload3['url'] == 'https://server3/lsst/data/step3_3/chunk_3_overlap.txt'
-    assert payload4['url'] == 'https://server1/lsst/data/step4_4/chunk_4_overlap.txt'
+    assert payload['url'] == 'https://server1/lsst/data/step4_4/chunk_4_overlap.txt'
+
+    data_url = os.path.join(_CWD, "testdata", "case01")
+    contribution_metadata = metadata.ContributionMetadata(data_url)
+    Contribution.fileformats = contribution_metadata.fileformats
+    c = Contribution(**params)
+    payload = c._build_payload(transaction_id)
+
+    assert payload['fields_enclosed_by'] == ""
+    assert payload['fields_escaped_by'] == "\\\\"
+    assert payload['fields_terminated_by'] == "\\t"
+    assert payload['lines_terminated_by'] == "\\n"
 
 
 def test_print() -> None:
@@ -122,6 +141,7 @@ def test_print() -> None:
     _LOG.debug(c)
 
     params: Dict = dict()
+    params["ext"] = "txt"
     params["chunk_id"] = _PARAMS["chunk_id"]
     params["table"] = _PARAMS["table"]
 
@@ -130,7 +150,6 @@ def test_print() -> None:
     else:
         is_overlap = int(_PARAMS["is_overlap"])
     params["is_overlap"] = is_overlap
-    params["column_separator"] = ","
     params["load_balanced_url"] = c.load_balanced_url
     params["request_id"] = None
     params["retry_attempts"] = 0
