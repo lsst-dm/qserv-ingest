@@ -65,6 +65,8 @@ jobs:
     name: Run integration test on qserv-ingest
     runs-on: ubuntu-22.04
     needs: build
+    env:
+      GHA_BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
     steps:
       - name: apparmor
         run: |

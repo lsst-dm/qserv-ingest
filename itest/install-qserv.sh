@@ -12,9 +12,10 @@ if [ -d "$OPERATOR_DIR" ]; then
   rm -rf "$OPERATOR_DIR"
 fi
 
-BRANCH=$(git rev-parse --abbrev-ref HEAD)
 REPO_URL="https://github.com/lsst/qserv-operator"
 
+GIT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+BRANCH=${GHA_BRANCH_NAME:-$GIT_BRANCH}
 # Retrieve same qserv-operator branch if it exists, else use qserv-operator main branch
 if git ls-remote --exit-code --heads "$REPO_URL" "$BRANCH"
 then
