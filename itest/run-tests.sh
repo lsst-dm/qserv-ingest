@@ -47,7 +47,7 @@ for test_case in $TEST_CASES; do
   PODS_ARGO_FAILED=$(kubectl get pods -l workflows.argoproj.io/completed=true -o jsonpath='{.items[*].metadata.name}' --field-selector=status.phase=Failed)
   for pod in $PODS_ARGO_FAILED
   do
-    echo "Pod $pod log:"
+    echo "Pod $pod log (test case: $test_case):"
     echo "-----------------------------------------"
     kubectl logs $pod -c main
     echo "-----------------------------------------"
@@ -62,7 +62,4 @@ for test_case in $TEST_CASES; do
     kubectl logs $pod
     echo "-----------------------------------------"
   done
-
-argo wait @latest
-
 done

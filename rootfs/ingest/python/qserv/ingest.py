@@ -231,7 +231,7 @@ class Ingester:
             # No more contribution file to ingest
             # Waiting to recover possibly failed transactions
             else:
-                _LOG.info("Waiting for all contributions files to be in succeed state")
+                _LOG.info("Waiting for all contributions managed by other transactions to be in succeed state")
                 time.sleep(10)
 
         transaction_id: int

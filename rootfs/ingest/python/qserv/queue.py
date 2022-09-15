@@ -38,7 +38,7 @@ import typing
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-from .exception import QueueError
+from .exception import IngestError, QueueError
 from .metadata import ContributionMetadata
 import sqlalchemy
 from sqlalchemy import MetaData, Table, event, update
@@ -181,7 +181,7 @@ class QueueManager:
             with self.engine.begin() as conn:
                 conn.execute(self.queue.insert(), contrib_specs)
 
-    def _wait_for_mutex(self) -> None:
+    def _acquire_mutex(self) -> None:
 
         query = select([func.count("*")]).select_from(self.mutex)
         with self.engine.connect() as connection:
@@ -227,7 +227,8 @@ class QueueManager:
     def init_mutex(self) -> None:
         """Initialize mutex in queue database
            Queue database has a table `mutex` which contain only one row. This row is used to enable
-           only one pod to lock contribution file in queue at a time and need to be initialized at ingest startup.
+           only one pod to lock contribution file in queue at a time and need to be initialized
+           at ingest startup.
         """
         release_mutex_query = update(self.mutex).values(
             pod=None,
@@ -249,30 +250,33 @@ class QueueManager:
             Number of contribfiles locked
         """
 
-        self._wait_for_mutex()
+        try:
+            self._acquire_mutex()
 
-        select_query = select([self.queue.c.id])
-        select_query = select_query.limit(contribfiles_to_lock_count)
-        select_query = select_query.where(self.queue.c.locking_pod.is_(None))
-        select_query = select_query.where(self.queue.c.database == self.contribution_metadata.database)
+            select_query = select([self.queue.c.id])
+            select_query = select_query.limit(contribfiles_to_lock_count)
+            select_query = select_query.where(self.queue.c.locking_pod.is_(None))
+            select_query = select_query.where(self.queue.c.database == self.contribution_metadata.database)
 
-        # _LOG.debug("Query select: %s", select_query.compile(dialect=mysql.dialect()))
-        with self.engine.connect() as connection:
-            rows = connection.execute(select_query)
-            ids = []
-            for e in rows:
-                ids.append(e[0])
-            rows.close()
+            # _LOG.debug("Query select: %s", select_query.compile(dialect=mysql.dialect()))
+            with self.engine.connect() as connection:
+                rows = connection.execute(select_query)
+                ids = []
+                for e in rows:
+                    ids.append(e[0])
+                rows.close()
 
-        update_query = update(self.queue).values(
-            locking_pod=self.pod
-        )
-        update_query = update_query.where(self.queue.c.id.in_(ids))
+            update_query = update(self.queue).values(
+                locking_pod=self.pod
+            )
+            update_query = update_query.where(self.queue.c.id.in_(ids))
 
-        # _LOG.debug("Query (MySQL dialect)): %s", update_query.compile(dialect=mysql.dialect()))
-        self._safe_execute(update_query, _MAX_RETRY_ATTEMPTS)
-
-        self._release_mutex()
+            # _LOG.debug("Query (MySQL dialect)): %s", update_query.compile(dialect=mysql.dialect()))
+            self._safe_execute(update_query, _MAX_RETRY_ATTEMPTS)
+        except Exception as e:
+            raise IngestError("Failed to lock contribution files in queue") from e
+        finally:
+            self._release_mutex()
         contribfiles_locked_count = len(ids)
         return contribfiles_locked_count
 
