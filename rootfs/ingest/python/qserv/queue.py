@@ -273,8 +273,6 @@ class QueueManager:
 
             # _LOG.debug("Query (MySQL dialect)): %s", update_query.compile(dialect=mysql.dialect()))
             self._safe_execute(update_query, _MAX_RETRY_ATTEMPTS)
-        except Exception as e:
-            raise IngestError("Failed to lock contribution files in queue") from e
         finally:
             self._release_mutex()
         contribfiles_locked_count = len(ids)

@@ -6,7 +6,7 @@ Run Qserv ingest on a Kubernetes cluster
 Prerequisites
 =============
 
-- An up and running Qserv instance, managed by `qserv-operator <https://qserv-operator.lsst.io>`__ inside a k8s cluster:
+- An up and running Qserv instance, managed by `qserv-operator <https://qserv-operator.lsst.io>`_ inside a k8s cluster:
 
 .. code:: sh
 
@@ -37,7 +37,7 @@ The namespace containing this instance will be called `<QSERV_NAMESPACE>`.
 
     kubectl config set-context --current --namespace=<QSERV_NAMESPACE>
 
-For additional informations, check official documentation for `setting the namespace preference <https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/#setting-the-namespace-preference>`__
+For additional informations, check official documentation for `setting the namespace preference <https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces/#setting-the-namespace-preference>`_
 
 - Privileges to create pods and persistent volumes inside `<QSERV_NAMESPACE>`.
 
@@ -86,7 +86,7 @@ Prepare configuration
 Launch Qserv ingest
 ===================
 
-Launch the workflow using `Argo <https://argoproj.github.io/argo/>`__
+Launch the workflow using `Argo <https://argoproj.github.io/argo/>`_
 
 .. code:: sh
 
@@ -100,7 +100,7 @@ Then adapt `example/query.sh` to launch a few queries against freshly ingested d
 Delete an existing database
 ===========================
 
-Please refer to `Qserv Replication Service documentation <https://confluence.lsstcorp.org/display/DM/Ingest%3A+11.1.2.3.+Delete+a+database+or+a+table>`__,
+Please refer to `Qserv Replication Service documentation <https://confluence.lsstcorp.org/display/DM/Ingest%3A+11.1.2.3.+Delete+a+database+or+a+table>`_,
 and then adapt example script `example/delete_database.sh`.
 
 

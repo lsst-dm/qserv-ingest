@@ -114,7 +114,7 @@ class Contribution:
         }
 
         if Contribution.fileformats is not None:
-            ff: FileFormat = Contribution.fileformats.get(self.ext)
+            ff: Optional[FileFormat] = Contribution.fileformats.get(self.ext)
             if ff is not None:
                 if ff.fields_enclosed_by is not None:
                     payload["fields_enclosed_by"] = ff.fields_enclosed_by

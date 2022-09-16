@@ -57,8 +57,8 @@ _METADATA_FILENAME: str = "metadata.json"
 _OVERLAPS: str = "overlaps"
 _LOG = logging.getLogger(__name__)
 
-
-class FileFormat(object):
+@dataclass
+class FileFormat:
     """Define input data file format for mariadb 'LOAD DATA INFILE' statement
     see https://mariadb.com/kb/en/load-data-infile/
 
@@ -78,12 +78,10 @@ class FileFormat(object):
         default to 'None' and then use replication service default
     """
 
-    def __init__(self, fields_enclosed_by: Optional[str] = None, fields_escaped_by: Optional[str] = None,
-                 fields_terminated_by: Optional[str] = None, lines_terminated_by: Optional[str] = None):
-        self.fields_enclosed_by = fields_enclosed_by
-        self.fields_escaped_by = fields_escaped_by
-        self.fields_terminated_by = fields_terminated_by
-        self.lines_terminated_by = lines_terminated_by
+    fields_enclosed_by: Optional[str] = None
+    fields_escaped_by: Optional[str] = None
+    fields_terminated_by: Optional[str] = None
+    lines_terminated_by: Optional[str] = None
 
 
 @dataclass
@@ -178,7 +176,7 @@ class TableSpec:
         self.database: str = self.json_schema["database"]
         self.is_partitioned: bool = self.json_schema["is_partitioned"] == 1
         self.is_director: bool = self._is_director()
-        idx_files: List(str) = table_meta.get("indexes", [])
+        idx_files: List[str] = table_meta.get("indexes", [])
         self.json_indexes: List[Dict[str, Any]] = []
         for f in idx_files:
             self.json_indexes.append(json_get(metadata_url, f))

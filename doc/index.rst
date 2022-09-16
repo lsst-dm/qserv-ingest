@@ -23,9 +23,9 @@ Indices and tables
 Useful links
 ============
 
-* `Qserv Documentation <https://qserv.lsst.io>`__
-* `Qserv git repository <https://github.com/lsst/qserv>`__
-* `Qserv-ingest git repository <https://github.com/lsst/qserv-ingest>`__
-* `Qserv-operator git repository <https://github.com/lsst/qserv-operator>`__
+* `Qserv Documentation <https://qserv.lsst.io>`_
+* `Qserv git repository <https://github.com/lsst/qserv>`_
+* `Qserv-ingest git repository <https://github.com/lsst/qserv-ingest>`_
+* `Qserv-operator git repository <https://github.com/lsst/qserv-operator>`_
 
 Generated on the |today|

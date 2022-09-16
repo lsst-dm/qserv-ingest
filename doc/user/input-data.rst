@@ -10,16 +10,16 @@ Prerequisites
 Example
 =======
 
-These `examples for input data <https://github.com/lsst-dm/qserv-ingest/tree/main/itest/datasets>`__
-are used by `Qserv ingest continuous integration process <https://github.com/lsst-dm/qserv-ingest/actions>`__.
+These `examples for input data <https://github.com/lsst-dm/qserv-ingest/tree/main/itest/datasets>`_
+are used by `Qserv ingest continuous integration process <https://github.com/lsst-dm/qserv-ingest/actions>`_.
 
 
 input data
 ==========
 
-Input data is produced by `Qserv partitioner <https://github.com/lsst/partition>`__ (i.e. `sph-partition`) and is made of multiples `*.csv`, `*.tsv or `*.txt`` files.
+Input data is produced by `Qserv partitioner <https://github.com/lsst/partition>`_ (i.e. `sph-partition`) and is made of multiples `*.csv`, `*.tsv or `*.txt`` files.
 Each of these files contains a part of a chunk for a given database and table,
-as shown in `this example <https://github.com/lsst-dm/qserv-ingest/blob/main/itest/datasets/case01/partition/case01/Source/chunk_6630.txt>`__.
+as shown in `this example <https://github.com/lsst-dm/qserv-ingest/blob/main/itest/datasets/case01/partition/case01/Source/chunk_6630.txt>`_.
 Relation between an input data file and its related table and database is available inside `metadata.json`, detailed below.
 
 Metadata
@@ -101,4 +101,4 @@ Metadata files below describe input data and are required by `qserv-ingest`:
 - `<table_name>.json`: each of these files describes a table to register inside the replication service and where the data will be ingested,
 - `<table_index>.json`:each of these files describes an index to create for a given set of chunk tables,
 
-Formats for all of these files are documented in `replication service documentation <https://confluence.lsstcorp.org/pages/viewpage.action?pageId=133333850>`__.
+Formats for all of these files are documented in `replication service documentation <https://confluence.lsstcorp.org/pages/viewpage.action?pageId=133333850>`_.
