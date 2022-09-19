@@ -1,5 +1,5 @@
 #!/bin/bash
-# Delete a database from Qserv
+# Remove ingest queue entries for a given database 
 
 # Database names:
 # - cosmoDC2_v1_1_4_image_overlap
@@ -23,7 +23,7 @@ Usage: `basename $0` [options] database
   Available options:
     -h          this message
 
-Delete a database from Qserv
+Empty queue entries for a given database in Qserv-ingest
 EOD
 }
 
@@ -43,8 +43,7 @@ fi
 
 DATABASE="$1"
 
-$DIR/empty_queue.sh "$DATABASE"
-time kubectl exec -it $INSTANCE-repl-ctl-0 -- curl http://localhost:$REPL_CTL_PORT/ingest/database/"$DATABASE"  \
-   -X DELETE -H "Content-Type: application/json" \
-   -d '{"admin_auth_key":""}'
+DB_USER="qsingest"
 
+POD="$INSTANCE-ingest-db-0"
+kubectl exec -it "$POD" -- mysql -h "$POD" -u "$DB_USER" -e "DELETE FROM qservIngest.contribfile_queue WHERE \`database\` LIKE '$DATABASE';"

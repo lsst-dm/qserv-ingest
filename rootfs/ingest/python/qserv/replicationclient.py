@@ -46,7 +46,7 @@ from . import util
 # Local non-exported definitions --
 # ---------------------------------
 _LOG = logging.getLogger(__name__)
-_VERSION = 9
+_VERSION = 11
 
 
 class ReplicationClient:

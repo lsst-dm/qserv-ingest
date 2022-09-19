@@ -63,6 +63,14 @@ def test_contribution_monitor() -> None:
     assert contrib_monitor.retry_allowed is False
 
 
+def test_get_fqdn() -> None:
+    fqdn = jsonparser.get_fqdn("k8s-school.fr", 80)
+    assert fqdn == "k8s-school.fr"
+
+    fqdn = jsonparser.get_fqdn("does-not-exists,k8s-school.fr", 80)
+    assert fqdn == "k8s-school.fr"
+
+
 def test_parse_not_finished_transaction() -> None:
 
     jsonstring = (
