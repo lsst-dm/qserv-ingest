@@ -181,8 +181,10 @@ def get_fqdn(fqdns: str, port: int, scheme: str = "http") -> str:
     port: `int`
         url port to reach
 
-    Returns:
-        str: first reachable host fqdn, empty string if not fqdn is reachable
+    Returns
+    -------
+    fqdn : `str`
+        First reachable host fqdn, empty string if not fqdn is reachable
     """
     http = Http()
     for fqdn in fqdns.split(","):
@@ -213,6 +215,8 @@ def get_regular_table_locations(responseJson: dict) -> List[Tuple[str, int]]:
         fqdns = entry["http_host_name"]
         port = entry["http_port"]
         fqdn = get_fqdn(fqdns, port)
+        if not fqdn:
+            raise IngestError(f"Unable to find a valid worker fqdn in json response {responseJson}")
         locations.append((fqdn, port))
     return locations
 

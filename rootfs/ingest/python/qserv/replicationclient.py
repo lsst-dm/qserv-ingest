@@ -46,7 +46,7 @@ from . import util
 # Local non-exported definitions --
 # ---------------------------------
 _LOG = logging.getLogger(__name__)
-_VERSION = 11
+_REPL_SERVICE_VERSION = 11
 
 
 class ReplicationClient:
@@ -113,11 +113,11 @@ class ReplicationClient:
         url = urllib.parse.urljoin(self.repl_url, "meta/version")
         responseJson = self.http.get(url, timeout=self.timeout_short)
         jsonparser.raise_error(responseJson)
-        if responseJson["version"] != _VERSION:
+        if responseJson["version"] != _REPL_SERVICE_VERSION:
             raise ValueError(
-                "Invalid replication server version " + f"(is {responseJson['version']}, expected {_VERSION})"
+                "Invalid replication server version " + f"(is {responseJson['version']}, expected {_REPL_SERVICE_VERSION})"
             )
-        _LOG.info("Replication service version: v%s", _VERSION)
+        _LOG.info("Replication service version: v%s", _REPL_SERVICE_VERSION)
 
     def database_config(self, database: str, replication_config: util.ReplicationConfig) -> None:
         """Set replication system configuration for a given database

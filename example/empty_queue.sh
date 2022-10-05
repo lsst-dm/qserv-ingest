@@ -1,15 +1,6 @@
 #!/bin/bash
 # Remove ingest queue entries for a given database 
 
-# Database names:
-# - cosmoDC2_v1_1_4_image_overlap
-# - dc2_run2_1i_dr1b
-# - dc2_errors
-# - dc2_object_run22i_dr6_wfd_v2_00
-
-# Default password
-# PASSWORD=CHANGEME
-
 set -euxo pipefail
 
 DIR=$(cd "$(dirname "$0")"; pwd -P)

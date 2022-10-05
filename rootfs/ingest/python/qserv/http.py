@@ -31,7 +31,6 @@ User-friendly client library for Qserv replication service.
 #  Imports of standard modules --
 # -------------------------------
 import getpass
-from http.client import RemoteDisconnected
 import json
 import logging
 import os

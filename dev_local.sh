@@ -36,7 +36,7 @@ if [ $# -ne 0 ] ; then
 fi
 
 TELEPRESENCE_VERSION="v2"
-if telepresence version | grep "Client: $TELEPRESENCE_VERSION" > /dev/null
+if telepresence version | grep "Client: $TELEPRESENCE_VERSION\." > /dev/null
 then
   echo "Check telepresence version==$TELEPRESENCE_VERSION"
 else

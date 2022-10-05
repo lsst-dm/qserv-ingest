@@ -29,6 +29,7 @@ Tools used by ingest algorithm
 #  Imports of standard modules --
 # -------------------------------
 import json
+import logging
 
 # ----------------------------
 # Imports for other modules --
@@ -47,6 +48,8 @@ _FAMILY = "layout_340_3"
 
 _DATADIR = os.path.join(_CWD, "testdata")
 
+_LOG = logging.getLogger(__name__)
+
 
 def test_contribution_monitor() -> None:
 
@@ -64,11 +67,21 @@ def test_contribution_monitor() -> None:
 
 
 def test_get_fqdn() -> None:
-    fqdn = jsonparser.get_fqdn("k8s-school.fr", 80)
-    assert fqdn == "k8s-school.fr"
 
-    fqdn = jsonparser.get_fqdn("does-not-exists,k8s-school.fr", 80)
-    assert fqdn == "k8s-school.fr"
+    remote_server = "k8s-school.fr"
+    response = os.system("ping -c 1 " + remote_server)
+
+    if response == 0:
+        fqdn = jsonparser.get_fqdn(remote_server, 80)
+        assert fqdn == remote_server
+
+        fqdn = jsonparser.get_fqdn(f"does-not-exists,{remote_server}", 80)
+        assert fqdn == remote_server
+    else:
+        _LOG.warn("Skipping some tests because %s is not reachable", remote_server)
+
+    fqdn = jsonparser.get_fqdn("does-not-exists1,does-not-exists2,does-not-exists3", 80)
+    assert fqdn == ""
 
 
 def test_parse_not_finished_transaction() -> None:
