@@ -42,6 +42,10 @@ sed -i "s/^INGEST_RELEASE=.*$/INGEST_RELEASE=''/" "$ENV_FILE"
 TEST_CASES="base case01 case03"
 for test_case in $TEST_CASES; do
 
+  echo "---------------------------------------------------------"
+  echo "Launch workflow for test case: $test_case"
+  echo "---------------------------------------------------------"
+
   "$INGEST_DIR"/argo-submit.sh -t "$test_case"
   argo watch @latest
   PODS_ARGO_FAILED=$(kubectl get pods -l workflows.argoproj.io/completed=true -o jsonpath='{.items[*].metadata.name}' --field-selector=status.phase=Failed)
@@ -62,4 +66,14 @@ for test_case in $TEST_CASES; do
     kubectl logs $pod
     echo "-----------------------------------------"
   done
+  WF_PHASE=$(kubectl get workflow -o jsonpath="{.items[0].status.phase}")
+  if [ "$WF_PHASE" == "Failed" ]
+  then
+    >&2 echo "---------------------------------------------------------"
+    >&2 echo "ERROR, failed workflow for test case: $test_case"
+    >&2 echo "---------------------------------------------------------"
+    exit 1
+  fi
+  # FIXME get current workflow name instead of keeping only one workflow
+  argo delete @latest
 done

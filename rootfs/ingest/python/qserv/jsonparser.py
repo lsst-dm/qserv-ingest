@@ -37,6 +37,8 @@ from typing import Any, Dict, List, Tuple
 # Imports for other modules --
 # ----------------------------
 from jsonpath_ng.ext import parse
+from .http import Http
+from .exception import IngestError
 
 
 # ---------------------------------
@@ -161,9 +163,35 @@ def get_chunk_location(responseJson: dict) -> Tuple[str, int]:
     """Retrieve chunk location (worker host and port)
     inside json response issued by replication service
     """
-    host = responseJson["location"]["http_host"]
+    fqdns = responseJson["location"]["http_host_name"]
     port = int(responseJson["location"]["http_port"])
-    return (host, port)
+    fqdn = get_fqdn(fqdns, port)
+    if not fqdn:
+        raise IngestError(f"Unable to find a valid worker fqdn in json response {responseJson}")
+    return (fqdn, port)
+
+
+def get_fqdn(fqdns: str, port: int, scheme: str = "http") -> str:
+    """Return fqdn of the first reachable scheme://fqdn:port entry
+
+    Parameters
+    ----------
+    fqdns: `str`
+        comma-separated list of fqdns
+    port: `int`
+        url port to reach
+
+    Returns
+    -------
+    fqdn : `str`
+        First reachable host fqdn, empty string if not fqdn is reachable
+    """
+    http = Http()
+    for fqdn in fqdns.split(","):
+        url = f"{scheme}://{fqdn}:{port}"
+        if http.is_reachable(url):
+            return fqdn
+    return ""
 
 
 def get_regular_table_locations(responseJson: dict) -> List[Tuple[str, int]]:
@@ -184,9 +212,12 @@ def get_regular_table_locations(responseJson: dict) -> List[Tuple[str, int]]:
     """
     locations = []
     for entry in responseJson["locations"]:
-        host = entry["http_host"]
+        fqdns = entry["http_host_name"]
         port = entry["http_port"]
-        locations.append((host, port))
+        fqdn = get_fqdn(fqdns, port)
+        if not fqdn:
+            raise IngestError(f"Unable to find a valid worker fqdn in json response {responseJson}")
+        locations.append((fqdn, port))
     return locations
 
 

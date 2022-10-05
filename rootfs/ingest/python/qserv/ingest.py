@@ -234,7 +234,7 @@ class Ingester:
                 _LOG.info("Waiting for all contributions managed by other transactions to be in succeed state")
                 time.sleep(10)
 
-        transaction_id: int
+        transaction_id: Optional[int] = None
         ingest_success: bool = False
         try:
             transaction_id = self.repl_client.start_transaction(self.contrib_meta.database)
@@ -248,7 +248,7 @@ class Ingester:
             # Stop process when any transaction abort
             raise (e)
         finally:
-            if transaction_id:
+            if transaction_id is not None:
                 if ingest_success:
                     _LOG.info("Close ingest transaction %s", transaction_id)
                 else:

@@ -64,8 +64,7 @@ def download_file(url: str, dest: str) -> None:
 
 
 def file_exists(url: str) -> bool:
-    """
-    Check if a file exists on a remote HTTP server
+    """Check if a file exists on a remote HTTP server
     """
     response = requests.head(url)
     return response.status_code == 200
@@ -132,6 +131,16 @@ class Http:
         self.http.mount("https://", adapter)
         self.http.mount("http://", adapter)
         self.authKey = self._authenticate(auth_path)
+
+    def is_reachable(self, url: str) -> bool:
+        """Check if a given http URL is reachable through the network
+        """
+        try:
+            self.http.head(url)
+        except requests.exceptions.ConnectionError as e:
+            _LOG.warning("Unable to connect to url %s, error: %s", url, e)
+            return False
+        return True
 
     def _authenticate(self, auth_path: Optional[str]) -> str:
         if not auth_path:
