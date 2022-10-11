@@ -39,7 +39,7 @@ import urllib.parse
 # Imports for other modules --
 # ----------------------------
 from . import jsonparser
-from .http import Http, DEFAULT_AUTH_PATH
+from .http import Http, DEFAULT_AUTH_PATH, TIMEOUT_SHORT_SEC, TIMEOUT_LONG_SEC
 from . import util
 
 # ---------------------------------
@@ -61,9 +61,6 @@ class ReplicationClient:
         self.repl_url = util.trailing_slash(repl_url)
 
         self.http = Http()
-
-        self.timeout_short = 5
-        self.timeout_long = 120
 
         self._check_version()
 
@@ -111,7 +108,7 @@ class ReplicationClient:
 
     def _check_version(self) -> None:
         url = urllib.parse.urljoin(self.repl_url, "meta/version")
-        responseJson = self.http.get(url, timeout=self.timeout_short)
+        responseJson = self.http.get(url, timeout=TIMEOUT_SHORT_SEC)
         jsonparser.raise_error(responseJson)
         if responseJson["version"] != _REPL_SERVICE_VERSION:
             raise ValueError(
@@ -140,7 +137,7 @@ class ReplicationClient:
             "LOW_SPEED_TIME": replication_config.low_speed_time,
         }
         _LOG.debug("Configure database inside replication system, url: %s, json: %s", url, json)
-        responseJson = self.http.put(url, json, timeout=self.timeout_long)
+        responseJson = self.http.put(url, json, timeout=TIMEOUT_LONG_SEC)
         jsonparser.raise_error(responseJson)
 
     def database_publish(self, database: str) -> None:
@@ -161,7 +158,7 @@ class ReplicationClient:
         url = urllib.parse.urljoin(self.repl_url, "/ingest/database/")
         payload = json_db
         _LOG.debug("Starting a database registration request: %s with %s", url, payload)
-        responseJson = self.http.post(url, payload, timeout=self.timeout_long)
+        responseJson = self.http.post_retry(url, payload)
         jsonparser.raise_error(responseJson)
 
     def database_register_tables(self, tables_json_data: List[Dict], felis: Dict = None) -> None:
@@ -184,12 +181,12 @@ class ReplicationClient:
                 schema = felis[json_data["table"]]
                 json_data["schema"] = schema + json_data["schema"]
             _LOG.debug("Start a table registration request: %s with %s", url, json_data)
-            responseJson = self.http.post(url, json_data, timeout=self.timeout_long)
+            responseJson = self.http.post_retry(url, json_data)
             jsonparser.raise_error(responseJson)
 
     def get_database_status(self, database: str, family: str) -> jsonparser.DatabaseStatus:
         url = urllib.parse.urljoin(self.repl_url, "replication/config")
-        responseJson = self.http.get(url, timeout=self.timeout_short)
+        responseJson = self.http.get(url, timeout=TIMEOUT_SHORT_SEC)
         jsonparser.raise_error(responseJson)
         status = jsonparser.parse_database_status(responseJson, database, family)
         _LOG.debug(f"Database {family}:{database} status: {status}")
@@ -216,7 +213,7 @@ class ReplicationClient:
         """
         url = urllib.parse.urljoin(self.repl_url, "ingest/chunk")
         payload = {"chunk": chunk_id, "database": database}
-        responseJson = Http().post(url, payload, timeout=self.timeout_short)
+        responseJson = Http().post_retry(url, payload)
         jsonparser.raise_error(responseJson)
 
         host, port = jsonparser.get_chunk_location(responseJson)
@@ -244,7 +241,7 @@ class ReplicationClient:
         """
         url = urllib.parse.urljoin(self.repl_url, "ingest/regular")
         payload = {"database": database}
-        responseJson = Http().get(url, payload, timeout=self.timeout_short)
+        responseJson = Http().get(url, payload, timeout=TIMEOUT_SHORT_SEC)
         jsonparser.raise_error(responseJson)
 
         locations = jsonparser.get_regular_table_locations(responseJson)
@@ -257,7 +254,7 @@ class ReplicationClient:
         Return transactions ids
         """
         url = urllib.parse.urljoin(self.repl_url, "ingest/trans?database=" + database)
-        responseJson = self.http.get(url, timeout=self.timeout_short)
+        responseJson = self.http.get(url, timeout=TIMEOUT_SHORT_SEC)
         jsonparser.raise_error(responseJson)
         transaction_ids = jsonparser.filter_transactions(responseJson, database, states)
 
@@ -283,7 +280,8 @@ class ReplicationClient:
     def start_transaction(self, database: str) -> int:
         url = urllib.parse.urljoin(self.repl_url, "ingest/trans")
         payload = {"database": database, "context": {"pod": socket.gethostname()}}
-        responseJson = self.http.post(url, payload, timeout=self.timeout_short)
+        responseJson = self.http.post_retry(url, payload)
+
         jsonparser.raise_error(responseJson)
 
         # For catching the super transaction ID

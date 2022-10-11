@@ -76,3 +76,11 @@ def test_retry() -> None:
     _http = http.Http()
     with pytest.raises(requests.ConnectionError):
         _http.get(url="http://server.not-exists", payload={}, auth=False)
+
+
+def test_retry_post() -> None:
+    """Check if an error occurs for a non-existing DNS entry
+    """
+    _http = http.Http()
+    with pytest.raises(requests.ConnectionError):
+        _http.post_retry(url="http://server.not-exists", payload={})

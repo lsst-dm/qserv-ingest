@@ -251,10 +251,13 @@ class Ingester:
             if transaction_id is not None:
                 if ingest_success:
                     _LOG.info("Close ingest transaction %s", transaction_id)
-                else:
+                elif transaction_id is not None:
                     _LOG.warn("Abort ingest transaction %s", transaction_id)
                 self.repl_client.close_transaction(self.contrib_meta.database, transaction_id, ingest_success)
-                self.queue_manager.unlock_contribfiles(ingest_success)
+            # Solve error case https://jira.lsstcorp.org/browse/DM-36418:
+            # Consider that transaction has not been opened if transaction_id is None
+            # and so unlock contribution files in any case (success or failure failure)
+            self.queue_manager.unlock_contribfiles(ingest_success)
         continue_ingest = True
         return continue_ingest
 

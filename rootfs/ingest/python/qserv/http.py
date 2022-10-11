@@ -42,6 +42,7 @@ import urllib.parse
 # ----------------------------
 import requests
 from requests.adapters import HTTPAdapter
+from retry import retry
 from urllib3.util import Retry
 
 from .exception import IngestError, ReplicationControllerError
@@ -51,6 +52,11 @@ from . import util
 # Local non-exported definitions --
 # ---------------------------------
 DEFAULT_AUTH_PATH = "~/.lsst/qserv"
+
+TIMEOUT_SHORT_SEC = 5
+TIMEOUT_LONG_SEC = 120
+
+_MAX_RETRY_ATTEMPTS = 3
 
 _LOG = logging.getLogger(__name__)
 
@@ -157,6 +163,26 @@ class Http:
             payload: Dict[str, Any] = dict(),
             auth: bool = True,
             timeout: Optional[int] = None) -> Dict:
+        """Send a GET query to an http(s) URL
+
+        Parameters
+        ----------
+        url : `str`
+            Http(s) URL
+        payload : `Optional[Dict[str, Any]`
+            JSON payload, Defaults to dict().
+        auth : `Optional[bool]`
+            Perform HTTP authentication. Defaults to True.
+        timeout : `Optional[int]`
+            Query time-out. Defaults to None.
+
+        Raises:
+            ReplicationControllerError: JSON response contain an error code
+
+        Returns:
+        response_json : `dict`
+            JSON response
+        """
         if auth is True:
             payload["auth_key"] = self.authKey
         r = self.http.get(url, json=payload, timeout=timeout)
@@ -169,11 +195,31 @@ class Http:
         return response_json
 
     def post(self, url: str, payload: Dict[str, Any] = dict(),
-             auth: bool = True, timeout: int = None) -> Dict:
+             auth: bool = True, timeout: int = TIMEOUT_LONG_SEC) -> Dict:
+        """Send a POST query to an http(s) URL
+
+        Parameters
+        ----------
+        url : `str`
+            Http(s) URL
+        payload : `Optional[Dict[str, Any]`
+            JSON payload, Defaults to dict().
+        auth : `Optional[bool]`
+            Perform HTTP authentication. Defaults to True.
+        timeout : `Optional[int]`
+            Query time-out. Defaults to TIMEOUT_LONG_SEC.
+
+        Raises:
+            ReplicationControllerError: JSON response contain an error code
+
+        Returns:
+        response_json : `dict`
+            JSON response
+        """
         if auth is True:
             payload["auth_key"] = self.authKey
         try:
-            r = requests.post(url, json=payload, timeout=timeout)
+            r = requests.post(url, json=payload, timeout=TIMEOUT_LONG_SEC)
         except (requests.exceptions.RequestException, ConnectionResetError) as e:
             _LOG.critical("Error when sending POST request to url %s", url)
             e.args = (
@@ -185,6 +231,26 @@ class Http:
         response_json = r.json()
         _LOG.debug("POST %s: success", url)
         return response_json
+
+    @retry(requests.exceptions.Timeout, delay=5, tries=_MAX_RETRY_ATTEMPTS)
+    def post_retry(self, url: str, payload: Dict[str, Any] = dict(),
+                   auth: bool = True)  -> Dict:
+        """Send a POST query to an http(s) URL and retry on time-out error
+
+        Parameters
+        ----------
+        url : `str`
+            Http(s) URL
+        payload : `Optional[Dict[str, Any]`
+            JSON payload, Defaults to dict().
+        auth : `Optional[bool]`
+            Perform HTTP authentication. Defaults to True.
+
+        Returns:
+        response_json : `dict`
+            JSON response
+        """
+        return self.post(url, payload, auth, TIMEOUT_SHORT_SEC)
 
     def put(self, url: str, payload: Dict[str, Any] = dict(), timeout: int = None) -> Dict:
         if not payload:

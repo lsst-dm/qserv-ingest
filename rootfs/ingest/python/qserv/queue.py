@@ -38,7 +38,7 @@ import typing
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-from .exception import IngestError, QueueError
+from .exception import QueueError
 from .metadata import ContributionMetadata
 import sqlalchemy
 from sqlalchemy import MetaData, Table, event, update
@@ -356,7 +356,7 @@ class QueueManager:
         query : `Any`
             Sql query
         max_retry : `int`
-            Maximum num of retry attempts
+            Maximum number of retry attempts
         """
         wait_sec = 1
         retry_count = 0

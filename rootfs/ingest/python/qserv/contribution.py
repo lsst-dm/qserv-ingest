@@ -134,11 +134,8 @@ class Contribution:
 
         Parameters
         ----------
-            transaction_id (int): id of the transaction in which the contribution will be ingested
-
-        Returns
-        -------
-            None request id, returned by the replication controller
+        transaction_id : `int`
+            id of the transaction in which the contribution will be ingested
         """
         url = urllib.parse.urljoin(self.worker_url, "ingest/file-async")
         _LOG.debug("start_async(): url: %s", url)
@@ -155,7 +152,7 @@ class Contribution:
                 self.retry_attempts_post,
                 payload,
             )
-            responseJson = Http().post(url, payload)
+            responseJson = Http().post_retry(url, payload)
 
             retry = raise_error(responseJson, self.retry_attempts_post, MAX_RETRY_ATTEMPTS)
             if retry:
