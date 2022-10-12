@@ -19,10 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""
-Test Contribution class
+"""Test Contribution class.
 
 @author  Fabrice Jammes, IN2P3
+
 """
 
 # -------------------------------
@@ -99,29 +99,29 @@ def test_build_payload() -> None:
     c = Contribution(**params)
     payload = c._build_payload(transaction_id)
 
-    assert payload['url'] == 'https://server1/lsst/data/step1_1/chunk_1_overlap.txt'
-    assert payload['url'] == 'https://server1/lsst/data/step1_1/chunk_1_overlap.txt'
+    assert payload["url"] == "https://server1/lsst/data/step1_1/chunk_1_overlap.txt"
+    assert payload["url"] == "https://server1/lsst/data/step1_1/chunk_1_overlap.txt"
 
-    params['filepath'] = "step2_2/chunk_2_overlap.txt"
-    params['load_balanced_base_url'] = LoadBalancedURL(_PATH, lbAlgo)
+    params["filepath"] = "step2_2/chunk_2_overlap.txt"
+    params["load_balanced_base_url"] = LoadBalancedURL(_PATH, lbAlgo)
     c = Contribution(**params)
     payload = c._build_payload(transaction_id)
 
-    assert payload['url'] == 'https://server2/lsst/data/step2_2/chunk_2_overlap.txt'
+    assert payload["url"] == "https://server2/lsst/data/step2_2/chunk_2_overlap.txt"
 
-    params['filepath'] = "step3_3/chunk_3_overlap.txt"
-    params['load_balanced_base_url'] = LoadBalancedURL(_PATH, lbAlgo)
+    params["filepath"] = "step3_3/chunk_3_overlap.txt"
+    params["load_balanced_base_url"] = LoadBalancedURL(_PATH, lbAlgo)
     c = Contribution(**params)
     payload = c._build_payload(transaction_id)
 
-    assert payload['url'] == 'https://server3/lsst/data/step3_3/chunk_3_overlap.txt'
+    assert payload["url"] == "https://server3/lsst/data/step3_3/chunk_3_overlap.txt"
 
-    params['filepath'] = "step4_4/chunk_4_overlap.txt"
-    params['load_balanced_base_url'] = LoadBalancedURL(_PATH, lbAlgo)
+    params["filepath"] = "step4_4/chunk_4_overlap.txt"
+    params["load_balanced_base_url"] = LoadBalancedURL(_PATH, lbAlgo)
     c = Contribution(**params)
     payload = c._build_payload(transaction_id)
 
-    assert payload['url'] == 'https://server1/lsst/data/step4_4/chunk_4_overlap.txt'
+    assert payload["url"] == "https://server1/lsst/data/step4_4/chunk_4_overlap.txt"
 
     data_url = os.path.join(_CWD, "testdata", "case01")
     contribution_metadata = metadata.ContributionMetadata(data_url)
@@ -129,14 +129,13 @@ def test_build_payload() -> None:
     c = Contribution(**params)
     payload = c._build_payload(transaction_id)
 
-    assert payload['fields_enclosed_by'] == ""
-    assert payload['fields_escaped_by'] == "\\\\"
-    assert payload['fields_terminated_by'] == "\\t"
-    assert payload['lines_terminated_by'] == "\\n"
+    assert payload["fields_enclosed_by"] == ""
+    assert payload["fields_escaped_by"] == "\\\\"
+    assert payload["fields_terminated_by"] == "\\t"
+    assert payload["lines_terminated_by"] == "\\n"
 
 
 def test_print() -> None:
-
     c = Contribution(**_PARAMS)
     _LOG.debug(c)
 

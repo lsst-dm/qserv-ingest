@@ -20,10 +20,10 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-"""
-Helper for ingest contribution management
+"""Helper for ingest contribution management.
 
 @author  Fabrice Jammes, IN2P3
+
 """
 
 # -------------------------------
@@ -54,12 +54,13 @@ MAX_RETRY_ATTEMPTS = 3
 
 
 class Contribution:
-    """Represent an ingest contribution
+    """Represent an ingest contribution.
 
     Store input parameters for replication REST api located at
     http://<worker_host:worker_port>/ingest/file-async
 
     """
+
     fileformats: Optional[Dict[str, FileFormat]] = None
 
     def __init__(
@@ -91,8 +92,9 @@ class Contribution:
                 self.ext = ext
 
         if len(self.ext) == 0:
-            raise IngestError("Unsupported data format for regular table "
-                              f"only {metadata.EXT_LIST} are supported")
+            raise IngestError(
+                "Unsupported data format for regular table " f"only {metadata.EXT_LIST} are supported"
+            )
 
         self.load_balanced_url = LoadBalancedURL.new(load_balanced_base_url, filepath)
         self.request_id = None
@@ -128,14 +130,15 @@ class Contribution:
         return payload
 
     def start_async(self, transaction_id: int) -> None:
-        """Start an asynchronous ingest query for a chunk contribution
-           Raise an exception if the query fails after a fixed number of attempts
-           (see MAX_RETRY_ATTEMPTS constant)
+        """Start an asynchronous ingest query for a chunk contribution Raise an
+        exception if the query fails after a fixed number of attempts (see
+        MAX_RETRY_ATTEMPTS constant)
 
         Parameters
         ----------
         transaction_id : `int`
             id of the transaction in which the contribution will be ingested
+
         """
         url = urllib.parse.urljoin(self.worker_url, "ingest/file-async")
         _LOG.debug("start_async(): url: %s", url)
@@ -161,23 +164,26 @@ class Contribution:
                 self.request_id = responseJson["contrib"]["id"]
 
     def monitor(self) -> bool:
-        """Monitor an asynchronous ingest query for a chunk contribution
-           States of an ingest query are listed here:
-           https://confluence.lsstcorp.org/display/DM/Ingest%3A+9.5.3.+Asynchronous+Protocol
-           Propagate an exception if the query fails after a fixed number of attempts
+        """Monitor an asynchronous ingest query for a chunk contribution States
+        of an ingest query are listed here:
+        https://confluence.lsstcorp.org/display/DM/Ingest%3A+9.5.3.+Asynchronous+Protocol
+        Propagate an exception
+        if the query fails after a fixed number of attempts.
 
         Raises
         ------
             IngestError
                 Raised in case of error during contribution ingest
             ReplicationControllerError
-                Raised for unmanaged contribution state or non-retriable errors from R-I system
+                Raised for unmanaged contribution state or non-retriable errors
+                from R-I system
 
 
         Returns
         -------
             bool: True if contribution has been successfully ingested
                   False if contribution is being ingested
+
         """
         status_url = urllib.parse.urljoin(self.worker_url, f"ingest/file-async/{self.request_id}")
 
@@ -197,10 +203,12 @@ class Contribution:
         contrib_monitor = ContributionMonitor(response_json)
         contrib_finished = False
         # For transaction state description
-        # see: https://confluence.lsstcorp.org/display/DM/Ingest%3A+9.5.3.+Asynchronous+Protocol
+        # see:
+        # https://confluence.lsstcorp.org/display/DM/Ingest%3A+9.5.3.+Asynchronous+Protocol
         match contrib_monitor.status:
             case ContributionState.IN_PROGRESS:
-                # _LOG.debug("_ingest_chunk: request %s in progress", self.request_id)
+                # _LOG.debug("_ingest_chunk: request %s in progress",
+                #            self.request_id)
                 pass
             case ContributionState.FINISHED:
                 contrib_finished = True
@@ -215,14 +223,14 @@ class Contribution:
                     noretry_errmsg = "and is not retriable"
                 elif self.retry_attempts >= MAX_RETRY_ATTEMPTS:
                     noretry_errmsg = "and has exceeded maximum number of ingest attempts"
-                msg = (f"Contribution {self} is in status {contrib_monitor.status} "
-                       f"with error: {contrib_monitor.error}, "
-                       f"system error: {contrib_monitor.system_error}, "
-                       f"http error: {contrib_monitor.http_error}")
+                msg = (
+                    f"Contribution {self} is in status {contrib_monitor.status} "
+                    f"with error: {contrib_monitor.error}, "
+                    f"system error: {contrib_monitor.system_error}, "
+                    f"http error: {contrib_monitor.http_error}"
+                )
                 if noretry_errmsg:
-                    raise IngestError(
-                        msg + f" {noretry_errmsg}"
-                    )
+                    raise IngestError(msg + f" {noretry_errmsg}")
                 else:
                     _LOG.warning(msg)
                 self.retry_attempts += 1

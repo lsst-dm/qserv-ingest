@@ -20,26 +20,26 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-"""
-Manage custom error
+"""Manage custom error.
 
 @author  Fabrice Jammes, IN2P3
+
 """
 
 
 class IngestError(Exception):
-    """Error related to ingest client"""
+    """Error related to ingest client."""
 
     pass
 
 
 class QueueError(Exception):
-    """Error related to ingest queue"""
+    """Error related to ingest queue."""
 
     pass
 
 
 class ReplicationControllerError(Exception):
-    """Error related to replication controller response"""
+    """Error related to replication controller response."""
 
     pass

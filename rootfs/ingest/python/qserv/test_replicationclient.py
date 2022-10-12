@@ -19,10 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""
-Tests for util modules
+"""Tests for util modules.
 
 @author  Fabrice Jammes, IN2P3
+
 """
 
 # -------------------------------
@@ -30,7 +30,6 @@ Tests for util modules
 # -------------------------------
 import logging
 import os
-from pathlib import Path
 import tempfile
 
 # ----------------------------
@@ -51,10 +50,11 @@ _LOG = logging.getLogger(__name__)
 
 
 def test_database_register_tables() -> None:
-    """Test function database_register_tables
+    """Test function database_register_tables.
 
-    TODO add mock replication server for testing
-    database_register_tables() method
+    TODO add mock replication server for testing database_register_tables()
+    method
+
     """
 
     data_url = os.path.join(_CWD, "testdata", "dp01_dc2_catalogs")

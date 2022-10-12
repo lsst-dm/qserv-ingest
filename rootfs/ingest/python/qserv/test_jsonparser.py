@@ -19,10 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""
-Tools used by ingest algorithm
+"""Tools used by ingest algorithm.
 
 @author  Fabrice Jammes, IN2P3
+
 """
 
 # -------------------------------
@@ -52,14 +52,16 @@ _LOG = logging.getLogger(__name__)
 
 
 def test_contribution_monitor() -> None:
-
     response_json = http.json_get(_DATADIR, "response_file_async.json")
     contrib_monitor = jsonparser.ContributionMonitor(response_json)
 
     assert contrib_monitor.status == jsonparser.ContributionState.LOAD_FAILED
     assert (
         contrib_monitor.error
-        == "Connection[119]::execute(_inTransaction=1)  mysql_real_query failed, query: 'LOAD DATA INFILE '/qserv/data/ingest/qservTest_case01_qserv-Logs-4294967295-24-9ad6-c5a6-c537-1086.csv' INTO TABLE `qservTest_case01_qserv`.`Logs`FIELDS TERMINATED BY ',' ESCAPED BY '\\\\' LINES TERMINATED BY '\\n'', error: Data truncated for column 'id' at row 1, errno: 1265"
+        == "Connection[119]::execute(_inTransaction=1)  mysql_real_query failed, query: 'LOAD DATA INFILE "
+        + "'/qserv/data/ingest/qservTest_case01_qserv-Logs-4294967295-24-9ad6-c5a6-c537-1086.csv' INTO TABLE "
+        + "`qservTest_case01_qserv`.`Logs`FIELDS TERMINATED BY ',' ESCAPED BY '\\\\' "
+        + "LINES TERMINATED BY '\\n'', error: Data truncated for column 'id' at row 1, errno: 1265"
     )
     assert contrib_monitor.system_error == 11
     assert contrib_monitor.http_error == 0
@@ -67,7 +69,6 @@ def test_contribution_monitor() -> None:
 
 
 def test_get_fqdn() -> None:
-
     remote_server = "k8s-school.fr"
     response = os.system("ping -c 1 " + remote_server)
 
@@ -85,17 +86,24 @@ def test_get_fqdn() -> None:
 
 
 def test_parse_not_finished_transaction() -> None:
-
     jsonstring = (
         '{"databases": {"cosmoDC2_v1_1_4_image": {"num_chunks": 5, "transactions": ['
-        '{"begin_time": 1611956328241, "database": "cosmoDC2_v1_1_4_image", "end_time": 1611956328693, "id": 8, "state": "FINISHED"}, '
-        '{"begin_time": 1611956328068, "database": "cosmoDC2_v1_1_4_image", "end_time": 1611956330782, "id": 7, "state": "FINISHED"}, '
-        '{"begin_time": 1611956328039, "database": "cosmoDC2_v1_1_4_image", "end_time": 1611956328477, "id": 6, "state": "ABORTED"}, '
-        '{"begin_time": 1611956327716, "database": "cosmoDC2_v1_1_4_image", "end_time": 1611956328168, "id": 5, "state": "FINISHED"}, '
-        '{"begin_time": 1611956327578, "database": "cosmoDC2_v1_1_4_image", "end_time": 1611956327978, "id": 4, "state": "FINISHED"}, '
-        '{"begin_time": 1611956327057, "database": "cosmoDC2_v1_1_4_image", "end_time": 1611956327652, "id": 3, "state": "FINISHED"}, '
-        '{"begin_time": 1611956326857, "database": "cosmoDC2_v1_1_4_image", "end_time": 0, "id": 2, "state": "STARTED"}, '
-        '{"begin_time": 1611956326351, "database": "cosmoDC2_v1_1_4_image", "end_time": 1611956326806, "id": 1, "state": "ABORTED"}]}},'
+        '{"begin_time": 1611956328241, "database": "cosmoDC2_v1_1_4_image", '
+        '"end_time": 1611956328693, "id": 8, "state": "FINISHED"}, '
+        '{"begin_time": 1611956328068, "database": "cosmoDC2_v1_1_4_image", '
+        '"end_time": 1611956330782, "id": 7, "state": "FINISHED"}, '
+        '{"begin_time": 1611956328039, "database": "cosmoDC2_v1_1_4_image", '
+        '"end_time": 1611956328477, "id": 6, "state": "ABORTED"}, '
+        '{"begin_time": 1611956327716, "database": "cosmoDC2_v1_1_4_image", '
+        '"end_time": 1611956328168, "id": 5, "state": "FINISHED"}, '
+        '{"begin_time": 1611956327578, "database": "cosmoDC2_v1_1_4_image", '
+        '"end_time": 1611956327978, "id": 4, "state": "FINISHED"}, '
+        '{"begin_time": 1611956327057, "database": "cosmoDC2_v1_1_4_image", '
+        '"end_time": 1611956327652, "id": 3, "state": "FINISHED"}, '
+        '{"begin_time": 1611956326857, "database": "cosmoDC2_v1_1_4_image", '
+        '"end_time": 0, "id": 2, "state": "STARTED"}, '
+        '{"begin_time": 1611956326351, "database": "cosmoDC2_v1_1_4_image", '
+        '"end_time": 1611956326806, "id": 1, "state": "ABORTED"}]}},'
         '"error": "", "error_ext": {}, "success": 1}'
     )
     jsondata = json.loads(jsonstring)

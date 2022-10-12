@@ -58,10 +58,7 @@ linkcheck_timeout = 15
 
 # Add any URL patterns to ignore (e.g. for private sites, or sites that
 # are frequently down).
-linkcheck_ignore = [
-    r"^https://jira.lsstcorp.org/browse/",
-    r"^https://dev.lsstcorp.org/trac"
-]
+linkcheck_ignore = [r"^https://jira.lsstcorp.org/browse/", r"^https://dev.lsstcorp.org/trac"]
 
 # -- Options for html builder -------------------------------------------------
 

@@ -6,10 +6,12 @@ TAG=${INGEST_RELEASE:-$(git -C $DIR describe --dirty --always)}
 # Select dataset to load
 # related directory must exists inside ./manifests/
 OVERLAY=base
+# OVERLAY="case01"
+# OVERLAY="case03"
 # OVERLAY="in2p3-skysim5000"
 # OVERLAY="in2p3-dc2_dr6_object_v2"
 # OVERLAY="dc2-errors"
-# OVERLAY="OVERLAY=in2p3-dp0.2"
+# OVERLAY="in2p3-dp0.2"
 
 # Image version created by build procedure
 INGEST_IMAGE="qserv/ingest:$TAG"

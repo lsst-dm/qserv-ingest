@@ -20,10 +20,10 @@
 # the GNU General Public License along with this program.  If not,
 # see <http://www.lsstcorp.org/LegalNotices/>.
 
-"""
-Send SQL queries in order to validate successful ingest for a dataset
+"""Send SQL queries in order to validate successful ingest for a dataset.
 
 @author  Fabrice Jammes, IN2P3
+
 """
 
 # -------------------------------
@@ -65,10 +65,8 @@ _LOG = logging.getLogger(__name__)
 
 
 def _dircmp(dir1: str, dir2: str) -> bool:
-    """
-    Compare all files in two directories
-    Return true if files have the same names and are identical, else false
-    """
+    """Compare all files in two directories Return true if files have the same
+    names and are identical, else false."""
     comp = filecmp.dircmp(dir1, dir2)
     left = sorted(comp.left_list)
     right = sorted(comp.right_list)
@@ -94,9 +92,10 @@ def _dircmp(dir1: str, dir2: str) -> bool:
 
 
 class Validator:
-    """
-    Validate Qserv ingest process has been successful
-       - lauch SQL query against currently ingested database
+    """Validate Qserv ingest process has been successful.
+
+    - lauch SQL query against currently ingested database
+
     """
 
     def __init__(
@@ -131,10 +130,7 @@ class Validator:
         _LOG.info("Database: %s, tables: %s", database, self.tables)
 
     def query(self) -> None:
-        """
-        Lauch simple queries against Qserv database
-        using sqlalchemy
-        """
+        """Lauch simple queries against Qserv database using sqlalchemy."""
         for table in self.tables:
             query = select([func.count()]).select_from(table)
             result = self.engine.execute(query)
@@ -151,10 +147,8 @@ class Validator:
         return local_file_path
 
     def benchmark(self) -> bool:
-        """
-        Lauch query benchmark against Qserv database
-        Return True if query results are as expected, else False
-        """
+        """Lauch query benchmark against Qserv database Return True if query
+        results are as expected, else False."""
         dbbench_config = self._download_to_workdir(_TESTBENCH_CONFIG)
 
         dbbench_results_path = os.path.join(_WORKDIR, "dbbench")

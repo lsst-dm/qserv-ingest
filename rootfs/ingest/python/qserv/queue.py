@@ -19,11 +19,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""
-Manage a contributions queue used to orchestrate Qserv replication service
-on the client side
+"""Manage a contributions queue used to orchestrate Qserv replication service
+on the client side.
 
 @author  Fabrice Jammes, IN2P3
+
 """
 
 # -------------------------------
@@ -62,17 +62,15 @@ _MAX_RETRY_ATTEMPTS = 100
 
 
 class QueueManager:
-    """
-    Class implementing contributions queue manager for Qserv ingest process
-    """
+    """Class implementing contributions queue manager for Qserv ingest
+    process."""
+
     current_table: typing.Optional[str]
 
     def __init__(self, connection_url: str, contribution_metadata: ContributionMetadata):
 
         db_url = make_url(connection_url)
-        self.engine = sqlalchemy.create_engine(db_url,
-                                               pool_recycle=3600,
-                                               future=True)
+        self.engine = sqlalchemy.create_engine(db_url, pool_recycle=3600, future=True)
 
         @event.listens_for(self.engine, "before_cursor_execute")
         # type: ignore
@@ -98,19 +96,15 @@ class QueueManager:
         self._pop_current_table()
 
     def set_transaction_size(self, contributions_queue_fraction: int) -> None:
-        """
-        Set number of contributions managed by a single transaction
-        """
+        """Set number of contributions managed by a single transaction."""
         contributions_count = self._count_contribfiles()
         _LOG.debug("Contributions queue size: %s", contributions_count)
         self._contribfiles_to_lock_number = int(contributions_count / contributions_queue_fraction) + 1
 
     def _count_contribfiles(self, not_succeed: bool = False) -> int:
-        """
-        Count contributions for current database
-           if not_succeed is 'True' count contributions which are not ingested
-           else count all contributions.
-        """
+        """Count contributions for current database if not_succeed is 'True'
+        count contributions which are not ingested else count all
+        contributions."""
         query = select([func.count("*")]).select_from(self.queue)
 
         if not_succeed is True:
@@ -131,12 +125,14 @@ class QueueManager:
             self.current_table = None
 
     def all_succeed(self) -> bool:
-        """Check all contribution files have beed ingested successfully for current database
+        """Check all contribution files have beed ingested successfully for
+        current database.
 
         Returns
         -------
         all_succeed : `bool`
-            True if all contribution files have beed ingested successfully, else False
+            True if all contribution files have beed ingested successfully,
+            else False
         """
         if self._count_contribfiles(not_succeed=True) == 0:
             return True
@@ -163,12 +159,13 @@ class QueueManager:
         return contributions
 
     def insert_contribfiles(self) -> None:
-        """If queue is empty for current database, then load contribution
-           files specification in queue, else do nothing
+        """If queue is empty for current database, then load contribution files
+        specification in queue, else do nothing.
 
         Returns
         -------
         Nothing
+
         """
 
         contributions_count = self._count_contribfiles()
@@ -206,8 +203,7 @@ class QueueManager:
                 loop = False
             else:
                 acquire_mutex_query = update(self.mutex).values(
-                    pod=self.pod,
-                    latest_move=datetime.datetime.now()
+                    pod=self.pod, latest_move=datetime.datetime.now()
                 )
                 acquire_mutex_query = acquire_mutex_query.where(self.mutex.c.pod.is_(None))
                 with self.engine.begin() as conn:
@@ -217,27 +213,23 @@ class QueueManager:
                 wait_sec = util.increase_wait_time(wait_sec)
 
     def _release_mutex(self) -> None:
-        release_mutex_query = update(self.mutex).values(
-            pod=None,
-            latest_move=datetime.datetime.now()
-        )
+        release_mutex_query = update(self.mutex).values(pod=None, latest_move=datetime.datetime.now())
         release_mutex_query = release_mutex_query.where(self.mutex.c.pod == self.pod)
         self._safe_execute(release_mutex_query, _MAX_RETRY_ATTEMPTS)
 
     def init_mutex(self) -> None:
-        """Initialize mutex in queue database
-           Queue database has a table `mutex` which contain only one row. This row is used to enable
-           only one pod to lock contribution file in queue at a time and need to be initialized
-           at ingest startup.
+        """Initialize mutex in queue database Queue database has a table
+        `mutex` which contain only one row.
+
+        This row is used to enable only one pod to lock contribution file in
+        queue at a time and need to be initialized at ingest startup.
+
         """
-        release_mutex_query = update(self.mutex).values(
-            pod=None,
-            latest_move=datetime.datetime.now()
-        )
+        release_mutex_query = update(self.mutex).values(pod=None, latest_move=datetime.datetime.now())
         self._safe_execute(release_mutex_query, _MAX_RETRY_ATTEMPTS)
 
     def _run_lock_queries(self, contribfiles_to_lock_count: int) -> int:
-        """Assign contribfiles to a pod inside ingest queue
+        """Assign contribfiles to a pod inside ingest queue.
 
         Parameters
         ----------
@@ -248,6 +240,7 @@ class QueueManager:
         -------
         contribfiles_locked_count: int
             Number of contribfiles locked
+
         """
 
         try:
@@ -258,7 +251,6 @@ class QueueManager:
             select_query = select_query.where(self.queue.c.locking_pod.is_(None))
             select_query = select_query.where(self.queue.c.database == self.contribution_metadata.database)
 
-            # _LOG.debug("Query select: %s", select_query.compile(dialect=mysql.dialect()))
             with self.engine.connect() as connection:
                 rows = connection.execute(select_query)
                 ids = []
@@ -266,12 +258,9 @@ class QueueManager:
                     ids.append(e[0])
                 rows.close()
 
-            update_query = update(self.queue).values(
-                locking_pod=self.pod
-            )
+            update_query = update(self.queue).values(locking_pod=self.pod)
             update_query = update_query.where(self.queue.c.id.in_(ids))
 
-            # _LOG.debug("Query (MySQL dialect)): %s", update_query.compile(dialect=mysql.dialect()))
             self._safe_execute(update_query, _MAX_RETRY_ATTEMPTS)
         finally:
             self._release_mutex()
@@ -280,12 +269,14 @@ class QueueManager:
 
     def lock_contribfiles(self) -> typing.List[typing.Tuple[str, int, str, bool, str]]:
         """Lock a batch of contribution files and returns their representation,
-        return empty list if all contribution have been ingested
+        return empty list if all contribution have been ingested.
 
         Returns
         -------
         A list of chunk contributions representation where:
-        contributions = (string database, int chunk_id, bool is_overlap, string table)
+        contributions =
+        (string database, int chunk_id, bool is_overlap, string table)
+
         """
 
         # Lock contributions for one or more tables
@@ -293,22 +284,28 @@ class QueueManager:
 
         contribfiles_locked = self._select_locked_contribfiles()
         contribfiles_locked_count = len(contribfiles_locked)
-        # Non expensive check, should be useless and can be removed in the long term
-        if (contribfiles_locked_count_expected != contribfiles_locked_count):
-            _LOG.fatal("Unexpected number of locked contributions for pod %s (is: %s, should be: %s)",
-                       self.pod, contribfiles_locked_count, contribfiles_locked_count_expected)
+        # Non expensive check, should be useless and can be removed
+        # in the long term
+        if contribfiles_locked_count_expected != contribfiles_locked_count:
+            _LOG.fatal(
+                "Unexpected number of locked contributions for pod %s (is: %s, should be: %s)",
+                self.pod,
+                contribfiles_locked_count,
+                contribfiles_locked_count_expected,
+            )
         _LOG.debug("contributions_locked_count: %s", contribfiles_locked_count)
         _LOG.debug("%s contribution files locked by pod %s", contribfiles_locked_count, self.pod)
 
         return contribfiles_locked
 
     def unlock_contribfiles(self, ingest_success: bool) -> None:
-        """Mark contributions as "succeed" in contribution queue if super-transaction
-        has been successfully commited
-        Release contributions in queue when the super-transaction has been aborted
+        """Mark contributions as "succeed" in contribution queue if super-
+        transaction has been successfully commited Release contributions in
+        queue when the super-transaction has been aborted.
 
         WARN: this operation will be retried until it succeed
         so that contribution queue state is consistent with ingest state
+
         """
         if ingest_success:
             logging.debug("Mark contributions as 'succeed' in queue")
@@ -328,7 +325,8 @@ class QueueManager:
             return False
 
     def select_noningested_contribfiles(self) -> typing.List[typing.Tuple]:
-        """Return all contribution files in queue not successfully loaded for current database"""
+        """Return all contribution files in queue not successfully loaded for
+        current database."""
         query = select(
             [
                 self.queue.c.database,
@@ -347,7 +345,7 @@ class QueueManager:
         return contribfiles
 
     def _safe_execute(self, query: typing.Any, max_retry: int = 0) -> None:
-        """Retry failed update queries
+        """Retry failed update queries.
 
         Parameters
         ----------
@@ -357,6 +355,7 @@ class QueueManager:
             Sql query
         max_retry : `int`
             Maximum number of retry attempts
+
         """
         wait_sec = 1
         retry_count = 0
@@ -376,9 +375,7 @@ class QueueManager:
                 if retry_count < max_retry:
                     _LOG.error(
                         "Database connection error: {} - sleeping for {}s"
-                        " and will retry (attempt #{} of {})".format(
-                            ex, wait_sec, retry_count, max_retry
-                        )
+                        " and will retry (attempt #{} of {})".format(ex, wait_sec, retry_count, max_retry)
                     )
                     time.sleep(wait_sec)
                     wait_sec = util.increase_wait_time(wait_sec)
@@ -390,9 +387,7 @@ class QueueManager:
                 connection.rollback()
                 _LOG.error(
                     "An error occurred during execution of a SQL statement: {},"
-                    " transaction has been rolled back (attempt #{} of {})".format(
-                        ex, retry_count, max_retry
-                    )
+                    " transaction has been rolled back (attempt #{} of {})".format(ex, retry_count, max_retry)
                 )
             finally:
                 connection.close()

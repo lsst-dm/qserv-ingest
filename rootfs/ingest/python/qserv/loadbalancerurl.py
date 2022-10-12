@@ -19,10 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""
-Manage metadata related to input data
+"""Manage metadata related to input data.
 
 @author  Fabrice Jammes, IN2P3
+
 """
 
 # -------------------------------
@@ -44,8 +44,8 @@ _LOG = logging.getLogger(__name__)
 
 
 class LoadBalancerAlgorithm:
-    """Load balancing algorithm for accessing http servers
-    """
+    """Load balancing algorithm for accessing http servers."""
+
     count: int
     loadbalancers: List[str]
 
@@ -64,15 +64,15 @@ class LoadBalancerAlgorithm:
 
 
 class LoadBalancedURL:
-    """Manage http(s) load balanced URL
-    Also file file:// protocol, and use it as default if no scheme is provided
-    """
+    """Manage http(s) load balanced URL Also file file:// protocol, and use it
+    as default if no scheme is provided."""
 
     loadBalancerAlgorithm: Optional[LoadBalancerAlgorithm]
     direct_url: str
 
     def __init__(self, path: str, lbAlgo: LoadBalancerAlgorithm = None):
-        """Manage a load balanced URL for http:// protocol, also support access for file:// protocol
+        """Manage a load balanced URL for http:// protocol, also support access
+        for file:// protocol.
 
         Parameters
         ----------
@@ -84,6 +84,7 @@ class LoadBalancedURL:
         Raises
         ------
             ValueError if path uses an unsupported protocol
+
         """
 
         if lbAlgo is not None and len(lbAlgo.loadbalancers) != 0:

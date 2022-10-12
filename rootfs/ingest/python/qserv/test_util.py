@@ -19,10 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""
-Tests for util modules
+"""Tests for util modules.
 
 @author  Fabrice Jammes, IN2P3
+
 """
 
 # -------------------------------
@@ -46,25 +46,25 @@ _LOG = logging.getLogger(__name__)
 
 
 def test_ingestconfig() -> None:
-    """Check the function which compare files in two directories"""
+    """Check the function which compare files in two directories."""
 
     parser = argparse.ArgumentParser(description="Test util module")
     util.add_default_arguments(parser)
 
     configfile = os.path.join(_CWD, "testdata", "dp02", "ingest.yaml")
-    args = parser.parse_args(['--config', configfile])
+    args = parser.parse_args(["--config", configfile])
 
     _LOG.debug("Replication configuration: %s", args.config.replication_config)
 
-    assert args.config.replication_config.cainfo == '/etc/pki/tls/certs/ca-bundle.crt'
+    assert args.config.replication_config.cainfo == "/etc/pki/tls/certs/ca-bundle.crt"
     assert args.config.replication_config.ssl_verifypeer == 1
     assert args.config.replication_config.low_speed_limit == 60
     assert args.config.replication_config.low_speed_time == 120
 
     configfile = os.path.join(_CWD, "testdata", "dp02", "ingest.replication.yaml")
-    args = parser.parse_args(['--config', configfile])
+    args = parser.parse_args(["--config", configfile])
 
-    assert args.config.replication_config.cainfo == '/etc/pki/tls/certs/ca-bundle.crt'
+    assert args.config.replication_config.cainfo == "/etc/pki/tls/certs/ca-bundle.crt"
     assert args.config.replication_config.ssl_verifypeer == 1
     assert args.config.replication_config.low_speed_limit == 10
     assert args.config.replication_config.low_speed_time == 3600

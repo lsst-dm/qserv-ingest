@@ -20,11 +20,11 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-"""
-User-friendly client library for Qserv replication service.
+"""User-friendly client library for Qserv replication service.
 
 @author  Hsin Fang Chiang, Rubin Observatory
 @author  Fabrice Jammes, IN2P3
+
 """
 
 # -------------------------------
@@ -70,14 +70,13 @@ def download_file(url: str, dest: str) -> None:
 
 
 def file_exists(url: str) -> bool:
-    """Check if a file exists on a remote HTTP server
-    """
+    """Check if a file exists on a remote HTTP server."""
     response = requests.head(url)
     return response.status_code == 200
 
 
 def json_get(base_url: str, filename: str) -> Dict:
-    """Load a JSON file located at a given URL
+    """Load a JSON file located at a given URL.
 
     Parameters
     ----------
@@ -95,6 +94,7 @@ def json_get(base_url: str, filename: str) -> Dict:
     ------
     IngestError:
         Raise is URI scheme is not in http://, https://, file://
+
     """
     str_url = urllib.parse.urljoin(util.trailing_slash(base_url), filename)
     url = urllib.parse.urlsplit(str_url, scheme="file")
@@ -111,11 +111,13 @@ def json_get(base_url: str, filename: str) -> Dict:
 def _get_retry_object(retries: int = 5, backoff_factor: float = 0.2) -> Retry:
     """Create an instance of :obj:`urllib3.util.Retry`.
 
-    With default arguments (5 retries with 0.2 backoff factor), urllib3 will sleep
-    for 0.2, 0.4, 0.8, 1.6, 3.2 seconds between attempts.
+    With default arguments (5 retries with 0.2 backoff factor), urllib3 will
+    sleep for 0.2, 0.4, 0.8, 1.6, 3.2 seconds between attempts.
+
     """
 
-    # See https://findwork.dev/blog/advanced-usage-python-requests-timeouts-retries-hooks/#retry-on-failure
+    # See
+    # https://findwork.dev/blog/advanced-usage-python-requests-timeouts-retries-hooks/#retry-on-failure
     return Retry(
         total=retries,
         read=retries,
@@ -127,10 +129,10 @@ def _get_retry_object(retries: int = 5, backoff_factor: float = 0.2) -> Retry:
 
 
 class Http:
-    """Manage http connections"""
+    """Manage http connections."""
 
     def __init__(self, auth_path: Optional[str] = None) -> None:
-        """Set http connections retry/timeout errors"""
+        """Set http connections retry/timeout errors."""
         adapter = HTTPAdapter(max_retries=_get_retry_object())
         # Session is only used for the GET method
         self.http = requests.Session()
@@ -139,8 +141,7 @@ class Http:
         self.authKey = self._authenticate(auth_path)
 
     def is_reachable(self, url: str) -> bool:
-        """Check if a given http URL is reachable through the network
-        """
+        """Check if a given http URL is reachable through the network."""
         try:
             self.http.head(url)
         except requests.exceptions.ConnectionError as e:
@@ -159,11 +160,10 @@ class Http:
             authKey = getpass.getpass()
         return authKey
 
-    def get(self, url: str,
-            payload: Dict[str, Any] = dict(),
-            auth: bool = True,
-            timeout: Optional[int] = None) -> Dict:
-        """Send a GET query to an http(s) URL
+    def get(
+        self, url: str, payload: Dict[str, Any] = dict(), auth: bool = True, timeout: Optional[int] = None
+    ) -> Dict:
+        """Send a GET query to an http(s) URL.
 
         Parameters
         ----------
@@ -182,6 +182,7 @@ class Http:
         Returns:
         response_json : `dict`
             JSON response
+
         """
         if auth is True:
             payload["auth_key"] = self.authKey
@@ -194,9 +195,10 @@ class Http:
         _LOG.debug("GET: success")
         return response_json
 
-    def post(self, url: str, payload: Dict[str, Any] = dict(),
-             auth: bool = True, timeout: int = TIMEOUT_LONG_SEC) -> Dict:
-        """Send a POST query to an http(s) URL
+    def post(
+        self, url: str, payload: Dict[str, Any] = dict(), auth: bool = True, timeout: int = TIMEOUT_LONG_SEC
+    ) -> Dict:
+        """Send a POST query to an http(s) URL.
 
         Parameters
         ----------
@@ -215,6 +217,7 @@ class Http:
         Returns:
         response_json : `dict`
             JSON response
+
         """
         if auth is True:
             payload["auth_key"] = self.authKey
@@ -233,9 +236,8 @@ class Http:
         return response_json
 
     @retry(requests.exceptions.Timeout, delay=5, tries=_MAX_RETRY_ATTEMPTS)
-    def post_retry(self, url: str, payload: Dict[str, Any] = dict(),
-                   auth: bool = True)  -> Dict:
-        """Send a POST query to an http(s) URL and retry on time-out error
+    def post_retry(self, url: str, payload: Dict[str, Any] = dict(), auth: bool = True) -> Dict:
+        """Send a POST query to an http(s) URL and retry on time-out error.
 
         Parameters
         ----------
@@ -249,6 +251,7 @@ class Http:
         Returns:
         response_json : `dict`
             JSON response
+
         """
         return self.post(url, payload, auth, TIMEOUT_SHORT_SEC)
 
