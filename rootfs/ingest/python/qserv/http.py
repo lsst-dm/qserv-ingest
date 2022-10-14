@@ -196,7 +196,7 @@ class Http:
         return response_json
 
     def post(
-        self, url: str, payload: Dict[str, Any] = dict(), auth: bool = True, timeout: int = TIMEOUT_LONG_SEC
+        self, url: str, payload: Dict[str, Any] = dict(), auth: bool = True, timeout: int = None
     ) -> Dict:
         """Send a POST query to an http(s) URL.
 
@@ -209,7 +209,7 @@ class Http:
         auth : `Optional[bool]`
             Perform HTTP authentication. Defaults to True.
         timeout : `Optional[int]`
-            Query time-out. Defaults to TIMEOUT_LONG_SEC.
+            Query time-out. Defaults to None.
 
         Raises:
             ReplicationControllerError: JSON response contain an error code
@@ -222,7 +222,7 @@ class Http:
         if auth is True:
             payload["auth_key"] = self.authKey
         try:
-            r = requests.post(url, json=payload, timeout=TIMEOUT_LONG_SEC)
+            r = requests.post(url, json=payload, timeout=timeout)
         except (requests.exceptions.RequestException, ConnectionResetError) as e:
             _LOG.critical("Error when sending POST request to url %s", url)
             e.args = (
