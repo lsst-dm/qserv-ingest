@@ -35,17 +35,19 @@ import socket
 import time
 import typing
 
+import sqlalchemy
+from sqlalchemy import MetaData, Table, event, update
+from sqlalchemy.engine.url import make_url
+from sqlalchemy.exc import OperationalError, StatementError
+from sqlalchemy.sql import func, select
+
+from . import util
+
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
 from .exception import QueueError
 from .metadata import ContributionMetadata
-import sqlalchemy
-from sqlalchemy import MetaData, Table, event, update
-from sqlalchemy.exc import OperationalError, StatementError
-from sqlalchemy.engine.url import make_url
-from sqlalchemy.sql import select, func
-from . import util
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -63,7 +65,8 @@ _MAX_RETRY_ATTEMPTS = 100
 
 class QueueManager:
     """Class implementing contributions queue manager for Qserv ingest
-    process."""
+    process.
+    """
 
     current_table: typing.Optional[str]
 
@@ -133,6 +136,7 @@ class QueueManager:
         all_succeed : `bool`
             True if all contribution files have beed ingested successfully,
             else False
+
         """
         if self._count_contribfiles(not_succeed=True) == 0:
             return True
@@ -219,7 +223,7 @@ class QueueManager:
 
     def init_mutex(self) -> None:
         """Initialize mutex in queue database Queue database has a table
-        `mutex` which contain only one row.
+        ``mutex`` which contain only one row.
 
         This row is used to enable only one pod to lock contribution file in
         queue at a time and need to be initialized at ingest startup.
@@ -300,7 +304,7 @@ class QueueManager:
 
     def unlock_contribfiles(self, ingest_success: bool) -> None:
         """Mark contributions as "succeed" in contribution queue if super-
-        transaction has been successfully commited Release contributions in
+        transaction has been successfully commited. Release contributions in
         queue when the super-transaction has been aborted.
 
         WARN: this operation will be retried until it succeed
@@ -374,8 +378,12 @@ class QueueManager:
                 util.check_raise(ex, mysql_retry_err_msg)
                 if retry_count < max_retry:
                     _LOG.error(
-                        "Database connection error: {} - sleeping for {}s"
-                        " and will retry (attempt #{} of {})".format(ex, wait_sec, retry_count, max_retry)
+                        "Database connection error: %s - sleeping for %ss"
+                        " and will retry (attempt #%s of %s)",
+                        ex,
+                        wait_sec,
+                        retry_count,
+                        max_retry,
                     )
                     time.sleep(wait_sec)
                     wait_sec = util.increase_wait_time(wait_sec)

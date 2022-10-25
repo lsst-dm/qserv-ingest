@@ -25,22 +25,22 @@
 
 """
 
+import logging
+import posixpath
+import socket
+import urllib.parse
+
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
 from functools import lru_cache
-import logging
-import posixpath
-import socket
 from typing import Any, Dict, List, Tuple
-import urllib.parse
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-from . import jsonparser
-from .http import Http, DEFAULT_AUTH_PATH, TIMEOUT_SHORT_SEC, TIMEOUT_LONG_SEC
-from . import util
+from . import jsonparser, util
+from .http import DEFAULT_AUTH_PATH, TIMEOUT_LONG_SEC, TIMEOUT_SHORT_SEC, Http
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -109,13 +109,14 @@ class ReplicationClient:
         if responseJson["version"] != _REPL_SERVICE_VERSION:
             raise ValueError(
                 "Invalid replication server version "
-                + f"(is {responseJson['version']}, expected {_REPL_SERVICE_VERSION})"
+                f"(is {responseJson['version']}, expected {_REPL_SERVICE_VERSION})"
             )
         _LOG.info("Replication service version: v%s", _REPL_SERVICE_VERSION)
 
     def database_config(self, database: str, replication_config: util.ReplicationConfig) -> None:
-        """Set replication system configuration for a given database
-        https://confluence.lsstcorp.org/display/DM/Ingest%3A+11.1.8.1.+Setting+configuration+parameters.
+        """Set replication system configuration for a given database https://co
+        nfluence.lsstcorp.org/display/DM/Ingest%3A+11.1.8.1.+Setting+configurat
+        ion+parameters.
 
         Parameters
         ----------
@@ -124,6 +125,7 @@ class ReplicationClient:
         replication_config: `util.ReplicationConfig`
             Configuration parameters for the database inside
             replication/ingest system
+
         """
 
         url = urllib.parse.urljoin(self.repl_url, "/ingest/config/")
@@ -217,7 +219,7 @@ class ReplicationClient:
     @lru_cache(maxsize=None)
     def get_regular_tables_locations(self, database: str) -> List[Tuple[str, int]]:
         """Returns connection parameters of the Data Ingest Service of workers
-        which are available for ingesting regular (fully replicated) tables:
+        which are available for ingesting regular (fully replicated) tables.
 
         Parameters
         ----------

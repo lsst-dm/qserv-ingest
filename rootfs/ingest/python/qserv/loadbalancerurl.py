@@ -29,9 +29,10 @@
 #  Imports of standard modules --
 # -------------------------------
 from __future__ import annotations
+
 import logging
-from typing import List, Optional
 import urllib.parse
+from typing import List, Optional
 
 # ----------------------------
 # Imports for other modules --
@@ -64,8 +65,9 @@ class LoadBalancerAlgorithm:
 
 
 class LoadBalancedURL:
-    """Manage http(s) load balanced URL Also file file:// protocol, and use it
-    as default if no scheme is provided."""
+    """Manage http(s) load balanced URL. Support http:// https:// and file://
+    protocols, use the latter as default if no scheme is provided.
+    """
 
     loadBalancerAlgorithm: Optional[LoadBalancerAlgorithm]
     direct_url: str

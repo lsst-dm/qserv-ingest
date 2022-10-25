@@ -26,14 +26,15 @@
 @author  Fabrice Jammes, IN2P3
 
 """
-
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
-from enum import Enum, auto
 import logging
 import time
+from enum import Enum, auto
 from typing import Dict, List, Optional, Tuple
+
+from . import util
 
 # ----------------------------
 # Imports for other modules --
@@ -44,7 +45,6 @@ from .jsonparser import DatabaseStatus
 from .metadata import ContributionMetadata
 from .queue import QueueManager
 from .replicationclient import ReplicationClient
-from . import util
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -75,7 +75,6 @@ class Ingester:
             Replication controller URL
         queue_manager: `QueueManager`
             Manager to access contribution queue
-
     """
 
     contrib_meta: ContributionMetadata
@@ -128,7 +127,6 @@ class Ingester:
             replication/ingest system
         felis: `dict`, optional
             Felis schema for tables. Defaults to None.
-
         """
         self.repl_client.database_register(self.contrib_meta.json_db)
         self.repl_client.database_register_tables(self.contrib_meta.get_ordered_tables_json(), felis)
@@ -262,16 +260,20 @@ class Ingester:
         return continue_ingest
 
     def _ingest_all_contributions(self, transaction_id: int, contributions: list[Contribution]) -> bool:
-        """Ingest all contribution for a given transaction Throw exception if
-        ingest fail This method always returns True, or raise an exception.
+        """Ingest all contribution for a given transaction. Throw exception if
+        ingest fail. This method always returns True, or raises an exception.
 
-        Args:
-            transaction_id (int): id of the transaction
-            contributions (list): list of contribution to ingest
+        Parameters
+        ----------
+        transaction_id : `int`
+            id of the transaction
+        contributions : `list[Contribution]`
+            list of contribution to ingest
 
-        Returns:
-            bool: True if ingest has ran successfully
-
+        Returns
+        -------
+        success: `bool`
+            True if ingest has ran successfully
         """
         loop = True
         _LOG.info(
@@ -309,7 +311,7 @@ class Ingester:
             else:
                 _LOG.info(
                     "Contributions for transaction %s, RECENTLY STARTED: %s, NOT FINISHED: %s,"
-                    + "RECENTLY FINISHED: %s, FINISHED: %s",
+                    "RECENTLY FINISHED: %s, FINISHED: %s",
                     transaction_id,
                     contribs_started_count,
                     contribs_notfinished_count,

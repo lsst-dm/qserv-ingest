@@ -31,18 +31,19 @@
 # -------------------------------
 import logging
 import time
-from typing import Dict, Optional
 import urllib.parse
+from typing import Dict, Optional
+
+from . import metadata
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
 from .exception import IngestError
 from .http import Http
-from .jsonparser import ContributionState, ContributionMonitor, raise_error
+from .jsonparser import ContributionMonitor, ContributionState, raise_error
 from .metadata import FileFormat, LoadBalancedURL
 from .util import increase_wait_time
-from . import metadata
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -93,7 +94,7 @@ class Contribution:
 
         if len(self.ext) == 0:
             raise IngestError(
-                "Unsupported data format for regular table " f"only {metadata.EXT_LIST} are supported"
+                f"Unsupported data format for regular table only {metadata.EXT_LIST} are supported"
             )
 
         self.load_balanced_url = LoadBalancedURL.new(load_balanced_base_url, filepath)
@@ -130,8 +131,8 @@ class Contribution:
         return payload
 
     def start_async(self, transaction_id: int) -> None:
-        """Start an asynchronous ingest query for a chunk contribution Raise an
-        exception if the query fails after a fixed number of attempts (see
+        """Start an asynchronous ingest query for a chunk contribution. Raise
+        an exception if the query fails after a fixed number of attempts (see
         MAX_RETRY_ATTEMPTS constant)
 
         Parameters
@@ -165,9 +166,8 @@ class Contribution:
 
     def monitor(self) -> bool:
         """Monitor an asynchronous ingest query for a chunk contribution States
-        of an ingest query are listed here:
-        https://confluence.lsstcorp.org/display/DM/Ingest%3A+9.5.3.+Asynchronous+Protocol
-        Propagate an exception
+        of an ingest query are listed here: https://confluence.lsstcorp.org/dis
+        play/DM/Ingest%3A+9.5.3.+Asynchronous+Protocol Propagate an exception
         if the query fails after a fixed number of attempts.
 
         Raises
@@ -177,7 +177,6 @@ class Contribution:
             ReplicationControllerError
                 Raised for unmanaged contribution state or non-retriable errors
                 from R-I system
-
 
         Returns
         -------
@@ -230,7 +229,7 @@ class Contribution:
                     f"http error: {contrib_monitor.http_error}"
                 )
                 if noretry_errmsg:
-                    raise IngestError(msg + f" {noretry_errmsg}")
+                    raise IngestError(f"{msg} {noretry_errmsg}")
                 else:
                     _LOG.warning(msg)
                 self.retry_attempts += 1

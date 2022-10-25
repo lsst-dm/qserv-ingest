@@ -30,6 +30,7 @@
 # -------------------------------
 import logging
 import os
+
 import pytest
 
 # ----------------------------
@@ -37,6 +38,7 @@ import pytest
 # ----------------------------
 import requests
 from requests import HTTPError
+
 from . import http
 
 # ---------------------------------
@@ -69,8 +71,11 @@ def test_errorcode() -> None:
 
 
 def test_retry() -> None:
-    """Check if a retry occurs for a non-existing DNS entry This might occurs
-    if k8s DNS fails intermittently."""
+    """Check if a retry occurs for a non-existing DNS entry.
+
+    This might occurs if k8s DNS fails intermittently.
+
+    """
     _http = http.Http()
     with pytest.raises(requests.ConnectionError):
         _http.get(url="http://server.not-exists", payload={}, auth=False)

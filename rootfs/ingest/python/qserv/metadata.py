@@ -25,21 +25,21 @@
 
 """
 
+import logging
+import urllib.parse
+
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
 from collections.abc import Generator
 from dataclasses import dataclass
-import logging
 from typing import Any, Dict, List, Optional
-import urllib.parse
-
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
 from .http import json_get
-from .loadbalancerurl import LoadBalancerAlgorithm, LoadBalancedURL
+from .loadbalancerurl import LoadBalancedURL, LoadBalancerAlgorithm
 
 CSV = "csv"
 TSV = "tsv"
@@ -249,6 +249,7 @@ class ContributionMetadata:
         loadbalancers: `List[str]` optional
             List of http(s) load balancer urls providing
             access to metadata. Defaults to [].
+
         """
 
         self.fileformats: Dict[str, FileFormat] = {}
@@ -278,6 +279,7 @@ class ContributionMetadata:
         ------
         data: `Iterator[List[dict()]]`
             Iterator on each contribution specifications for a database
+
         """
         for table in self.tables:
             yield from table.contrib_specs
@@ -308,6 +310,7 @@ class ContributionMetadata:
             a list of json schemas in the R-I system format,
             one for each table, director tables are at the beginning
             of the list
+
         """
         schema_files = []
         for t in self.tables:

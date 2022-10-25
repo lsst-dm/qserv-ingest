@@ -1,8 +1,5 @@
 """Sphinx configurations for the qserv.lsst.io documentation build."""
 
-import os
-import sys
-
 import lsst_sphinx_bootstrap_theme
 
 # -- General configuration ----------------------------------------------------
@@ -58,7 +55,7 @@ linkcheck_timeout = 15
 
 # Add any URL patterns to ignore (e.g. for private sites, or sites that
 # are frequently down).
-linkcheck_ignore = [r"^https://jira.lsstcorp.org/browse/", r"^https://dev.lsstcorp.org/trac"]
+linkcheck_ignore = [r"^https://jira.lsstcorp.org/browse/"]
 
 # -- Options for html builder -------------------------------------------------
 

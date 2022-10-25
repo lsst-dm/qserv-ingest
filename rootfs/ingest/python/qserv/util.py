@@ -30,11 +30,12 @@
 #  Imports of standard modules --
 # -------------------------------
 import argparse
-from dataclasses import dataclass, fields
 import dataclasses
 import json
 import logging
+from dataclasses import dataclass, fields
 from typing import Any, Dict, List
+
 import yaml
 
 # ----------------------------
@@ -159,6 +160,7 @@ class ReplicationConfig:
         Putting 0  as a value of the parameter will effectively turn this
         option off as if it has never been configured for the database.
         Default value: 120
+
     """
 
     cainfo: str = "/etc/pki/tls/certs/ca-bundle.crt"

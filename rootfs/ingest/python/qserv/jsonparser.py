@@ -26,25 +26,24 @@
 
 """
 
+import logging
+
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
 from enum import Enum
-import logging
 from typing import Any, Dict, List, Tuple
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
 from jsonpath_ng.ext import parse
-from .http import Http
-from .exception import IngestError
-
 
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
-from .exception import ReplicationControllerError
+from .exception import IngestError, ReplicationControllerError
+from .http import Http
 
 _LOG = logging.getLogger(__name__)
 
@@ -77,9 +76,9 @@ class TransactionState(Enum):
 
 
 class ContributionMonitor:
-    """Store contribution status returned by the Ingest Service see https://con
-    fluence.lsstcorp.org/display/DM/Ingest%3A+9.5.3.+Asynchronous+Protocol for
-    details.
+    """Store contribution status returned by the Ingest Service see
+    https://confluence.lsstcorp.org/display/DM/Ingest%3A+9.5.3.+Asynchronous+Protocol
+    for details.
 
     Parameters
     ----------
@@ -89,8 +88,9 @@ class ContributionMonitor:
 
     Raises
     ------
-    error: `ReplicationControllerError`
-        If 'response_json' does not have the expected value or format
+    ReplicationControllerError
+        Raised if 'response_json' does not have the expected value or format
+
     """
 
     status: ContributionState
@@ -204,17 +204,16 @@ def get_regular_table_locations(responseJson: dict) -> List[Tuple[str, int]]:
     Parameters
     ----------
     responseJson: `dict`
-        Response for replication service for the regular table locations API
+        Response from replication service API for the regular table locations.
         see
         https://confluence.lsstcorp.org/pages/viewpage.action?pageId=133333850#UserguidefortheQservIngestsystem(APIversion8)-Locateregulartables
 
     Returns
     -------
     locations `typing.List[typing.Tuple[str, int]]`:
-        List of connection parameters for Data ingest Service REST API,
-        for workers which are available for ingesting
-        regular (fully replicated) tables
-
+        List of connection parameters for Data ingest Service REST API, for
+        workers which are available for ingesting regular (fully replicated)
+        tables
     """
     locations = []
     for entry in responseJson["locations"]:
@@ -287,9 +286,8 @@ def raise_error(responseJson: dict, retry_attempts: int = -1, max_retry_attempts
     Returns
     -------
     is_error_retryable: `bool`
-        True if retry_attempts < max_retry_attempts
-        and if error allows retrying request
-        False if no error in JSON response
+        True if retry_attempts < max_retry_attempts and if error allows
+        retrying request. False if no error in JSON response.
 
     """
     if retry_attempts < max_retry_attempts:
