@@ -20,21 +20,22 @@
 # the GNU General Public License along with this program.  If not,
 # see <http://www.lsstcorp.org/LegalNotices/>.
 
-"""
-Tools used by ingest algorithm
+"""Tools used by ingest algorithm.
 
 @author  Fabrice Jammes, IN2P3
+
 """
 
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
 import argparse
-from dataclasses import dataclass, fields
 import dataclasses
 import json
 import logging
+from dataclasses import dataclass, fields
 from typing import Any, Dict, List
+
 import yaml
 
 # ----------------------------
@@ -55,15 +56,20 @@ def add_default_arguments(parser: argparse.ArgumentParser) -> None:
         type=argparse.FileType("r"),
         action=IngestConfigAction,
         metavar="FILE",
-        required=True
+        required=True,
     )
-    parser.add_argument('-v', '--verbose', default=0, action='count',
-                        help="More verbose output, can use several times. " +
-                        "Overridden by QSERV_INGEST_VERBOSE environment variable")
+    parser.add_argument(
+        "-v",
+        "--verbose",
+        default=0,
+        action="count",
+        help="More verbose output, can use several times. "
+        + "Overridden by QSERV_INGEST_VERBOSE environment variable",
+    )
 
 
 def configure_logger(level: int) -> logging.Logger:
-    """Create, configure and returns logger
+    """Create, configure and returns logger.
 
     Parameters
     ----------
@@ -74,6 +80,7 @@ def configure_logger(level: int) -> logging.Logger:
     -------
     logger: `logging.Logger`
         a configured logger which logs on standard output
+
     """
     levels = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
     logger = logging.getLogger()
@@ -93,9 +100,7 @@ def trailing_slash(url: str) -> str:
 
 
 class IngestConfig:
-    """
-    Configuration parameter for ingest client
-    """
+    """Configuration parameter for ingest client."""
 
     def __init__(self, yaml: dict):
 
@@ -109,64 +114,78 @@ class IngestConfig:
         self.replication_url = ingest_dict["qserv"]["replication_url"]
         replication = ingest_dict.get("replication")
         if replication is not None:
-            self.replication_config = ReplicationConfig(replication.get("cainfo"),
-                                                        replication.get("ssl_verifypeer"),
-                                                        replication.get("low_speed_limit"),
-                                                        replication.get("low_speed_time"))
+            self.replication_config = ReplicationConfig(
+                replication.get("cainfo"),
+                replication.get("ssl_verifypeer"),
+                replication.get("low_speed_limit"),
+                replication.get("low_speed_time"),
+            )
         else:
             self.replication_config = ReplicationConfig()
 
 
 @dataclass
 class ReplicationConfig:
-    """Configuration parameters for replication/ingest system
-    See https://confluence.lsstcorp.org/display/DM/Ingest%3A+11.1.8.1.+Setting+configuration+parameters
+    """Configuration parameters for replication/ingest system See https://confl
+    uence.lsstcorp.org/display/DM/Ingest%3A+11.1.8.1.+Setting+configuration+par
+    ameters.
 
-    Default value for all parameters are kept, in case `None` value is used in constructor
+    Default value for all parameters are kept, in case `None` value is used in
+    constructor
 
     Parameters
     ----------
     cainfo : `str`
-        This attribute directly maps to https://curl.se/libcurl/c/CURLOPT_PROXY_CAINFO.html.
-        Putting the empty string as a value of the parameter will effectively turn this option off
-        as if it has never been configured for the database.
+        This attribute directly maps to
+        https://curl.se/libcurl/c/CURLOPT_PROXY_CAINFO.html.
+        Putting the empty string as a value of the parameter will effectively
+        turn this option off as if it has never been configured
+        for the database.
         Default value: "/etc/pki/tls/certs/ca-bundle.crt"
     ssl_verifypeer: `int`
-        This attribute directly maps to https://curl.se/libcurl/c/CURLOPT_PROXY_SSL_VERIFYPEER.html.
+        This attribute directly maps to
+        https://curl.se/libcurl/c/CURLOPT_PROXY_SSL_VERIFYPEER.html.
         Numeric values of the parameter are treated as boolean variables,
         where 0 represents false and any other values represent true.
         Default value: 1
     low_speed_limit: `int`
-        This attribute directly maps to https://curl.se/libcurl/c/CURLOPT_LOW_SPEED_LIMIT.html
-        Putting 0  as a value of the parameter will effectively turn this option off
-        as if it has never been configured for the database.
+        This attribute directly maps to
+        https://curl.se/libcurl/c/CURLOPT_LOW_SPEED_LIMIT.html
+        Putting 0  as a value of the parameter will effectively turn
+        this option off as if it has never been configured for the database.
         Default value: 60
     low_speed_time: `int`
-        This attribute directly maps to https://curl.se/libcurl/c/CURLOPT_LOW_SPEED_TIME.html
-        Putting 0  as a value of the parameter will effectively turn this option off
-        as if it has never been configured for the database.
+        This attribute directly maps to
+        https://curl.se/libcurl/c/CURLOPT_LOW_SPEED_TIME.html
+        Putting 0  as a value of the parameter will effectively turn this
+        option off as if it has never been configured for the database.
         Default value: 120
+
     """
+
     cainfo: str = "/etc/pki/tls/certs/ca-bundle.crt"
     ssl_verifypeer: int = 1
     low_speed_limit: int = 60
     low_speed_time: int = 120
 
     def __post_init__(self) -> None:
-        """Set default value for all parameters, in case `None` value is used in constructor
-        """
+        """Set default value for all parameters, in case `None` value is used
+        in constructor."""
         for field in fields(self):
             if not isinstance(field.default, dataclasses._MISSING_TYPE) and getattr(self, field.name) is None:
                 setattr(self, field.name, field.default)
 
 
 class IngestConfigAction(argparse.Action):
-    """
-    Argparse action to read an ingest client configuration file
-    """
+    """Argparse action to read an ingest client configuration file."""
 
-    def __call__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace, values: Any,
-                 option_string: str = None) -> None:
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: Any,
+        option_string: str = None,
+    ) -> None:
         try:
             yaml_data = yaml.safe_load(values)
             config = IngestConfig(yaml_data)
@@ -176,23 +195,30 @@ class IngestConfigAction(argparse.Action):
 
 
 class BaseUrlAction(argparse.Action):
-    """
-    Add trailing slash to url
-    """
+    """Add trailing slash to url."""
 
-    def __call__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace, values: Any,
-                 option_string: str = None) -> None:
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: Any,
+        option_string: str = None,
+    ) -> None:
         x = trailing_slash(values)
         setattr(namespace, self.dest, x)
 
 
 class DictAction(argparse.Action):
-    """
-    Argparse action to attempt casting the values to floats and put into a dict
-    """
+    """Argparse action to attempt casting the values to floats and put into a
+    dict."""
 
-    def __call__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace, values: Any,
-                 option_string: str = None) -> None:
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: Any,
+        option_string: str = None,
+    ) -> None:
         d = dict()
         for item in values:
             k, v = item.split("=")
@@ -206,20 +232,28 @@ class DictAction(argparse.Action):
 
 
 class JsonAction(argparse.Action):
-    def __call__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace, values: Any,
-                 option_string: str = None) -> None:
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: Any,
+        option_string: str = None,
+    ) -> None:
         with open(values, "r") as f:
             x = json.load(f)
         setattr(namespace, self.dest, x)
 
 
 class FelisAction(argparse.Action):
-    """
-    Argparse action to read a felis file into namespace
-    """
+    """Argparse action to read a felis file into namespace."""
 
-    def __call__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace, values: Any,
-                 option_string: str = None) -> None:
+    def __call__(
+        self,
+        parser: argparse.ArgumentParser,
+        namespace: argparse.Namespace,
+        values: Any,
+        option_string: str = None,
+    ) -> None:
         with open(values, "r") as f:
             tables = yaml.safe_load(f)["tables"]
         schemas: Dict[str, List] = dict()
@@ -245,7 +279,7 @@ def increase_wait_time(wait_sec: int) -> int:
 
 
 def check_raise(e: Exception, not_raise_msgs: List[str]) -> None:
-    """Raise not recognized exceptions, depending on their message
+    """Raise not recognized exceptions, depending on their message.
 
     Parameters
     ----------
@@ -258,6 +292,7 @@ def check_raise(e: Exception, not_raise_msgs: List[str]) -> None:
     ------
     Exception
         Raised exception
+
     """
     raiseExc = True
     for msg in not_raise_msgs:

@@ -20,31 +20,30 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-"""
-Parse JSON responses from replication service
+"""Parse JSON responses from replication service.
 
 @author  Fabrice Jammes, IN2P3
+
 """
+
+import logging
 
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
 from enum import Enum
-import logging
 from typing import Any, Dict, List, Tuple
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
 from jsonpath_ng.ext import parse
-from .http import Http
-from .exception import IngestError
-
 
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
-from .exception import ReplicationControllerError
+from .exception import IngestError, ReplicationControllerError
+from .http import Http
 
 _LOG = logging.getLogger(__name__)
 
@@ -77,18 +76,21 @@ class TransactionState(Enum):
 
 
 class ContributionMonitor:
-    """Store contribution status returned by the Ingest Service
-    see https://confluence.lsstcorp.org/display/DM/Ingest%3A+9.5.3.+Asynchronous+Protocol
-    for details
+    """Store contribution status returned by the Ingest Service see
+    https://confluence.lsstcorp.org/display/DM/Ingest%3A+9.5.3.+Asynchronous+Protocol
+    for details.
 
     Parameters
     ----------
-        response_json: `dict`
-            Ingest Service response for a HTTP request against URL: ingest/file-async/<request_id>
+    response_json: `dict`
+        Ingest Service response for a HTTP request
+        against URL: ingest/file-async/<request_id>
 
     Raises
     ------
-        ReplicationControllerError: If 'response_json' does not have the expected value or format
+    ReplicationControllerError
+        Raised if 'response_json' does not have the expected value or format
+
     """
 
     status: ContributionState
@@ -145,7 +147,8 @@ class ContributionMonitor:
 
 
 def filter_transactions(responseJson: Dict, database: str, states: List[TransactionState]) -> List[int]:
-    """Filter transactions by state inside json response issued by replication service"""
+    """Filter transactions by state inside json response issued by replication
+    service."""
     transaction_ids = []
     transactions = responseJson["databases"][database]["transactions"]
     _LOG.debug(states)
@@ -160,9 +163,8 @@ def filter_transactions(responseJson: Dict, database: str, states: List[Transact
 
 
 def get_chunk_location(responseJson: dict) -> Tuple[str, int]:
-    """Retrieve chunk location (worker host and port)
-    inside json response issued by replication service
-    """
+    """Retrieve chunk location (worker host and port) inside json response
+    issued by replication service."""
     fqdns = responseJson["location"]["http_host_name"]
     port = int(responseJson["location"]["http_port"])
     fqdn = get_fqdn(fqdns, port)
@@ -172,7 +174,7 @@ def get_chunk_location(responseJson: dict) -> Tuple[str, int]:
 
 
 def get_fqdn(fqdns: str, port: int, scheme: str = "http") -> str:
-    """Return fqdn of the first reachable scheme://fqdn:port entry
+    """Return fqdn of the first reachable scheme://fqdn:port entry.
 
     Parameters
     ----------
@@ -185,6 +187,7 @@ def get_fqdn(fqdns: str, port: int, scheme: str = "http") -> str:
     -------
     fqdn : `str`
         First reachable host fqdn, empty string if not fqdn is reachable
+
     """
     http = Http()
     for fqdn in fqdns.split(","):
@@ -195,20 +198,22 @@ def get_fqdn(fqdns: str, port: int, scheme: str = "http") -> str:
 
 
 def get_regular_table_locations(responseJson: dict) -> List[Tuple[str, int]]:
-    """Retrieve locations (workers host and port) for regular tables
-    inside json response issued by replication service
+    """Retrieve locations (workers host and port) for regular tables inside
+    json response issued by replication service.
 
     Parameters
     ----------
     responseJson: `dict`
-        Response for replication service for the regular table locations API
-        see https://confluence.lsstcorp.org/pages/viewpage.action?pageId=133333850#UserguidefortheQservIngestsystem(APIversion8)-Locateregulartables
+        Response from replication service API for the regular table locations.
+        see
+        https://confluence.lsstcorp.org/pages/viewpage.action?pageId=133333850#UserguidefortheQservIngestsystem(APIversion8)-Locateregulartables
 
     Returns
     -------
     locations `typing.List[typing.Tuple[str, int]]`:
-        List of connection parameters , for Data ingest Service REST API i.e. http,
-        of workers which are available for ingesting regular (fully replicated) tables
+        List of connection parameters for Data ingest Service REST API, for
+        workers which are available for ingesting regular (fully replicated)
+        tables
     """
     locations = []
     for entry in responseJson["locations"]:
@@ -222,7 +227,8 @@ def get_regular_table_locations(responseJson: dict) -> List[Tuple[str, int]]:
 
 
 def parse_database_status(responseJson: dict, database: str, family: str) -> DatabaseStatus:
-    """Retrieve database status inside JSON response from replication controller
+    """Retrieve database status inside JSON response from replication
+    controller.
 
     Parameters
     ----------
@@ -242,6 +248,7 @@ def parse_database_status(responseJson: dict, database: str, family: str) -> Dat
     ------
     ValueError
         Raised if JSON response does not contain database name and family
+
     """
     jsonpath_expr = parse(
         '$.config.databases[?(database="{}" & family_name="{}")].is_published'.format(database, family)
@@ -260,7 +267,7 @@ def parse_database_status(responseJson: dict, database: str, family: str) -> Dat
 
 
 def raise_error(responseJson: dict, retry_attempts: int = -1, max_retry_attempts: int = 0) -> bool:
-    """Check JSON response from replication controller for error
+    """Check JSON response from replication controller for error.
 
     Parameters
     ----------
@@ -279,8 +286,9 @@ def raise_error(responseJson: dict, retry_attempts: int = -1, max_retry_attempts
     Returns
     -------
     is_error_retryable: `bool`
-        True if retry_attempts < max_retry_attempts and if error allows retrying request
-        False if no error in JSON response
+        True if retry_attempts < max_retry_attempts and if error allows
+        retrying request. False if no error in JSON response.
+
     """
     if retry_attempts < max_retry_attempts:
         check_retry = True

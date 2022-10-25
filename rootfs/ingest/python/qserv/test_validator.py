@@ -19,10 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""
-Tools used by validation algorithms
+"""Tools used by validation algorithms.
 
 @author  Fabrice Jammes, IN2P3
+
 """
 
 # -------------------------------
@@ -43,7 +43,7 @@ _CWD = os.path.dirname(os.path.abspath(__file__))
 
 
 def test_dircmp() -> None:
-    """Check the function which compare files in two directories"""
+    """Check the function which compare files in two directories."""
     dir1 = os.path.join(_CWD, "testdata", "dbbench-difffiles")
     dir2 = os.path.join(_CWD, "testdata", "dbbench-expected")
     result = validator._dircmp(dir1, dir2)

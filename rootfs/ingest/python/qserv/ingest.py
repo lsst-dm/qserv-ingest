@@ -20,20 +20,21 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-"""
-User-friendly client library for Qserv replication service.
+"""User-friendly client library for Qserv replication service.
 
 @author  Hsin Fang Chiang, Rubin Observatory
 @author  Fabrice Jammes, IN2P3
-"""
 
+"""
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
-from enum import Enum, auto
 import logging
 import time
+from enum import Enum, auto
 from typing import Dict, List, Optional, Tuple
+
+from . import util
 
 # ----------------------------
 # Imports for other modules --
@@ -44,7 +45,6 @@ from .jsonparser import DatabaseStatus
 from .metadata import ContributionMetadata
 from .queue import QueueManager
 from .replicationclient import ReplicationClient
-from . import util
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -64,9 +64,8 @@ class TransactionAction(Enum):
 
 
 class Ingester:
-    """
-    Manage contribution ingestion tasks
-    Retrieve contribution metadata and connection to concurrent queue manager
+    """Manage contribution ingestion tasks Retrieve contribution metadata and
+    connection to concurrent queue manager.
 
     Parameters
     ----------
@@ -93,7 +92,7 @@ class Ingester:
         Contribution.fileformats = contribution_metadata.fileformats
 
     def check_supertransactions_success(self) -> None:
-        """Check all super-transactions have ran successfully"""
+        """Check all super-transactions have ran successfully."""
         trans = self.repl_client.get_transactions_started(self.contrib_meta.database)
         _LOG.debug(f"IDs of transactions in STARTED state: {trans}")
         if len(trans) > 0:
@@ -110,22 +109,22 @@ class Ingester:
         _LOG.info("All contributions in queue successfully ingested")
 
     def database_publish(self) -> None:
-        """
-        Publish a Qserv database inside replication system
-        """
+        """Publish a Qserv database inside replication system."""
         database = self.contrib_meta.database
         self.repl_client.database_publish(database)
 
-    def database_register_and_config(self,
-                                     replication_config: util.ReplicationConfig,
-                                     felis: Optional[Dict] = None) -> None:
-        """Register a database, its tables and its configuration inside replication/ingest system
-           using data_url/<database_name>.json as input data
+    def database_register_and_config(
+        self, replication_config: util.ReplicationConfig, felis: Optional[Dict] = None
+    ) -> None:
+        """Register a database, its tables and its configuration inside
+        replication/ingest system using data_url/<database_name>.json as input
+        data.
 
         Parameters
         ----------
         replication_config: `util.ReplicationConfig`
-            Configuration parameters for the database inside replication/ingest system
+            Configuration parameters for the database inside
+            replication/ingest system
         felis: `dict`, optional
             Felis schema for tables. Defaults to None.
         """
@@ -134,15 +133,11 @@ class Ingester:
         self.repl_client.database_config(self.contrib_meta.database, replication_config)
 
     def get_database_status(self) -> DatabaseStatus:
-        """
-        Return the status of a Qserv catalog database
-        """
+        """Return the status of a Qserv catalog database."""
         return self.repl_client.get_database_status(self.contrib_meta.database, self.contrib_meta.family)
 
     def ingest(self, contribution_queue_fraction: int) -> None:
-        """
-        Ingest contribution for a transaction
-        """
+        """Ingest contribution for a transaction."""
         if self.queue_manager is not None:
             self.queue_manager.set_transaction_size(contribution_queue_fraction)
         else:
@@ -152,10 +147,7 @@ class Ingester:
             has_non_ingested_contributions = self._ingest_transaction()
 
     def index(self, secondary: bool = False) -> None:
-        """
-        Index Qserv MySQL sharded tables
-        or create secondary index
-        """
+        """Index Qserv MySQL sharded tables or create secondary index."""
         if secondary:
             database = self.contrib_meta.database
             self.repl_client.build_secondary_index(database)
@@ -167,6 +159,7 @@ class Ingester:
         self, contribfiles_locked: List[Tuple[str, int, str, bool, str]]
     ) -> List[Contribution]:
         """Build contribution specification using information from:
+
           - ingest queue for file to be ingested
           - Data Ingest service
 
@@ -179,6 +172,7 @@ class Ingester:
         -------
             contributions: `List[Contribution]`
               List of contributions to be ingested
+
         """
         contributions = []
         for contrib_file in contribfiles_locked:
@@ -200,8 +194,8 @@ class Ingester:
         return contributions
 
     def _ingest_transaction(self) -> bool:
-        """Get contributions from a queue server for a given database
-        then ingest it inside Qserv during a super-transaction
+        """Get contributions from a queue server for a given database then
+        ingest it inside Qserv during a super-transaction.
 
         Returns
         -------
@@ -212,6 +206,7 @@ class Ingester:
         Raises
         ------
         Raise exception if an error occurs during transaction
+
         """
 
         continue_ingest: bool
@@ -231,7 +226,9 @@ class Ingester:
             # No more contribution file to ingest
             # Waiting to recover possibly failed transactions
             else:
-                _LOG.info("Waiting for all contributions managed by other transactions to be in succeed state")
+                _LOG.info(
+                    "Waiting for all contributions managed by other transactions to be in succeed state"
+                )
                 time.sleep(10)
 
         transaction_id: Optional[int] = None
@@ -251,24 +248,32 @@ class Ingester:
             if transaction_id is not None:
                 if ingest_success:
                     _LOG.info("Close ingest transaction %s", transaction_id)
-                else:
+                elif transaction_id is not None:
                     _LOG.warn("Abort ingest transaction %s", transaction_id)
                 self.repl_client.close_transaction(self.contrib_meta.database, transaction_id, ingest_success)
-                self.queue_manager.unlock_contribfiles(ingest_success)
+            # Solve error case https://jira.lsstcorp.org/browse/DM-36418:
+            # Consider that transaction has not been opened
+            # if transaction_id is None and so unlock contribution files
+            # in any case (success or failure failure)
+            self.queue_manager.unlock_contribfiles(ingest_success)
         continue_ingest = True
         return continue_ingest
 
     def _ingest_all_contributions(self, transaction_id: int, contributions: list[Contribution]) -> bool:
-        """Ingest all contribution for a given transaction
-           Throw exception if ingest fail
-           This method always returns True, or raise an exception
+        """Ingest all contribution for a given transaction. Throw exception if
+        ingest fail. This method always returns True, or raises an exception.
 
-        Args:
-            transaction_id (int): id of the transaction
-            contributions (list): list of contribution to ingest
+        Parameters
+        ----------
+        transaction_id : `int`
+            id of the transaction
+        contributions : `list[Contribution]`
+            list of contribution to ingest
 
-        Returns:
-            bool: True if ingest has ran successfully
+        Returns
+        -------
+        success: `bool`
+            True if ingest has ran successfully
         """
         loop = True
         _LOG.info(
@@ -305,21 +310,20 @@ class Ingester:
                 loop = False
             else:
                 _LOG.info(
-                    "Contributions for transaction %s, RECENTLY STARTED: %s, NOT FINISHED: %s," +
+                    "Contributions for transaction %s, RECENTLY STARTED: %s, NOT FINISHED: %s,"
                     "RECENTLY FINISHED: %s, FINISHED: %s",
                     transaction_id,
                     contribs_started_count,
                     contribs_notfinished_count,
                     contribs_justfinished_count,
-                    contribs_prevfinished_count
+                    contribs_prevfinished_count,
                 )
                 time.sleep(5)
 
         return True
 
     def transaction_helper(self, action: TransactionAction, trans_id: int = None) -> None:
-        """High-level method which help in managing transaction(s)
-        """
+        """High-level method which help in managing transaction(s)"""
         database = self.contrib_meta.database
         match action:
             case TransactionAction.ABORT_ALL:

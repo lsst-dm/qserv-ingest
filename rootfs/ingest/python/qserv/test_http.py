@@ -19,10 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""
-Unit tests for http.py
+"""Unit tests for http.py.
 
 @author  Fabrice Jammes, IN2P3
+
 """
 
 # -------------------------------
@@ -30,6 +30,7 @@ Unit tests for http.py
 # -------------------------------
 import logging
 import os
+
 import pytest
 
 # ----------------------------
@@ -37,6 +38,7 @@ import pytest
 # ----------------------------
 import requests
 from requests import HTTPError
+
 from . import http
 
 # ---------------------------------
@@ -49,7 +51,7 @@ _CWD = os.path.dirname(os.path.abspath(__file__))
 
 
 def test_file_exists() -> None:
-    """Check if a file exists on a remote HTTP server"""
+    """Check if a file exists on a remote HTTP server."""
     assert http.file_exists("https://www.k8s-school.fr/team/index.html")
     assert not http.file_exists("https://www.k8s-school.fr/team/false.html")
 
@@ -61,8 +63,7 @@ def test_json_get() -> None:
 
 
 def test_errorcode() -> None:
-    """Check behaviour for error 404
-    """
+    """Check behaviour for error 404."""
     _http = http.Http()
     with pytest.raises(HTTPError) as e:
         _http.get(url="https://www.in2p3.cnrs.fr/notfound", payload={}, auth=False)
@@ -70,9 +71,18 @@ def test_errorcode() -> None:
 
 
 def test_retry() -> None:
-    """Check if a retry occurs for a non-existing DNS entry
-    This might occurs if k8s DNS fails intermittently
+    """Check if a retry occurs for a non-existing DNS entry.
+
+    This might occurs if k8s DNS fails intermittently.
+
     """
     _http = http.Http()
     with pytest.raises(requests.ConnectionError):
         _http.get(url="http://server.not-exists", payload={}, auth=False)
+
+
+def test_retry_post() -> None:
+    """Check if an error occurs for a non-existing DNS entry."""
+    _http = http.Http()
+    with pytest.raises(requests.ConnectionError):
+        _http.post_retry(url="http://server.not-exists", payload={})

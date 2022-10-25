@@ -25,7 +25,7 @@ COPY --from=dbbench /go/bin/dbbench /usr/local/bin
 RUN python3 -m pip install jsonpath-ng==1.5.2 \
     mariadb==1.0.9 \
     mysqlclient==2.1.0 PyYAML==5.3.1  \
-    requests==2.25.1 SQLAlchemy==1.4.31
+    requests==2.25.1 retry==0.9.2 SQLAlchemy==1.4.31
 
 #USER qserv
 

@@ -19,31 +19,31 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""
-Manage metadata related to input data
+"""Manage metadata related to input data.
 
 @author  Fabrice Jammes, IN2P3
+
 """
+
+import logging
+import urllib.parse
 
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
 from collections.abc import Generator
 from dataclasses import dataclass
-import logging
 from typing import Any, Dict, List, Optional
-import urllib.parse
-
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
 from .http import json_get
-from .loadbalancerurl import LoadBalancerAlgorithm, LoadBalancedURL
+from .loadbalancerurl import LoadBalancedURL, LoadBalancerAlgorithm
 
-CSV = 'csv'
-TSV = 'tsv'
-TXT = 'txt'
+CSV = "csv"
+TSV = "tsv"
+TXT = "txt"
 EXT_LIST: List[str] = [CSV, TSV, TXT]
 """List of supported input data file extensions
 """
@@ -56,6 +56,7 @@ _FILES: str = "files"
 _METADATA_FILENAME: str = "metadata.json"
 _OVERLAPS: str = "overlaps"
 _LOG = logging.getLogger(__name__)
+
 
 @dataclass
 class FileFormat:
@@ -76,6 +77,7 @@ class FileFormat:
     lines_terminated_by: `Optional[str]`
         Set mariadb "LINES TERMINATED BY" option,
         default to 'None' and then use replication service default
+
     """
 
     fields_enclosed_by: Optional[str] = None
@@ -86,13 +88,14 @@ class FileFormat:
 
 @dataclass
 class TableContributionsSpec:
-    """Contain contribution specification for a given table
-    and for a given path.
+    """Contain contribution specification for a given table and for a given
+    path.
 
-     Store informations which will allow to retrieve contributions file.
-     Each entry of the list is a tuple: (<path>, [chunk_ids], <is_overlap>, <table>)
-     where [chunk_ids] is the list of the contribution files (XOR overlap) available
-     at a given path for a given table and a given chunk.
+    Store informations which will allow to retrieve contributions file. Each
+    entry of the list is a tuple: (<path>, [chunk_ids], <is_overlap>, <table>)
+    where [chunk_ids] is the list of the contribution files (XOR overlap)
+    available at a given path for a given table and a given chunk.
+
     """
 
     base_path: str
@@ -108,17 +111,24 @@ class TableContributionsSpec:
     """ Files for regular tables, empty for partitioned tables """
 
     chunks: List[int]
-    """ Chunks ids for files for partitioned tables, empty for non-partitioned tables """
+    """Chunks ids for files for partitioned tables,
+    empty for non-partitioned tables
+    """
 
     chunks_overlap: List[int]
-    """ Chunks ids for overlap files for partioned tables, empty for non-partitioned tables """
+    """Chunks ids for overlap files for partioned tables,
+    empty for non-partitioned tables
+    """
 
     def get_contrib(self) -> Generator[Dict[str, Any], None, None]:
-        """Generator for contribution specifications for a given table and a given path
+        """Generator for contribution specifications for a given table and a
+        given path.
 
         Yields
         ------
-            Iterator[List[dict()]]: Iterator on each contribution specifications for a table
+        data: `Iterator[List[dict()]]`
+            Iterator on each contribution specifications for a table
+
         """
         data: Dict[str, Any]
         for file in self.files:
@@ -157,14 +167,16 @@ class TableContributionsSpec:
 
 
 class TableSpec:
-    """Contain table specifications
+    """Contain table specifications.
 
     Parameters:
     -----------
     metadata_url : `str`
-        url of metadata, used to access tables' json configuration files for R-I service
+        url of metadata, used to access tables' json
+        configuration files for R-I service
     table_meta : `Dict`
         metadata for a table
+
     """
 
     def __init__(self, metadata_url: str, table_meta: Dict):
@@ -191,15 +203,17 @@ class TableSpec:
                 chunks = d[_CHUNKS]
                 # Only director tables can have (extra) overlaps
                 if self.is_director:
-                    # chunk ids for overlaps might be different of regular chunk ids
+                    # chunk ids for overlaps might be different
+                    # of regular chunk ids
                     if d.get(_OVERLAPS):
                         chunks_overlap = d[_OVERLAPS]
                     else:
                         chunks_overlap = d[_CHUNKS]
             else:
                 files = d[_FILES]
-            self.contrib_specs.append(TableContributionsSpec(path, self.database, self.name, files,
-                                                             chunks, chunks_overlap))
+            self.contrib_specs.append(
+                TableContributionsSpec(path, self.database, self.name, files, chunks, chunks_overlap)
+            )
 
     def _is_director(self) -> bool:
         is_director: bool = False
@@ -214,11 +228,14 @@ class TableSpec:
 
 class ContributionMetadata:
     """Manage metadata related to data to ingest:
+
     database, tables and contribution files
+
     """
 
     def __init__(self, path: str, loadbalancers: List[str] = []):
         """Retrieve and store metadata located at 'path' and describing:
+
              - database
              - tables
              - contribution files
@@ -230,7 +247,9 @@ class ContributionMetadata:
         path : `str`
             Path to metadata
         loadbalancers: `List[str]` optional
-            List of http(s) load balancer urls providing access to metadata. Defaults to [].
+            List of http(s) load balancer urls providing
+            access to metadata. Defaults to [].
+
         """
 
         self.fileformats: Dict[str, FileFormat] = {}
@@ -251,22 +270,22 @@ class ContributionMetadata:
         self._init_fileformats()
 
     def get_table_contribs_spec(self) -> Generator[TableContributionsSpec, None, None]:
-        """Generator for contribution specifications for the whole database
+        """Generator for contribution specifications for the whole database.
 
         Retrieve information about input contribution files
         in order to insert them inside the contribution files queue
 
         Yields
         ------
-            Iterator[List[dict()]]: Iterator on each contribution specifications for a database
+        data: `Iterator[List[dict()]]`
+            Iterator on each contribution specifications for a database
+
         """
         for table in self.tables:
             yield from table.contrib_specs
 
     def get_file_url(self, path: str) -> str:
-        """
-        Return the url of a file located on the input data server
-        """
+        """Return the url of a file located on the input data server."""
         return urllib.parse.urljoin(self.metadata_url, path)
 
     def get_tables_names(self) -> List[str]:
@@ -282,14 +301,16 @@ class ContributionMetadata:
         return json_indexes
 
     def get_ordered_tables_json(self) -> List[Dict[Any, Any]]:
-        """Retrieve json schema for each tables of a given database
-        in order to register them inside the replication service
+        """Retrieve json schema for each tables of a given database in order to
+        register them inside the replication service.
 
         Returns
         -------
         l: List[str]
-            a list of json schemas in the R-I system format, one for each table,
-            director tables are at the beginning of the list
+            a list of json schemas in the R-I system format,
+            one for each table, director tables are at the beginning
+            of the list
+
         """
         schema_files = []
         for t in self.tables:
@@ -307,7 +328,7 @@ class ContributionMetadata:
                 self.tables.append(table)
 
     def _init_fileformats(self) -> None:
-        format = self.metadata.get('formats')
+        format = self.metadata.get("formats")
         if format:
             for ext in EXT_LIST:
                 format_spec = format.get(ext)
@@ -317,9 +338,9 @@ class ContributionMetadata:
         for ext in EXT_LIST:
             if self.fileformats.get(ext) is None:
                 if ext == CSV:
-                    fields_terminated_by = ','
+                    fields_terminated_by = ","
                 elif ext == TSV:
-                    fields_terminated_by = '\\t'
+                    fields_terminated_by = "\\t"
                 else:
                     fields_terminated_by = None
                 self.fileformats[ext] = FileFormat(fields_terminated_by=fields_terminated_by)

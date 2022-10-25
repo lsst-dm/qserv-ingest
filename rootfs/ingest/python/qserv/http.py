@@ -20,11 +20,11 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 
-"""
-User-friendly client library for Qserv replication service.
+"""User-friendly client library for Qserv replication service.
 
 @author  Hsin Fang Chiang, Rubin Observatory
 @author  Fabrice Jammes, IN2P3
+
 """
 
 # -------------------------------
@@ -34,23 +34,29 @@ import getpass
 import json
 import logging
 import os
-from typing import Any, Dict, Optional
 import urllib.parse
+from typing import Any, Dict, Optional
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
 import requests
 from requests.adapters import HTTPAdapter
+from retry import retry
 from urllib3.util import Retry
 
-from .exception import IngestError, ReplicationControllerError
 from . import util
+from .exception import IngestError, ReplicationControllerError
 
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
 DEFAULT_AUTH_PATH = "~/.lsst/qserv"
+
+TIMEOUT_SHORT_SEC = 5
+TIMEOUT_LONG_SEC = 120
+
+_MAX_RETRY_ATTEMPTS = 3
 
 _LOG = logging.getLogger(__name__)
 
@@ -64,14 +70,13 @@ def download_file(url: str, dest: str) -> None:
 
 
 def file_exists(url: str) -> bool:
-    """Check if a file exists on a remote HTTP server
-    """
+    """Check if a file exists on a remote HTTP server."""
     response = requests.head(url)
     return response.status_code == 200
 
 
 def json_get(base_url: str, filename: str) -> Dict:
-    """Load a JSON file located at a given URL
+    """Load a JSON file located at a given URL.
 
     Parameters
     ----------
@@ -89,6 +94,7 @@ def json_get(base_url: str, filename: str) -> Dict:
     ------
     IngestError:
         Raise is URI scheme is not in http://, https://, file://
+
     """
     str_url = urllib.parse.urljoin(util.trailing_slash(base_url), filename)
     url = urllib.parse.urlsplit(str_url, scheme="file")
@@ -105,11 +111,13 @@ def json_get(base_url: str, filename: str) -> Dict:
 def _get_retry_object(retries: int = 5, backoff_factor: float = 0.2) -> Retry:
     """Create an instance of :obj:`urllib3.util.Retry`.
 
-    With default arguments (5 retries with 0.2 backoff factor), urllib3 will sleep
-    for 0.2, 0.4, 0.8, 1.6, 3.2 seconds between attempts.
+    With default arguments (5 retries with 0.2 backoff factor), urllib3 will
+    sleep for 0.2, 0.4, 0.8, 1.6, 3.2 seconds between attempts.
+
     """
 
-    # See https://findwork.dev/blog/advanced-usage-python-requests-timeouts-retries-hooks/#retry-on-failure
+    # See
+    # https://findwork.dev/blog/advanced-usage-python-requests-timeouts-retries-hooks/#retry-on-failure
     return Retry(
         total=retries,
         read=retries,
@@ -121,10 +129,11 @@ def _get_retry_object(retries: int = 5, backoff_factor: float = 0.2) -> Retry:
 
 
 class Http:
-    """Manage http connections"""
+    """Manage http(s) connections
+    designed to connect to Qserv Replication Controller"""
 
     def __init__(self, auth_path: Optional[str] = None) -> None:
-        """Set http connections retry/timeout errors"""
+        """Set http connections retry/timeout errors."""
         adapter = HTTPAdapter(max_retries=_get_retry_object())
         # Session is only used for the GET method
         self.http = requests.Session()
@@ -133,8 +142,7 @@ class Http:
         self.authKey = self._authenticate(auth_path)
 
     def is_reachable(self, url: str) -> bool:
-        """Check if a given http URL is reachable through the network
-        """
+        """Check if a given http URL is reachable through the network."""
         try:
             self.http.head(url)
         except requests.exceptions.ConnectionError as e:
@@ -153,10 +161,33 @@ class Http:
             authKey = getpass.getpass()
         return authKey
 
-    def get(self, url: str,
-            payload: Dict[str, Any] = dict(),
-            auth: bool = True,
-            timeout: Optional[int] = None) -> Dict:
+    def get(
+        self, url: str, payload: Dict[str, Any] = dict(), auth: bool = True, timeout: Optional[int] = None
+    ) -> Dict:
+        """Send a GET query to an http(s) URL.
+
+        Parameters
+        ----------
+        url : `str`
+            Http(s) URL
+        payload : `dict` [`str`, `Any`], optional
+            JSON payload, Defaults to dict().
+        auth : `bool`, optional
+            Perform HTTP authentication. Defaults to True.
+        timeout : `int` optional
+            Query time-out. Defaults to None.
+
+        Raises
+        ------
+        ReplicationControllerError
+            Raised if JSON response contain an error code
+
+        Returns
+        -------
+        response_json : `dict`
+            JSON response
+
+        """
         if auth is True:
             payload["auth_key"] = self.authKey
         r = self.http.get(url, json=payload, timeout=timeout)
@@ -168,8 +199,33 @@ class Http:
         _LOG.debug("GET: success")
         return response_json
 
-    def post(self, url: str, payload: Dict[str, Any] = dict(),
-             auth: bool = True, timeout: int = None) -> Dict:
+    def post(self, url: str, payload: Dict[str, Any] = None, auth: bool = True, timeout: int = None) -> Dict:
+        """Send a POST query to an http(s) URL.
+
+        Parameters
+        ----------
+        url : `str`
+            Http(s) URL
+        payload : `Dict[str, Any]`, optional
+            JSON payload, Defaults to None.
+        auth : `bool`, optional
+            Perform HTTP authentication. Defaults to True.
+        timeout : `int`, optional
+            Query time-out. Defaults to None.
+
+        Raises
+        ------
+        ReplicationControllerError
+            Raised if JSON response contain an error code
+
+        Returns
+        -------
+        response_json : `dict`
+            JSON response
+
+        """
+        if payload is None:
+            payload = dict()
         if auth is True:
             payload["auth_key"] = self.authKey
         try:
@@ -186,9 +242,51 @@ class Http:
         _LOG.debug("POST %s: success", url)
         return response_json
 
-    def put(self, url: str, payload: Dict[str, Any] = dict(), timeout: int = None) -> Dict:
-        if not payload:
-            payload = {}
+    @retry(requests.exceptions.Timeout, delay=5, tries=_MAX_RETRY_ATTEMPTS)
+    def post_retry(self, url: str, payload: Dict[str, Any] = None, auth: bool = True) -> Dict:
+        """Send a POST query to an http(s) URL and retry on time-out error.
+
+        Parameters
+        ----------
+        url : `str`
+            Http(s) URL
+        payload : `Dict[ str, Any ]`, optional
+            JSON payload, Defaults to None.
+        auth : `bool`, optional
+            Perform HTTP authentication. Defaults to True.
+
+        Returns:
+        response_json : `dict`
+            JSON response
+        """
+        if payload is None:
+            payload = dict()
+        return self.post(url, payload, auth, TIMEOUT_SHORT_SEC)
+
+    def put(self, url: str, payload: Dict[str, Any] = None, timeout: int = None) -> Dict:
+        """Send a PUT query to an http(s) URL.
+
+        Parameters
+        ----------
+        url : str
+            Http(s) URL
+        payload : Dict[str, Any], optional
+            JSON payload, by default None
+        timeout : int, optional
+            Time-out for query, by default None
+
+        Returns
+        -------
+        response_json : `dict`
+            JSON response
+
+        Raises
+        ------
+        ReplicationControllerError
+            Raised if JSON response contain an error code
+        """
+        if payload is None:
+            payload = dict()
         payload["auth_key"] = self.authKey
         r = requests.put(url, json=payload, timeout=timeout)
         r.raise_for_status()
@@ -200,6 +298,25 @@ class Http:
         return response_json
 
     def delete(self, url: str, timeout: int = None) -> Dict:
+        """Send a DELETE query to an http(s) URL.
+
+        Parameters
+        ----------
+        url : `str`
+            Http(s) URL
+        timeout : `int`, optional
+            Time-out for query, by default None
+
+        Returns
+        -------
+        response_json : `dict`
+            JSON response
+
+        Raises
+        ------
+        ReplicationControllerError
+            Raised if JSON response contain an error code
+        """
         r = requests.delete(url, json={"auth_key": self.authKey}, timeout=timeout)
         r.raise_for_status()
         response_json = r.json()

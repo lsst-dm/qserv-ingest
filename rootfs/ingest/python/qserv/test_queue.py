@@ -19,10 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""
-Unit tests for queue.py
+"""Unit tests for queue.py.
 
 @author  Fabrice Jammes, IN2P3
+
 """
 
 # -------------------------------
@@ -39,8 +39,20 @@ import pytest
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-from sqlalchemy import (MetaData, Table, Column, Integer, String,
-                        Boolean, DateTime, create_engine, event, func, select, update)
+from sqlalchemy import (
+    MetaData,
+    Table,
+    Column,
+    Integer,
+    String,
+    Boolean,
+    DateTime,
+    create_engine,
+    event,
+    func,
+    select,
+    update,
+)
 from sqlalchemy.exc import StatementError
 import yaml
 
@@ -56,7 +68,7 @@ _LOG = logging.getLogger(__name__)
 
 _CWD = os.path.dirname(os.path.abspath(__file__))
 
-_SCISQL_QUEUE_URL = 'sqlite:///testqservingest.db'
+_SCISQL_QUEUE_URL = "sqlite:///testqservingest.db"
 
 _CASE01_DATASET = "case01"
 
@@ -72,23 +84,25 @@ class MockDataAccessLayer:
     engine: Any
     conn_string = None
     db_meta = MetaData()
-    queue = Table('contribfile_queue',
-                  db_meta,
-                  Column('id', Integer(), primary_key=True),
-                  Column('chunk_id', Integer()),
-                  Column('database', String(50)),
-                  Column('filepath', String(255)),
-                  Column('is_overlap', Boolean()),
-                  Column('table', String(50)),
-                  Column('locking_pod', String(255), nullable=True),
-                  Column('succeed', Boolean())
-                  )
+    queue = Table(
+        "contribfile_queue",
+        db_meta,
+        Column("id", Integer(), primary_key=True),
+        Column("chunk_id", Integer()),
+        Column("database", String(50)),
+        Column("filepath", String(255)),
+        Column("is_overlap", Boolean()),
+        Column("table", String(50)),
+        Column("locking_pod", String(255), nullable=True),
+        Column("succeed", Boolean()),
+    )
 
-    mutex = Table('mutex',
-                  db_meta,
-                  Column('pod', String(255), nullable=True),
-                  Column('latest_move', DateTime(), nullable=False)
-                  )
+    mutex = Table(
+        "mutex",
+        db_meta,
+        Column("pod", String(255), nullable=True),
+        Column("latest_move", DateTime(), nullable=False),
+    )
 
     def __init__(self, conn_string: str) -> None:
         self.engine = create_engine(conn_string or self.conn_string, future=True)
@@ -144,13 +158,25 @@ class MockDataAccessLayer:
         tbl = "object"
         contrib_files = []
         for i in range(_DP01_CONTRIBFILES_COUNT):
-            contrib_file = {"chunk_id": 100 + i, "database": db, "filepath": f"/file{i}.txt",
-                            "is_overlap": False, "table": tbl, "succeed": False}
+            contrib_file = {
+                "chunk_id": 100 + i,
+                "database": db,
+                "filepath": f"/file{i}.txt",
+                "is_overlap": False,
+                "table": tbl,
+                "succeed": False,
+            }
             contrib_files.append(contrib_file)
         db = "mydb"
         for i in range(15):
-            contrib_file = {"chunk_id": 200 + i, "database": db, "filepath": f"/file{i}.txt",
-                            "is_overlap": False, "table": tbl, "succeed": False}
+            contrib_file = {
+                "chunk_id": 200 + i,
+                "database": db,
+                "filepath": f"/file{i}.txt",
+                "is_overlap": False,
+                "table": tbl,
+                "succeed": False,
+            }
             contrib_files.append(contrib_file)
         with self.engine.begin() as connection:
             connection.execute(ins, contrib_files)
@@ -287,11 +313,12 @@ def test_send_query() -> None:
 
 @pytest.mark.scale
 def test_scale_lock_contribfiles() -> None:
-    """Used for scale testing purpose, not for unit tests
+    """Used for scale testing purpose, not for unit tests.
 
     Must be run from inside k8s, against an existing Qserv instances
 
     Warning: Work in progress
+
     """
     config_file = os.path.join(_CWD, "testdata", _DP02, "ingest.yaml")
     with open(config_file, "r") as values:
@@ -313,7 +340,7 @@ def test_scale_lock_contribfiles() -> None:
     start_time = time.time()
     for i in range(_CHUNK_QUEUE_FRACTION):
         pod_start_time = time.time()
-        queue_manager.pod = f'POD{i}'
+        queue_manager.pod = f"POD{i}"
         queue_manager.lock_contribfiles()
         pod_total = time.time() - pod_start_time
         _LOG.info("-- Contribfiles locked for pod %s %f", queue_manager.pod, pod_total)
@@ -327,11 +354,12 @@ def test_scale_lock_contribfiles() -> None:
 
 @pytest.mark.scale
 def test_scale_unlock_contribfiles() -> None:
-    """Used for scale testing purpose, not for unit tests
+    """Used for scale testing purpose, not for unit tests.
 
     Must be run from inside k8s, against an existing Qserv instances
 
     Warning: Work in progress
+
     """
 
     config_file = os.path.join(_CWD, "testdata", _DP02, "ingest.yaml")
@@ -346,7 +374,7 @@ def test_scale_unlock_contribfiles() -> None:
     start_time = time.time()
     for i in range(_CHUNK_QUEUE_FRACTION):
         pod_start_time = time.time()
-        queue_manager.pod = f'POD{i}'
+        queue_manager.pod = f"POD{i}"
         queue_manager.unlock_contribfiles(True)
         pod_total = time.time() - pod_start_time
         _LOG.info("-- Contribfiles unlocked for pod %s %f", queue_manager.pod, pod_total)

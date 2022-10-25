@@ -1,5 +1,5 @@
 #!/bin/bash
-# Remove ingest queue entries for a given database 
+# Remove ingest queue entries for a given database
 
 set -euxo pipefail
 

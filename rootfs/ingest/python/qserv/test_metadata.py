@@ -19,10 +19,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""
-Tools used by ingest algorithm
+"""Tools used by ingest algorithm.
 
 @author  Fabrice Jammes, IN2P3
+
 """
 
 # -------------------------------
@@ -205,4 +205,3 @@ def test_get_contribution_file_specs_dp02() -> None:
     assert contrib_director_overlap_count == 2508
     assert contrib_source_count == 1661647
     assert contrib_count == 1692713
-
