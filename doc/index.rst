@@ -6,26 +6,13 @@
 Qserv-ingest |release| documentation
 ######################################
 
-Contents:
-
-.. toctree::
-   :maxdepth: 2
-
-   user/index
-   
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+* ``qserv-ingest`` documentation is now part of `Qserv Documentation <https://qserv.lsst.io/admin/qserv-ingest>`_
 
 Useful links
 ============
 
-* `Qserv Documentation <https://qserv.lsst.io>`_
+* `Qserv-ingest git repository <https://github.com/lsst-dm/qserv-ingest>`_
 * `Qserv git repository <https://github.com/lsst/qserv>`_
-* `Qserv-ingest git repository <https://github.com/lsst/qserv-ingest>`_
 * `Qserv-operator git repository <https://github.com/lsst/qserv-operator>`_
 
 Generated on the |today|

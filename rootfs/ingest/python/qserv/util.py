@@ -30,10 +30,9 @@
 #  Imports of standard modules --
 # -------------------------------
 import argparse
-import dataclasses
 import json
 import logging
-from dataclasses import dataclass, fields
+import os
 from typing import Any, Dict, List
 
 import yaml
@@ -41,12 +40,14 @@ import yaml
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-
+from .ingestconfig import IngestConfigAction
 
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
 _LOG = logging.getLogger(__name__)
+CWD = os.path.dirname(os.path.abspath(__file__))
+DATADIR = os.path.join(CWD, "testdata")
 
 
 def add_default_arguments(parser: argparse.ArgumentParser) -> None:
@@ -99,101 +100,6 @@ def trailing_slash(url: str) -> str:
     return url
 
 
-class IngestConfig:
-    """Configuration parameter for ingest client."""
-
-    def __init__(self, yaml: dict):
-
-        ingest_dict = yaml["ingest"]
-
-        self.servers = ingest_dict["input"]["servers"]
-        self.path = ingest_dict["input"]["path"]
-        self.data_url = ingest_dict["qserv"]["queue_url"]
-        self.query_url = ingest_dict["qserv"]["query_url"]
-        self.queue_url = ingest_dict["qserv"]["queue_url"]
-        self.replication_url = ingest_dict["qserv"]["replication_url"]
-        replication = ingest_dict.get("replication")
-        if replication is not None:
-            self.replication_config = ReplicationConfig(
-                replication.get("cainfo"),
-                replication.get("ssl_verifypeer"),
-                replication.get("low_speed_limit"),
-                replication.get("low_speed_time"),
-            )
-        else:
-            self.replication_config = ReplicationConfig()
-
-
-@dataclass
-class ReplicationConfig:
-    """Configuration parameters for replication/ingest system See https://confl
-    uence.lsstcorp.org/display/DM/Ingest%3A+11.1.8.1.+Setting+configuration+par
-    ameters.
-
-    Default value for all parameters are kept, in case `None` value is used in
-    constructor
-
-    Parameters
-    ----------
-    cainfo : `str`
-        This attribute directly maps to
-        https://curl.se/libcurl/c/CURLOPT_PROXY_CAINFO.html.
-        Putting the empty string as a value of the parameter will effectively
-        turn this option off as if it has never been configured
-        for the database.
-        Default value: "/etc/pki/tls/certs/ca-bundle.crt"
-    ssl_verifypeer: `int`
-        This attribute directly maps to
-        https://curl.se/libcurl/c/CURLOPT_PROXY_SSL_VERIFYPEER.html.
-        Numeric values of the parameter are treated as boolean variables,
-        where 0 represents false and any other values represent true.
-        Default value: 1
-    low_speed_limit: `int`
-        This attribute directly maps to
-        https://curl.se/libcurl/c/CURLOPT_LOW_SPEED_LIMIT.html
-        Putting 0  as a value of the parameter will effectively turn
-        this option off as if it has never been configured for the database.
-        Default value: 60
-    low_speed_time: `int`
-        This attribute directly maps to
-        https://curl.se/libcurl/c/CURLOPT_LOW_SPEED_TIME.html
-        Putting 0  as a value of the parameter will effectively turn this
-        option off as if it has never been configured for the database.
-        Default value: 120
-
-    """
-
-    cainfo: str = "/etc/pki/tls/certs/ca-bundle.crt"
-    ssl_verifypeer: int = 1
-    low_speed_limit: int = 60
-    low_speed_time: int = 120
-
-    def __post_init__(self) -> None:
-        """Set default value for all parameters, in case `None` value is used
-        in constructor."""
-        for field in fields(self):
-            if not isinstance(field.default, dataclasses._MISSING_TYPE) and getattr(self, field.name) is None:
-                setattr(self, field.name, field.default)
-
-
-class IngestConfigAction(argparse.Action):
-    """Argparse action to read an ingest client configuration file."""
-
-    def __call__(
-        self,
-        parser: argparse.ArgumentParser,
-        namespace: argparse.Namespace,
-        values: Any,
-        option_string: str = None,
-    ) -> None:
-        try:
-            yaml_data = yaml.safe_load(values)
-            config = IngestConfig(yaml_data)
-        finally:
-            values.close()
-        setattr(namespace, self.dest, config)
-
-
 class BaseUrlAction(argparse.Action):
     """Add trailing slash to url."""
 
@@ -208,30 +114,7 @@ class BaseUrlAction(argparse.Action):
         setattr(namespace, self.dest, x)
 
 
-class DictAction(argparse.Action):
-    """Argparse action to attempt casting the values to floats and put into a
-    dict."""
-
-    def __call__(
-        self,
-        parser: argparse.ArgumentParser,
-        namespace: argparse.Namespace,
-        values: Any,
-        option_string: str = None,
-    ) -> None:
-        d = dict()
-        for item in values:
-            k, v = item.split("=")
-            try:
-                v = float(v)
-            except ValueError:
-                pass
-            finally:
-                d[k] = v
-        setattr(namespace, self.dest, d)
-
-
-class JsonAction(argparse.Action):
+class JsonFileAction(argparse.Action):
     def __call__(
         self,
         parser: argparse.ArgumentParser,

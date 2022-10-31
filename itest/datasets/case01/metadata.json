@@ -1,4 +1,6 @@
 {
+   "version": 12,
+   "charset_name": "latin1",
    "database":"database.json",
    "tables":[
       {

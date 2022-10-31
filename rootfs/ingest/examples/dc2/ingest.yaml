@@ -1,3 +1,4 @@
+version: 12
 ingest:
     input:
         # TODO Add section below
@@ -16,4 +17,3 @@ ingest:
         query_url: "mysql://qsmaster:@qserv-czar:4040"
         queue_url: "mysql://qsingest:@qserv-ingest-db-0.qserv-ingest-db/qservIngest"
         replication_url: http://qserv-repl-ctl-0.qserv-repl-ctl:8080
-

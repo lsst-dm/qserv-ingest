@@ -32,20 +32,19 @@ import logging
 import os
 import tempfile
 
+import pytest
+
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
 import requests
-import pytest
-from . import http
-from . import metadata
-from . import replicationclient
+
+from . import http, metadata, replicationclient, util
 
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
 
-_CWD = os.path.dirname(os.path.abspath(__file__))
 _LOG = logging.getLogger(__name__)
 
 
@@ -57,9 +56,9 @@ def test_database_register_tables() -> None:
 
     """
 
-    data_url = os.path.join(_CWD, "testdata", "dp01_dc2_catalogs")
+    data_url = os.path.join(util.DATADIR, "dp01_dc2_catalogs")
     contribution_metadata = metadata.ContributionMetadata(data_url)
-    tables_json_data = contribution_metadata.get_ordered_tables_json()
+    tables_json_data = contribution_metadata.ordered_tables_json
 
     _, auth_path = tempfile.mkstemp()
 

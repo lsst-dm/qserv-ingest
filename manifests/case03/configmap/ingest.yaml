@@ -1,3 +1,4 @@
+version: 12
 ingest:
     input:
         # Servers which provides input data
@@ -22,4 +23,3 @@ ingest:
         queue_url: "mysql://qsingest:@qserv-ingest-db-0.qserv-ingest-db/qservIngest"
         # Replication service URL
         replication_url: http://qserv-repl-ctl-0.qserv-repl-ctl:8080
-

@@ -1,3 +1,4 @@
+version: 12
 ingest:
     input:
         # TODO Add section below

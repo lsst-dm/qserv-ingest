@@ -28,6 +28,7 @@
 import logging
 import posixpath
 import socket
+import sys
 import urllib.parse
 
 # -------------------------------
@@ -39,14 +40,14 @@ from typing import Any, Dict, List, Tuple
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-from . import jsonparser, util
+from . import jsonparser, util, version
 from .http import DEFAULT_AUTH_PATH, TIMEOUT_LONG_SEC, TIMEOUT_SHORT_SEC, Http
+from .ingestconfig import IngestServiceConfig
 
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
 _LOG = logging.getLogger(__name__)
-_REPL_SERVICE_VERSION = 17
 
 
 class ReplicationClient:
@@ -77,6 +78,7 @@ class ReplicationClient:
         url = urllib.parse.urljoin(self.repl_url, "ingest/index/secondary")
         _LOG.info("Create secondary index")
         payload = {
+            "version": version.REPL_SERVICE_VERSION,
             "database": database,
             "allow_for_published": 1,
             "local": 1,
@@ -103,17 +105,22 @@ class ReplicationClient:
             _LOG.debug("Close transaction (id: %s state: %s)", trans["id"], trans["state"])
 
     def _check_version(self) -> None:
+        """Check replication service version and exit if it is not
+        the expected one
+        """
         url = urllib.parse.urljoin(self.repl_url, "meta/version")
         responseJson = self.http.get(url, timeout=TIMEOUT_SHORT_SEC)
         jsonparser.raise_error(responseJson)
-        if responseJson["version"] != _REPL_SERVICE_VERSION:
-            raise ValueError(
-                "Invalid replication server version "
-                f"(is {responseJson['version']}, expected {_REPL_SERVICE_VERSION})"
+        if responseJson["version"] != version.REPL_SERVICE_VERSION:
+            _LOG.critical(
+                "Invalid replication server version (is %s, expected %s)",
+                responseJson["version"],
+                version.REPL_SERVICE_VERSION,
             )
-        _LOG.info("Replication service version: v%s", _REPL_SERVICE_VERSION)
+            sys.exit(1)
+        _LOG.info("Replication service version: v%s", version.REPL_SERVICE_VERSION)
 
-    def database_config(self, database: str, replication_config: util.ReplicationConfig) -> None:
+    def database_config(self, database: str, ingest_service_config: IngestServiceConfig) -> None:
         """Set replication system configuration for a given database https://co
         nfluence.lsstcorp.org/display/DM/Ingest%3A+11.1.8.1.+Setting+configurat
         ion+parameters.
@@ -122,7 +129,7 @@ class ReplicationClient:
         ----------
         database: `str`
             Database name
-        replication_config: `util.ReplicationConfig`
+        replication_config: `util.IngestServiceConfig`
             Configuration parameters for the database inside
             replication/ingest system
 
@@ -130,11 +137,13 @@ class ReplicationClient:
 
         url = urllib.parse.urljoin(self.repl_url, "/ingest/config/")
         json = {
+            "version": version.REPL_SERVICE_VERSION,
+            "ASYNC_PROC_LIMIT": ingest_service_config.async_proc_limit,
             "database": database,
-            "CAINFO": replication_config.cainfo,
-            "SSL_VERIFYPEER": replication_config.ssl_verifypeer,
-            "LOW_SPEED_LIMIT": replication_config.low_speed_limit,
-            "LOW_SPEED_TIME": replication_config.low_speed_time,
+            "CAINFO": ingest_service_config.cainfo,
+            "SSL_VERIFYPEER": ingest_service_config.ssl_verifypeer,
+            "LOW_SPEED_LIMIT": ingest_service_config.low_speed_limit,
+            "LOW_SPEED_TIME": ingest_service_config.low_speed_time,
         }
         _LOG.debug("Configure database inside replication system, url: %s, json: %s", url, json)
         responseJson = self.http.put(url, json, timeout=TIMEOUT_LONG_SEC)
@@ -207,7 +216,11 @@ class ReplicationClient:
 
         """
         url = urllib.parse.urljoin(self.repl_url, "ingest/chunk")
-        payload = {"chunk": chunk_id, "database": database}
+        payload = {
+            "version": version.REPL_SERVICE_VERSION,
+            "chunk": chunk_id,
+            "database": database,
+        }
         responseJson = Http().post_retry(url, payload)
         jsonparser.raise_error(responseJson)
 
@@ -273,7 +286,11 @@ class ReplicationClient:
 
     def start_transaction(self, database: str) -> int:
         url = urllib.parse.urljoin(self.repl_url, "ingest/trans")
-        payload = {"database": database, "context": {"pod": socket.gethostname()}}
+        payload = {
+            "version": version.REPL_SERVICE_VERSION,
+            "database": database,
+            "context": {"pod": socket.gethostname()},
+        }
         responseJson = self.http.post_retry(url, payload)
 
         jsonparser.raise_error(responseJson)
@@ -285,3 +302,41 @@ class ReplicationClient:
         transaction_id = int(current_db["transactions"][0]["id"])
         _LOG.debug("transaction ID: %i", transaction_id)
         return transaction_id
+
+    def deploy_statistics(self, database: str, table_names: List[str]) -> None:
+        """Collect row counters in the specified tables and deploy the
+        statistics in Qserv to allow optimizations of the relevant queries.
+        See:
+        - https://confluence.lsstcorp.org/display/DM/3.+Managing+statistics+for+the+row+counters+optimizations # noqa: W505, E501
+        - https://confluence.lsstcorp.org/display/DM/1.+Collecting+row+counters+and+deploying+them+at+Qserv
+
+        Parameters
+        ----------
+        database : `str`
+            Database name.
+        table_names: `str`
+            Names of processed tables
+
+        Raises
+        ------
+        ReplicationControllerError
+             Raised in case of error in JSON response
+             for a non-retriable request
+        """
+
+        url = urllib.parse.urljoin(self.repl_url, "/ingest/table-stats/")
+
+        # TODO Check parameters with Igor
+        payload = {
+            "database": database,
+            "overlap_selector": "CHUNK_AND_OVERLAP",
+            "force_rescan": 1,
+            "row_counters_state_update_policy": "ENABLED",
+            "row_counters_deploy_at_qserv": 1,
+        }
+
+        for table in table_names:
+            _LOG.debug("Start a table statistics deployment request: %s with %s", url, table)
+            payload["table"] = table
+            responseJson = self.http.post_retry(url, payload)
+            jsonparser.raise_error(responseJson)

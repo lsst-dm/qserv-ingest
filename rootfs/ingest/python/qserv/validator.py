@@ -33,9 +33,9 @@ import difflib
 import filecmp
 import logging
 import os
-from pathlib import Path
 import shutil
 import subprocess
+from pathlib import Path
 from typing import IO
 
 # ----------------------------
@@ -43,15 +43,13 @@ from typing import IO
 # ----------------------------
 import sqlalchemy
 from sqlalchemy import MetaData
-from sqlalchemy.engine.url import make_url, URL
-from sqlalchemy.sql import select, func
+from sqlalchemy.engine.url import URL, make_url
+from sqlalchemy.sql import func, select
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-from . import metadata
-from . import http
-from . import util
+from . import http, metadata, util
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -138,7 +136,7 @@ class Validator:
             _LOG.info("Query result: %s", row_count)
 
     def _download_to_workdir(self, file: str) -> str:
-        url = self.contribution_metadata.get_file_url(file)
+        url = self.contribution_metadata.file_url(file)
         if not http.file_exists(url):
             raise FileNotFoundError("File %s does not exist", url)
 

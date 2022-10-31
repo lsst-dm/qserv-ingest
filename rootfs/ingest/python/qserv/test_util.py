@@ -34,14 +34,15 @@
 # ----------------------------
 import argparse
 import logging
-from . import util
 import os
+
+from . import util
 
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
 
-_CWD = os.path.dirname(os.path.abspath(__file__))
+
 _LOG = logging.getLogger(__name__)
 
 
@@ -51,20 +52,20 @@ def test_ingestconfig() -> None:
     parser = argparse.ArgumentParser(description="Test util module")
     util.add_default_arguments(parser)
 
-    configfile = os.path.join(_CWD, "testdata", "dp02", "ingest.yaml")
+    configfile = os.path.join(util.DATADIR, "dp02", "ingest.yaml")
     args = parser.parse_args(["--config", configfile])
 
-    _LOG.debug("Replication configuration: %s", args.config.replication_config)
+    _LOG.debug("Replication configuration: %s", args.config.ingestservice)
 
-    assert args.config.replication_config.cainfo == "/etc/pki/tls/certs/ca-bundle.crt"
-    assert args.config.replication_config.ssl_verifypeer == 1
-    assert args.config.replication_config.low_speed_limit == 60
-    assert args.config.replication_config.low_speed_time == 120
+    assert args.config.ingestservice.cainfo == "/etc/pki/tls/certs/ca-bundle.crt"
+    assert args.config.ingestservice.ssl_verifypeer == 1
+    assert args.config.ingestservice.low_speed_limit == 60
+    assert args.config.ingestservice.low_speed_time == 120
 
-    configfile = os.path.join(_CWD, "testdata", "dp02", "ingest.replication.yaml")
+    configfile = os.path.join(util.DATADIR, "dp02", "ingest.finetuned.yaml")
     args = parser.parse_args(["--config", configfile])
 
-    assert args.config.replication_config.cainfo == "/etc/pki/tls/certs/ca-bundle.crt"
-    assert args.config.replication_config.ssl_verifypeer == 1
-    assert args.config.replication_config.low_speed_limit == 10
-    assert args.config.replication_config.low_speed_time == 3600
+    assert args.config.ingestservice.cainfo == "/etc/pki/tls/certs/ca-bundle.crt"
+    assert args.config.ingestservice.ssl_verifypeer == 1
+    assert args.config.ingestservice.low_speed_limit == 10
+    assert args.config.ingestservice.low_speed_time == 3600

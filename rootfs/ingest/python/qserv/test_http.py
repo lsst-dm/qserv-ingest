@@ -29,7 +29,6 @@
 #  Imports of standard modules --
 # -------------------------------
 import logging
-import os
 
 import pytest
 
@@ -39,15 +38,14 @@ import pytest
 import requests
 from requests import HTTPError
 
-from . import http
+from . import http, version
+from .util import DATADIR
 
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
 
 _LOG = logging.getLogger(__name__)
-
-_CWD = os.path.dirname(os.path.abspath(__file__))
 
 
 def test_file_exists() -> None:
@@ -57,7 +55,7 @@ def test_file_exists() -> None:
 
 
 def test_json_get() -> None:
-    data = http.json_get(_CWD, "servers.json")
+    data = http.json_load(DATADIR, "servers.json")
     assert data["http_servers"][0] == "https://server1"
     assert data["http_servers"][2] == "https://server3"
 
@@ -66,8 +64,12 @@ def test_errorcode() -> None:
     """Check behaviour for error 404."""
     _http = http.Http()
     with pytest.raises(HTTPError) as e:
-        _http.get(url="https://www.in2p3.cnrs.fr/notfound", payload={}, auth=False)
-    assert e.value.args[0] == "404 Client Error: Not Found for url: https://www.in2p3.cnrs.fr/notfound"
+        url = "https://www.in2p3.cnrs.fr/notfound"
+        _http.get(url=url, payload={}, auth=False)
+    assert (
+        e.value.args[0]
+        == f"404 Client Error: Not Found for url: {url}?version={version.REPL_SERVICE_VERSION}"
+    )
 
 
 def test_retry() -> None:

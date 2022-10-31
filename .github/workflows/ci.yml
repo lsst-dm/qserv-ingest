@@ -44,7 +44,7 @@ jobs:
     needs: build
     steps:
       - name: Download image
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: image
           path: artifacts
@@ -75,7 +75,7 @@ jobs:
           sudo apt-get install apparmor-profiles
           sudo apparmor_parser -R /etc/apparmor.d/usr.sbin.mysqld
       - name: Download qserv-ingest image
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: image
           path: artifacts
@@ -117,7 +117,7 @@ jobs:
     needs: integration
     steps:
       - name: Download qserv-ingest image
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: image
           path: artifacts

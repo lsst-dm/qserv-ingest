@@ -268,6 +268,8 @@ def parse_database_status(responseJson: dict, database: str, family: str) -> Dat
 
 def raise_error(responseJson: dict, retry_attempts: int = -1, max_retry_attempts: int = 0) -> bool:
     """Check JSON response from replication controller for error.
+    Do not manage retriable errors if retry_attempts != -1
+    else manage retriable errors if retry_attempts < max_retry_attempts
 
     Parameters
     ----------
@@ -290,7 +292,7 @@ def raise_error(responseJson: dict, retry_attempts: int = -1, max_retry_attempts
         retrying request. False if no error in JSON response.
 
     """
-    if retry_attempts < max_retry_attempts:
+    if retry_attempts != -1 and retry_attempts < max_retry_attempts:
         check_retry = True
     else:
         check_retry = False

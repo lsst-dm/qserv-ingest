@@ -30,37 +30,34 @@
 # -------------------------------
 import json
 import logging
+import os
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-from . import jsonparser
-from . import http
-import os
+from . import http, jsonparser, util
 
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
 
-_CWD = os.path.dirname(os.path.abspath(__file__))
 _DATABASE = "cosmoDC2_v1_1_4_image"
 _FAMILY = "layout_340_3"
 
-_DATADIR = os.path.join(_CWD, "testdata")
 
 _LOG = logging.getLogger(__name__)
 
 
 def test_contribution_monitor() -> None:
-    response_json = http.json_get(_DATADIR, "response_file_async.json")
+    response_json = http.json_load(util.DATADIR, "response_file_async.json")
     contrib_monitor = jsonparser.ContributionMonitor(response_json)
 
     assert contrib_monitor.status == jsonparser.ContributionState.LOAD_FAILED
     assert (
         contrib_monitor.error
         == "Connection[119]::execute(_inTransaction=1)  mysql_real_query failed, query: 'LOAD DATA INFILE "
-        + "'/qserv/data/ingest/qservTest_case01_qserv-Logs-4294967295-24-9ad6-c5a6-c537-1086.csv' INTO TABLE "
-        + "`qservTest_case01_qserv`.`Logs`FIELDS TERMINATED BY ',' ESCAPED BY '\\\\' "
+        + "'/qserv/data/ingest/test_case01_qserv-Logs-4294967295-24-9ad6-c5a6-c537-1086.csv' INTO TABLE "
+        + "`test_case01_qserv`.`Logs`FIELDS TERMINATED BY ',' ESCAPED BY '\\\\' "
         + "LINES TERMINATED BY '\\n'', error: Data truncated for column 'id' at row 1, errno: 1265"
     )
     assert contrib_monitor.system_error == 11
@@ -79,7 +76,7 @@ def test_get_fqdn() -> None:
         fqdn = jsonparser.get_fqdn(f"does-not-exists,{remote_server}", 80)
         assert fqdn == remote_server
     else:
-        _LOG.warn("Skipping some tests because %s is not reachable", remote_server)
+        _LOG.warning("Skipping some tests because %s is not reachable", remote_server)
 
     fqdn = jsonparser.get_fqdn("does-not-exists1,does-not-exists2,does-not-exists3", 80)
     assert fqdn == ""
@@ -118,6 +115,6 @@ def test_parse_not_finished_transaction() -> None:
 
 
 def test_parse_database_status() -> None:
-    response_json = http.json_get(_CWD, "replicationconfig.json")
+    response_json = http.json_load(util.DATADIR, "replicationconfig.json")
     status = jsonparser.parse_database_status(response_json, _DATABASE, _FAMILY)
     assert status == jsonparser.DatabaseStatus.REGISTERED_NOT_PUBLISHED

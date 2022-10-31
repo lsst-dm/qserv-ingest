@@ -1,0 +1,86 @@
+#!/usr/bin/env python
+
+# This file is part of qserv.
+#
+# Developed for the LSST Data Management System.
+# This product includes software developed by the LSST Project
+# (https://www.lsst.org).
+# See the COPYRIGHT file at the top-level directory of this distribution
+# for details of code ownership.
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+"""
+User-friendly client for Qserv replication service.
+
+@author  Hsin Fang Chiang, Rubin Observatory
+@author  Fabrice Jammes, IN2P3
+"""
+
+# -------------------------------
+#  Imports of standard modules --
+# -------------------------------
+import argparse
+import json
+import logging
+import os
+import sys
+
+# ----------------------------
+# Imports for other modules --
+# ----------------------------
+import qserv.util as util
+from qserv.http import Http
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Replication Service Client")
+
+    parser.add_argument("url", type=str, help="Replication Service URL", action=util.BaseUrlAction)
+    parser.add_argument("method", type=str, help="Request method", choices=["get", "post", "put", "delete"])
+
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-j", "--json", required=False, default={}, type=json.loads)
+    group.add_argument(
+        "--jsonfile",
+        type=str,
+        help="Json file which contain the request's payload",
+        action=util.JsonFileAction,
+    )
+    parser.add_argument("--verbose", "-v", action="store_true", help="Use debug logging")
+    args = parser.parse_args()
+
+    env_verbose = os.getenv("QSERV_INGEST_VERBOSE")
+    if env_verbose:
+        try:
+            verbose = int(env_verbose)
+        except ValueError:
+            logging.fatal("Non integer environment variable QSERV_INGEST_VERBOSE: %s", env_verbose)
+            sys.exit(1)
+    else:
+        verbose = args.verbose
+
+    logger = util.configure_logger(verbose)
+
+    payload = args.json or args.jsonfile or dict()
+    logging.debug("Start a request: %s with %s", args.url, payload)
+    http = Http()
+    if args.method == "get":
+        r = http.get(args.url)
+    if args.method == "post":
+        r = http.post(args.url, payload)
+    elif args.method == "put":
+        r = http.put(args.url)
+    elif args.method == "delete":
+        r = http.delete(args.url)
+    print(r)

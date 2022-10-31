@@ -1,4 +1,5 @@
 {
+    "version":12,
     "database": "dc2_run2_1i_dr1b",
     "table": "dpdd_ref",
     "auth_key": "",

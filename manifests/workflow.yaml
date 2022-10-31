@@ -132,6 +132,11 @@ spec:
         arguments:
           parameters: [{name: script, value: publish.sh}]
         dependencies: [check-transactions]
+      - name: statistics
+        template: ingest-step
+        arguments:
+          parameters: [{name: script, value: statistics.sh}]
+        dependencies: [check-transactions]
       - name: index-tables
         template: index-tables
         dependencies: [publish]

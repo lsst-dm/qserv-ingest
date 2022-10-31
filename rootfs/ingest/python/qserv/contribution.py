@@ -73,6 +73,7 @@ class Contribution:
         table: str,
         is_overlap: bool,
         load_balanced_base_url: LoadBalancedURL,
+        charset_name: str = "",
     ):
         self.is_overlap: int
         self.ext: str = ""
@@ -97,10 +98,9 @@ class Contribution:
                 f"Unsupported data format for regular table only {metadata.EXT_LIST} are supported"
             )
 
+        self.charset_name = charset_name
         self.load_balanced_url = LoadBalancedURL.new(load_balanced_base_url, filepath)
         self.request_id = None
-        self.retry_attempts = 0
-        self.retry_attempts_post = 0
         self.worker_url = f"http://{worker_host}:{worker_port}"
         self.finished = False
 
@@ -114,6 +114,7 @@ class Contribution:
             "chunk": self.chunk_id,
             "overlap": self.is_overlap,
             "url": self.load_balanced_url.get(),
+            "charset_name": self.charset_name,
         }
 
         if Contribution.fileformats is not None:
@@ -147,22 +148,17 @@ class Contribution:
 
         _LOG.debug("start_async(): payload: %s", payload)
 
-        while not self.request_id:
-            # Start ASYNC file ingest request using the POST method.
-            # See https://lsstc.slack.com/archives/D2Y1TQY5S/p1645556026791089
-            _LOG.debug(
-                "_ingest_chunk: url %s, retry attempts: %s, payload: %s",
-                url,
-                self.retry_attempts_post,
-                payload,
-            )
-            responseJson = Http().post_retry(url, payload)
+        # Start ASYNC file ingest request using the POST method.
+        # See https://lsstc.slack.com/archives/D2Y1TQY5S/p1645556026791089
+        _LOG.debug(
+            "_ingest_chunk: url %s, retry attempts: %s, payload: %s",
+            url,
+            payload,
+        )
+        responseJson = Http().post_retry(url, payload)
 
-            retry = raise_error(responseJson, self.retry_attempts_post, MAX_RETRY_ATTEMPTS)
-            if retry:
-                self.retry_attempts_post += 1
-            else:
-                self.request_id = responseJson["contrib"]["id"]
+        raise_error(responseJson)
+        self.request_id = responseJson["contrib"]["id"]
 
     def monitor(self) -> bool:
         """Monitor an asynchronous ingest query for a chunk contribution States
@@ -203,7 +199,7 @@ class Contribution:
         contrib_finished = False
         # For transaction state description
         # see:
-        # https://confluence.lsstcorp.org/display/DM/Ingest%3A+9.5.3.+Asynchronous+Protocol
+        # https://confluence.lsstcorp.org/display/DM/3.+The+asynchronous+protocol
         match contrib_monitor.status:
             case ContributionState.IN_PROGRESS:
                 # _LOG.debug("_ingest_chunk: request %s in progress",
@@ -217,23 +213,18 @@ class Contribution:
                 | ContributionState.READ_FAILED
                 | ContributionState.LOAD_FAILED
             ):
-                noretry_errmsg = ""
-                if not contrib_monitor.retry_allowed:
-                    noretry_errmsg = "and is not retriable"
-                elif self.retry_attempts >= MAX_RETRY_ATTEMPTS:
-                    noretry_errmsg = "and has exceeded maximum number of ingest attempts"
                 msg = (
                     f"Contribution {self} is in status {contrib_monitor.status} "
                     f"with error: {contrib_monitor.error}, "
                     f"system error: {contrib_monitor.system_error}, "
                     f"http error: {contrib_monitor.http_error}"
                 )
-                if noretry_errmsg:
-                    raise IngestError(f"{msg} {noretry_errmsg}")
+                noretry_errmsg = ""
+                if not contrib_monitor.retry_allowed:
+                    noretry_errmsg = "and is not retriable"
                 else:
-                    _LOG.warning(msg)
-                self.retry_attempts += 1
-                self.request_id = None
+                    noretry_errmsg = "and has exceeded maximum number of ingest retries"
+                raise IngestError(f"{msg} {noretry_errmsg}")
             case ContributionState.CANCELLED:
                 raise IngestError(f"Contribution {self} ingest has been cancelled by a third-party")
             case _:

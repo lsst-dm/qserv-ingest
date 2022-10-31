@@ -1,6 +1,6 @@
 {
     "auth_key":"",
-    "database":"qservTest_case01_qserv",
+    "database":"test_case01_qserv",
     "table":"Logs",
     "is_partitioned":0,
     "schema":[
