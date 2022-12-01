@@ -46,7 +46,7 @@ from .http import DEFAULT_AUTH_PATH, TIMEOUT_LONG_SEC, TIMEOUT_SHORT_SEC, Http
 # Local non-exported definitions --
 # ---------------------------------
 _LOG = logging.getLogger(__name__)
-_REPL_SERVICE_VERSION = 11
+_REPL_SERVICE_VERSION = 17
 
 
 class ReplicationClient:
