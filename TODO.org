@@ -1,10 +1,15 @@
+* TODO DM-37486
+** TODO monitor tests ./itest/loop-tests.sh >& loop-tests.log
+** TODO ingest cli:  ~/src/qserv-tools/cmd/ingest go build . && ./ingest --kubeconfig ~/.kube/kubeconfig-k8s-qserv.yaml
 * TODO DM-36606
-
+** TODO change qserv image tag in qserv-operator once merged
+** TODO create release once merged
 ** DONE [#A] Debug chunk location, see 5.3 https://confluence.lsstcorp.org/display/DM/Live+demo%3A+test+ingest+of+a+subset+of+one+track+of+the+HSC+Object+catalog
 
 ** DONE add ORDER BY in case03 itest queries
 ** DONE Document ingest.yaml + version change
 ** TODO Document repcli
+Add link to doc in inline help
 ** TODO Document qserv doc generation
 Fritz will do that, decided on Jan 4th
 qserv build-docs --cmake --linkcheck --user=qserv   --user-build-image qserv/lite-build-runner:2022.12.1-rc2
