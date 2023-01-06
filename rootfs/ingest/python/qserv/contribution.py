@@ -151,7 +151,7 @@ class Contribution:
         # Start ASYNC file ingest request using the POST method.
         # See https://lsstc.slack.com/archives/D2Y1TQY5S/p1645556026791089
         _LOG.debug(
-            "_ingest_chunk: url %s, retry attempts: %s, payload: %s",
+            "_ingest_chunk: url %s, payload: %s",
             url,
             payload,
         )
