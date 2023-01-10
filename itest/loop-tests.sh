@@ -37,7 +37,7 @@ $DIR/start-dataserver.sh
 # Use qserv-ingest development version
 ENV_FILE="$INGEST_DIR"/env.sh
 cp "$INGEST_DIR"/env.example.sh "$ENV_FILE"
-sed -i "s/^INGEST_RELEASE=.*$/INGEST_RELEASE=''/" "$ENV_FILE"
+sed -i -e "s/^INGEST_RELEASE=.*$/INGEST_RELEASE=''/" "$ENV_FILE"
 
 argo delete --all && kubectl delete job -l app=qserv,tier=ingest
 stern -l "app=qserv" > /tmp/ingestloop.log &
