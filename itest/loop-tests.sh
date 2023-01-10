@@ -42,6 +42,12 @@ sed -i -e "s/^INGEST_RELEASE=.*$/INGEST_RELEASE=''/" "$ENV_FILE"
 argo delete --all && kubectl delete job -l app=qserv,tier=ingest
 stern -l "app=qserv" > /tmp/ingestloop.log &
 while true; do
+
+  # Cleanup
+  $DIR/../example/delete_database.sh "qcase01"
+  $DIR/../example/delete_database.sh "qcase03"
+  $DIR/../example/delete_database.sh "dc2_run2_1i_dr1b"
+
   TEST_CASES="base case01 case03"
   for test_case in $TEST_CASES; do
 
@@ -84,7 +90,4 @@ while true; do
     # FIXME get current workflow name instead of keeping only one workflow
     argo delete @latest
   done
-  $DIR/../example/delete_database.sh "qcase01"
-  $DIR/../example/delete_database.sh "qcase03"
-  $DIR/../example/delete_database.sh "dc2_run2_1i_dr1b"
 done
