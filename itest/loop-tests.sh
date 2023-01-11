@@ -38,11 +38,12 @@ ENV_FILE="$INGEST_DIR"/env.sh
 cp "$INGEST_DIR"/env.example.sh "$ENV_FILE"
 sed -i -e "s/^INGEST_RELEASE=.*$/INGEST_RELEASE=''/" "$ENV_FILE"
 
-argo delete --all && kubectl delete job -l app=qserv,tier=ingest
 stern -l "app=qserv" > /tmp/ingestloop.log &
 while true; do
 
   # Cleanup
+  argo delete --all
+  kubectl delete job -l app=qserv,tier=ingest
   $DIR/../example/delete_database.sh "qcase01"
   $DIR/../example/delete_database.sh "qcase03"
   $DIR/../example/delete_database.sh "dc2_run2_1i_dr1b"
