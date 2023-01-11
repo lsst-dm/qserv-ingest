@@ -32,7 +32,6 @@ INGEST_DIR=$(readlink -f $DIR/..)
 INSTANCE=$(kubectl get qservs.qserv.lsst.org -o=jsonpath='{.items[0].metadata.name}')
 
 echo "::notice Run integration tests for Qserv"
-$DIR/start-dataserver.sh
 
 # Use qserv-ingest development version
 ENV_FILE="$INGEST_DIR"/env.sh
