@@ -124,7 +124,7 @@ class Ingester:
         felis: `dict`, optional
             Felis schema for tables. Defaults to None.
         """
-        self.repl_client.database_register(self.contrib_meta._json_db)
+        self.repl_client.database_register(self.contrib_meta.json_db)
         self.repl_client.database_register_tables(self.contrib_meta.ordered_tables_json, felis)
         self.repl_client.database_config(self.contrib_meta.database, replication_config)
 

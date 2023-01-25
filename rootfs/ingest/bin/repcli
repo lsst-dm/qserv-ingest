@@ -83,4 +83,4 @@ if __name__ == "__main__":
         r = http.put(args.url)
     elif args.method == "delete":
         r = http.delete(args.url)
-    print(r)
+    logging.info("Query result: %s", r)
