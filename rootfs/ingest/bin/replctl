@@ -31,20 +31,21 @@ Index table columns using replication service to Qserv
 #  Imports of standard modules --
 # -------------------------------
 import argparse
-from enum import Enum, auto
 import logging
 import os
 import sys
+from enum import Enum
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
+import qserv.util as util
+from qserv.contribqueue import QueueManager
 from qserv.ingest import Ingester
 from qserv.jsonparser import DatabaseStatus
 from qserv.metadata import ContributionMetadata
-from qserv.queue import QueueManager
-import qserv.util as util
 from qserv.validator import Validator
+
 
 class Task(str, Enum):
     REGISTER = "register"
@@ -54,41 +55,59 @@ class Task(str, Enum):
     INDEX = "index"
     VALIDATE = "validate"
     BENCHMARK = "benchmark"
+    STATISTICS = "statistics"
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Create Qserv indexes (tables or secondary) "
-                                     "using Qserv replication service. " +
-                                     "Log level can be set using QSERV_INGEST_VERBOSE (values: 0 to 2)")
+    parser = argparse.ArgumentParser(
+        description="Create Qserv indexes (tables or secondary) "
+        "using Qserv replication service. "
+        + "Log level can be set using QSERV_INGEST_VERBOSE (values: 0 to 2)"
+    )
     util.add_default_arguments(parser)
-    subparsers = parser.add_subparsers(dest='task')
+    subparsers = parser.add_subparsers(dest="task")
 
     # QUEUE step management
-    parser_queue = subparsers.add_parser(Task.QUEUE, help="Load Qserv ingest database with input chunk files (i.e. contributions)")
+    parser_queue = subparsers.add_parser(
+        Task.QUEUE, help="Load Qserv ingest database with input chunk files (i.e. contributions)"
+    )
 
     # REGISTER step management
-    parser_register = subparsers.add_parser(Task.REGISTER, help="Initialize database and "
-                                     "table inside Qserv replication service")
-    parser_register.add_argument("--felis", type=str,
-                            help=" A Felis schema file containing the table schema",
-                            action=util.FelisAction)
+    parser_register = subparsers.add_parser(
+        Task.REGISTER, help="Initialize database and " "table inside Qserv replication service"
+    )
+    parser_register.add_argument(
+        "--felis", type=str, help=" A Felis schema file containing the table schema", action=util.FelisAction
+    )
 
     # INGEST step management
-    parser_ingest = subparsers.add_parser(Task.INGEST, help="Launch Qserv replication service super-transactions "
-                                     "driving chunk files ingest")
-    parser_ingest.add_argument("--check", "-c", action='store_true',
-                        help="Check if chunk file ingest has been performed successfully")
-    parser_ingest.add_argument("--chunk-queue-fraction", "-f", type=int, metavar="FRACTION",
-                        help="Fraction of chunk queue loaded per super-transaction")
+    parser_ingest = subparsers.add_parser(
+        Task.INGEST, help="Launch Qserv replication service super-transactions " "driving chunk files ingest"
+    )
+    parser_ingest.add_argument(
+        "--check",
+        "-c",
+        action="store_true",
+        help="Check if chunk file ingest has been performed successfully",
+    )
+    parser_ingest.add_argument(
+        "--chunk-queue-fraction",
+        "-f",
+        type=int,
+        metavar="FRACTION",
+        help="Fraction of chunk queue loaded per super-transaction",
+    )
 
     # PUBLISH step management
     parser_publish = subparsers.add_parser(Task.PUBLISH, help="Publish Qserv database")
 
     # INDEX step management
-    parser_index = subparsers.add_parser(Task.INDEX,
-                                         help="Create Qserv indexes (tables or secondary) using Qserv replication service")
-    parser.add_argument("--secondary", "-s", action="store_true",
-                        help="Create secondary index, and do not index tables")
+    parser_index = subparsers.add_parser(
+        Task.INDEX, help="Create Qserv indexes (tables or secondary) using Qserv replication service"
+    )
+    parser.add_argument(
+        "--secondary", "-s", action="store_true", help="Create secondary index, and do not index tables"
+    )
 
     # VALIDATE step management
     parser_publish = subparsers.add_parser(Task.VALIDATE, help="Validate ingest for a database")
@@ -96,14 +115,19 @@ if __name__ == "__main__":
     # BENCHMARK step management
     parser_publish = subparsers.add_parser(Task.BENCHMARK, help="Benchmark ingest for a database")
 
+    # STATISTICS step management
+    parser_stats = subparsers.add_parser(
+        Task.STATISTICS, help="Manage statistics for the row counters optimizations"
+    )
+
     args = parser.parse_args()
 
-    env_verbose = os.getenv('QSERV_INGEST_VERBOSE')
+    env_verbose = os.getenv("QSERV_INGEST_VERBOSE")
     if env_verbose:
         try:
             verbose = int(env_verbose)
         except ValueError:
-            logging.fatal('Non integer environment variable QSERV_INGEST_VERBOSE: %s', env_verbose)
+            logging.fatal("Non integer environment variable QSERV_INGEST_VERBOSE: %s", env_verbose)
             sys.exit(1)
     else:
         verbose = args.verbose
@@ -124,7 +148,7 @@ if __name__ == "__main__":
         ingester = Ingester(contribution_metadata, args.config.replication_url)
         database_status = ingester.get_database_status()
         if database_status == DatabaseStatus.NOT_REGISTERED:
-            ingester.database_register_and_config(args.config.replication_config, args.felis)
+            ingester.database_register_and_config(args.config.ingestservice, args.felis)
         elif database_status == DatabaseStatus.REGISTERED_NOT_PUBLISHED:
             logger.warn("Skip current database registration: database has been registered previously")
         elif database_status == DatabaseStatus.PUBLISHED:
@@ -153,3 +177,6 @@ if __name__ == "__main__":
         else:
             logger.fatal("Query results are not identical to those expected")
             sys.exit(1)
+    elif args.task == Task.STATISTICS:
+        ingester = Ingester(contribution_metadata, args.config.replication_url)
+        ingester.deploy_statistics()

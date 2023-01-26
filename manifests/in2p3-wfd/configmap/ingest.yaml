@@ -1,3 +1,4 @@
+version: 12
 ingest:
     input:
         # Servers which provides input data
@@ -9,7 +10,7 @@ ingest:
             - https://ccnetlsst03.in2p3.fr:65101
             - https://ccnetlsst04.in2p3.fr:65101
         # Path on server where input data is available
-        path: dc2_object_run2_2i_dr6_wfd/ 
+        path: dc2_object_run2_2i_dr6_wfd/
     qserv:
         # TODO add support for secondary index generation method
         # Override the default value stored in input metadata
@@ -24,4 +25,3 @@ ingest:
         queue_url: "mysql://qsingest:@qserv-ingest-db-0.qserv-ingest-db/qservIngest"
         # Replication service URL
         replication_url: http://qserv-repl-ctl-0.qserv-repl-ctl:8080
-

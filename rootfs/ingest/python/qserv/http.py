@@ -45,14 +45,13 @@ from requests.adapters import HTTPAdapter
 from retry import retry
 from urllib3.util import Retry
 
-from . import util
+from . import util, version
 from .exception import IngestError, ReplicationControllerError
 
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
 DEFAULT_AUTH_PATH = "~/.lsst/qserv"
-
 TIMEOUT_SHORT_SEC = 5
 TIMEOUT_LONG_SEC = 120
 
@@ -75,7 +74,7 @@ def file_exists(url: str) -> bool:
     return response.status_code == 200
 
 
-def json_get(base_url: str, filename: str) -> Dict:
+def json_load(base_url: str, filename: str) -> Dict[Any, Any]:
     """Load a JSON file located at a given URL.
 
     Parameters
@@ -164,7 +163,7 @@ class Http:
     def get(
         self, url: str, payload: Dict[str, Any] = dict(), auth: bool = True, timeout: Optional[int] = None
     ) -> Dict:
-        """Send a GET query to an http(s) URL.
+        """Send a GET query to replication controller/worker http(s) URL
 
         Parameters
         ----------
@@ -190,7 +189,8 @@ class Http:
         """
         if auth is True:
             payload["auth_key"] = self.authKey
-        r = self.http.get(url, json=payload, timeout=timeout)
+        params = {"version": version.REPL_SERVICE_VERSION}
+        r = self.http.get(url, params=params, json=payload, timeout=timeout)
         r.raise_for_status()
         response_json = r.json()
         if not response_json["success"]:
@@ -287,6 +287,7 @@ class Http:
         """
         if payload is None:
             payload = dict()
+            payload["version"] = version.REPL_SERVICE_VERSION
         payload["auth_key"] = self.authKey
         r = requests.put(url, json=payload, timeout=timeout)
         r.raise_for_status()
@@ -317,7 +318,8 @@ class Http:
         ReplicationControllerError
             Raised if JSON response contain an error code
         """
-        r = requests.delete(url, json={"auth_key": self.authKey}, timeout=timeout)
+        json = {"version": version.REPL_SERVICE_VERSION, "auth_key": self.authKey}
+        r = requests.delete(url, json=json, timeout=timeout)
         r.raise_for_status()
         response_json = r.json()
         if not response_json["success"]:

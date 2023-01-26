@@ -25,28 +25,31 @@
 
 """
 
-# -------------------------------
-#  Imports of standard modules --
-# -------------------------------
-from collections.abc import Generator
 import datetime
 import logging
 import os
 import time
+
+# -------------------------------
+#  Imports of standard modules --
+# -------------------------------
+from collections.abc import Generator
 from typing import Any
+
 import pytest
+import yaml
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
 from sqlalchemy import (
-    MetaData,
-    Table,
-    Column,
-    Integer,
-    String,
     Boolean,
+    Column,
     DateTime,
+    Integer,
+    MetaData,
+    String,
+    Table,
     create_engine,
     event,
     func,
@@ -54,19 +57,15 @@ from sqlalchemy import (
     update,
 )
 from sqlalchemy.exc import StatementError
-import yaml
 
-from .util import IngestConfig
-from . import queue
-from . import metadata
+from . import contribqueue, metadata, util
+from .ingestconfig import IngestConfig
 
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
 
 _LOG = logging.getLogger(__name__)
-
-_CWD = os.path.dirname(os.path.abspath(__file__))
 
 _SCISQL_QUEUE_URL = "sqlite:///testqservingest.db"
 
@@ -131,7 +130,7 @@ class MockDataAccessLayer:
 
     def count_locked(self) -> int:
         query = select([func.count()]).select_from(self.queue)
-        query = query.where(self.queue.c.locking_pod.is_not(None))
+        query = query.where(self.queue.c.locking_pod.isnot(None))
         with self.engine.connect() as connection:
             result = connection.execute(query)
             contrib_locked_count = result.scalar()
@@ -222,9 +221,9 @@ def init_queue(dal: MockDataAccessLayer) -> None:
 def test_insert_contribfiles() -> None:
     contribfiles_count = 37
     dal = MockDataAccessLayer(_SCISQL_QUEUE_URL)
-    data_url = os.path.join(_CWD, "testdata", _CASE01_DATASET)
+    data_url = os.path.join(util.DATADIR, _CASE01_DATASET)
     contribution_metadata = metadata.ContributionMetadata(data_url)
-    queue_manager = queue.QueueManager(_SCISQL_QUEUE_URL, contribution_metadata)
+    queue_manager = contribqueue.QueueManager(_SCISQL_QUEUE_URL, contribution_metadata)
     queue_manager.insert_contribfiles()
     count = dal.count_contribfiles()
     assert count == contribfiles_count
@@ -234,9 +233,9 @@ def test_insert_contribfiles() -> None:
 def test_run_lock_queries() -> None:
     contribfiles_to_lock_count = 3
     dal = MockDataAccessLayer(_SCISQL_QUEUE_URL)
-    data_url = os.path.join(_CWD, "testdata", _DP01)
+    data_url = os.path.join(util.DATADIR, _DP01)
     contribution_metadata = metadata.ContributionMetadata(data_url)
-    queue_manager = queue.QueueManager(_SCISQL_QUEUE_URL, contribution_metadata)
+    queue_manager = contribqueue.QueueManager(_SCISQL_QUEUE_URL, contribution_metadata)
     dal.log_queue()
     queue_manager._run_lock_queries(contribfiles_to_lock_count)
     count = dal.count_locked()
@@ -246,18 +245,18 @@ def test_run_lock_queries() -> None:
 
 @pytest.mark.usefixtures("init_queue")
 def test_count_contribfiles() -> None:
-    data_url = os.path.join(_CWD, "testdata", _DP01)
+    data_url = os.path.join(util.DATADIR, _DP01)
     contribution_metadata = metadata.ContributionMetadata(data_url)
-    queue_manager = queue.QueueManager(_SCISQL_QUEUE_URL, contribution_metadata)
+    queue_manager = contribqueue.QueueManager(_SCISQL_QUEUE_URL, contribution_metadata)
     i = queue_manager._count_contribfiles()
     assert i == _DP01_CONTRIBFILES_COUNT
 
 
 @pytest.mark.usefixtures("init_queue")
 def test_select_noningested_contribfiles() -> None:
-    data_url = os.path.join(_CWD, "testdata", _DP01)
+    data_url = os.path.join(util.DATADIR, _DP01)
     contribution_metadata = metadata.ContributionMetadata(data_url)
-    queue_manager = queue.QueueManager(_SCISQL_QUEUE_URL, contribution_metadata)
+    queue_manager = contribqueue.QueueManager(_SCISQL_QUEUE_URL, contribution_metadata)
     contribfiles = queue_manager.select_noningested_contribfiles()
     assert len(contribfiles) == _DP01_CONTRIBFILES_COUNT
 
@@ -266,9 +265,9 @@ def test_select_noningested_contribfiles() -> None:
 def test_lock_contribfiles() -> None:
     dal = MockDataAccessLayer(_SCISQL_QUEUE_URL)
     contribfiles_to_lock_count = 4
-    data_url = os.path.join(_CWD, "testdata", _DP01)
+    data_url = os.path.join(util.DATADIR, _DP01)
     contribution_metadata = metadata.ContributionMetadata(data_url)
-    queue_manager = queue.QueueManager(_SCISQL_QUEUE_URL, contribution_metadata)
+    queue_manager = contribqueue.QueueManager(_SCISQL_QUEUE_URL, contribution_metadata)
     queue_manager._contribfiles_to_lock_number = 4
     queue_manager.lock_contribfiles()
     count = dal.count_locked()
@@ -278,9 +277,9 @@ def test_lock_contribfiles() -> None:
 def test_unlock_contribfiles() -> None:
     dal = MockDataAccessLayer(_SCISQL_QUEUE_URL)
     contribfiles_to_lock_count = 4
-    data_url = os.path.join(_CWD, "testdata", _DP01)
+    data_url = os.path.join(util.DATADIR, _DP01)
     contribution_metadata = metadata.ContributionMetadata(data_url)
-    queue_manager = queue.QueueManager(_SCISQL_QUEUE_URL, contribution_metadata)
+    queue_manager = contribqueue.QueueManager(_SCISQL_QUEUE_URL, contribution_metadata)
     queue_manager.unlock_contribfiles(True)
     count = dal.count_succeed()
     dal.log_queue()
@@ -290,9 +289,9 @@ def test_unlock_contribfiles() -> None:
 @pytest.mark.dev
 def test_all_succeed() -> None:
     dal = MockDataAccessLayer(_SCISQL_QUEUE_URL)
-    data_url = os.path.join(_CWD, "testdata", _DP01)
+    data_url = os.path.join(util.DATADIR, _DP01)
     contribution_metadata = metadata.ContributionMetadata(data_url)
-    queue_manager = queue.QueueManager(_SCISQL_QUEUE_URL, contribution_metadata)
+    queue_manager = contribqueue.QueueManager(_SCISQL_QUEUE_URL, contribution_metadata)
     all_succeed = queue_manager.all_succeed()
     assert all_succeed is False
     dal.update_all_succeed()
@@ -302,9 +301,9 @@ def test_all_succeed() -> None:
 
 
 def test_send_query() -> None:
-    data_url = os.path.join(_CWD, "testdata", _DP01)
+    data_url = os.path.join(util.DATADIR, _DP01)
     contribution_metadata = metadata.ContributionMetadata(data_url)
-    queue_manager = queue.QueueManager(_SCISQL_QUEUE_URL, contribution_metadata)
+    queue_manager = contribqueue.QueueManager(_SCISQL_QUEUE_URL, contribution_metadata)
     query = update(queue_manager.queue).values(succeed="NOT A BOOLEAN")
     with pytest.raises(StatementError) as e:
         queue_manager._safe_execute(query, 4)
@@ -320,15 +319,15 @@ def test_scale_lock_contribfiles() -> None:
     Warning: Work in progress
 
     """
-    config_file = os.path.join(_CWD, "testdata", _DP02, "ingest.yaml")
+    config_file = os.path.join(util.DATADIR, _DP02, "ingest.yaml")
     with open(config_file, "r") as values:
         yaml_data = yaml.safe_load(values)
 
     config = IngestConfig(yaml_data)
 
-    data_url = os.path.join(_CWD, "testdata", "dp02")
+    data_url = os.path.join(util.DATADIR, "dp02")
     contribution_metadata = metadata.ContributionMetadata(data_url)
-    queue_manager = queue.QueueManager(config.queue_url, contribution_metadata)
+    queue_manager = contribqueue.QueueManager(config.queue_url, contribution_metadata)
 
     logging.debug("(Re-)initialize all contributions in queue")
     query = update(queue_manager.queue).values(succeed=None, locking_pod=None)
@@ -362,15 +361,15 @@ def test_scale_unlock_contribfiles() -> None:
 
     """
 
-    config_file = os.path.join(_CWD, "testdata", _DP02, "ingest.yaml")
+    config_file = os.path.join(util.DATADIR, _DP02, "ingest.yaml")
     with open(config_file, "r") as values:
         yaml_data = yaml.safe_load(values)
 
     config = IngestConfig(yaml_data)
 
-    data_url = os.path.join(_CWD, "testdata", "dp02")
+    data_url = os.path.join(util.DATADIR, "dp02")
     contribution_metadata = metadata.ContributionMetadata(data_url)
-    queue_manager = queue.QueueManager(config.queue_url, contribution_metadata)
+    queue_manager = contribqueue.QueueManager(config.queue_url, contribution_metadata)
     start_time = time.time()
     for i in range(_CHUNK_QUEUE_FRACTION):
         pod_start_time = time.time()

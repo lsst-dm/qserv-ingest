@@ -1,0 +1,1791 @@
+{
+  "config": {
+    "database_families": [
+      {
+        "min_replication_level": 1,
+        "name": "layout_340_3",
+        "num_stripes": 340,
+        "num_sub_stripes": 3,
+        "overlap": 0.01667
+      }
+    ],
+    "databases": [
+      {
+        "chunk_id_key": "chunkId",
+        "columns": {
+          "data": [
+            {
+              "name": "qserv_trans_id",
+              "type": "INT NOT NULL"
+            },
+            {
+              "name": "galaxy_id",
+              "type": "bigint(20)"
+            },
+            {
+              "name": "halo_id",
+              "type": "bigint(20)"
+            },
+            {
+              "name": "coord_ra",
+              "type": "DOUBLE NOT NULL"
+            },
+            {
+              "name": "coord_dec",
+              "type": "DOUBLE NOT NULL"
+            },
+            {
+              "name": "A_v",
+              "type": "FLOAT"
+            },
+            {
+              "name": "A_v_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "A_v_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "Mag_true_Y_lsst_z0_obs",
+              "type": "FLOAT"
+            },
+            {
+              "name": "Mag_true_Y_lsst_z0_no_host_extinction_obs",
+              "type": "FLOAT"
+            },
+            {
+              "name": "Mag_true_g_lsst_z0",
+              "type": "FLOAT"
+            },
+            {
+              "name": "Mag_true_g_lsst_z0_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "Mag_true_g_sdss_z0",
+              "type": "FLOAT"
+            },
+            {
+              "name": "Mag_true_g_sdss_z0_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "Mag_true_i_lsst_z0",
+              "type": "FLOAT"
+            },
+            {
+              "name": "Mag_true_i_lsst_z0_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "Mag_true_i_sdss_z0",
+              "type": "FLOAT"
+            },
+            {
+              "name": "Mag_true_i_sdss_z0_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "Mag_true_r_lsst_z0",
+              "type": "FLOAT"
+            },
+            {
+              "name": "Mag_true_r_lsst_z0_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "Mag_true_r_sdss_z0",
+              "type": "FLOAT"
+            },
+            {
+              "name": "Mag_true_r_sdss_z0_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "Mag_true_u_lsst_z0",
+              "type": "FLOAT"
+            },
+            {
+              "name": "Mag_true_u_lsst_z0_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "Mag_true_u_sdss_z0",
+              "type": "FLOAT"
+            },
+            {
+              "name": "Mag_true_u_sdss_z0_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "Mag_true_y_lsst_z0",
+              "type": "FLOAT"
+            },
+            {
+              "name": "Mag_true_y_lsst_z0_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "Mag_true_z_lsst_z0",
+              "type": "FLOAT"
+            },
+            {
+              "name": "Mag_true_z_lsst_z0_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "Mag_true_z_sdss_z0",
+              "type": "FLOAT"
+            },
+            {
+              "name": "Mag_true_z_sdss_z0_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "R_v",
+              "type": "FLOAT"
+            },
+            {
+              "name": "R_v_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "R_v_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "bulge_to_total_ratio_i",
+              "type": "FLOAT"
+            },
+            {
+              "name": "convergence",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "dec_true",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "ellipticity_1_bulge_true",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "ellipticity_1_disk_true",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "ellipticity_1_true",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "ellipticity_2_bulge_true",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "ellipticity_2_disk_true",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "ellipticity_2_true",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "ellipticity_bulge_true",
+              "type": "FLOAT"
+            },
+            {
+              "name": "ellipticity_disk_true",
+              "type": "FLOAT"
+            },
+            {
+              "name": "ellipticity_true",
+              "type": "FLOAT"
+            },
+            {
+              "name": "halo_mass",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "is_central",
+              "type": "BOOLEAN"
+            },
+            {
+              "name": "mag_Yup_lsst",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "mag_Yup_lsst_no_host_extinction",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "mag_g",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "mag_g_lsst",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "mag_g_lsst_no_host_extinction",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "mag_g_sdss",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "mag_g_sdss_no_host_extinction",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "mag_i",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "mag_i_lsst",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "mag_i_lsst_no_host_extinction",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "mag_i_sdss",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "mag_i_sdss_no_host_extinction",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "mag_r",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "mag_r_lsst",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "mag_r_lsst_no_host_extinction",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "mag_r_sdss",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "mag_r_sdss_no_host_extinction",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "mag_true_Yup_lsst",
+              "type": "FLOAT"
+            },
+            {
+              "name": "mag_true_Yup_lsst_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "mag_true_g",
+              "type": "FLOAT"
+            },
+            {
+              "name": "mag_true_g_lsst",
+              "type": "FLOAT"
+            },
+            {
+              "name": "mag_true_g_lsst_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "mag_true_g_sdss",
+              "type": "FLOAT"
+            },
+            {
+              "name": "mag_true_g_sdss_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "mag_true_i",
+              "type": "FLOAT"
+            },
+            {
+              "name": "mag_true_i_lsst",
+              "type": "FLOAT"
+            },
+            {
+              "name": "mag_true_i_lsst_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "mag_true_i_sdss",
+              "type": "FLOAT"
+            },
+            {
+              "name": "mag_true_i_sdss_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "mag_true_r",
+              "type": "FLOAT"
+            },
+            {
+              "name": "mag_true_r_lsst",
+              "type": "FLOAT"
+            },
+            {
+              "name": "mag_true_r_lsst_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "mag_true_r_sdss",
+              "type": "FLOAT"
+            },
+            {
+              "name": "mag_true_r_sdss_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "mag_true_u",
+              "type": "FLOAT"
+            },
+            {
+              "name": "mag_true_u_lsst",
+              "type": "FLOAT"
+            },
+            {
+              "name": "mag_true_u_lsst_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "mag_true_u_sdss",
+              "type": "FLOAT"
+            },
+            {
+              "name": "mag_true_u_sdss_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "mag_true_y",
+              "type": "FLOAT"
+            },
+            {
+              "name": "mag_true_y_lsst",
+              "type": "FLOAT"
+            },
+            {
+              "name": "mag_true_y_lsst_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "mag_true_z",
+              "type": "FLOAT"
+            },
+            {
+              "name": "mag_true_z_lsst",
+              "type": "FLOAT"
+            },
+            {
+              "name": "mag_true_z_lsst_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "mag_true_z_sdss",
+              "type": "FLOAT"
+            },
+            {
+              "name": "mag_true_z_sdss_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "mag_u",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "mag_u_lsst",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "mag_u_lsst_no_host_extinction",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "mag_u_sdss",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "mag_u_sdss_no_host_extinction",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "mag_y",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "mag_y_lsst",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "mag_y_lsst_no_host_extinction",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "mag_z",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "mag_z_lsst",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "mag_z_lsst_no_host_extinction",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "mag_z_sdss",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "mag_z_sdss_no_host_extinction",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "magnification",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "position_angle_true",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "position_x",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "position_y",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "position_z",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "ra_true",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "redshift",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "redshift_true",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "sed_1000_246",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_1000_246_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_1000_246_bulge_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_1000_246_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_1000_246_disk_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_1000_246_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_11467_1710",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_11467_1710_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_11467_1710_bulge_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_11467_1710_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_11467_1710_disk_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_11467_1710_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_1246_306",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_1246_306_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_1246_306_bulge_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_1246_306_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_1246_306_disk_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_1246_306_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_13177_1966",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_13177_1966_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_13177_1966_bulge_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_13177_1966_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_13177_1966_disk_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_13177_1966_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_15143_2259",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_15143_2259_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_15143_2259_bulge_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_15143_2259_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_15143_2259_disk_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_15143_2259_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_1552_381",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_1552_381_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_1552_381_bulge_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_1552_381_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_1552_381_disk_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_1552_381_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_17402_2596",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_17402_2596_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_17402_2596_bulge_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_17402_2596_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_17402_2596_disk_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_17402_2596_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_1933_474",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_1933_474_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_1933_474_bulge_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_1933_474_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_1933_474_disk_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_1933_474_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_2407_591",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_2407_591_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_2407_591_bulge_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_2407_591_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_2407_591_disk_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_2407_591_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_2998_186",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_2998_186_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_2998_186_bulge_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_2998_186_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_2998_186_disk_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_2998_186_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_3184_197",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_3184_197_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_3184_197_bulge_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_3184_197_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_3184_197_disk_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_3184_197_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_3381_209",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_3381_209_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_3381_209_bulge_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_3381_209_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_3381_209_disk_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_3381_209_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_3590_222",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_3590_222_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_3590_222_bulge_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_3590_222_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_3590_222_disk_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_3590_222_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_3812_236",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_3812_236_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_3812_236_bulge_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_3812_236_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_3812_236_disk_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_3812_236_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_4048_251",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_4048_251_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_4048_251_bulge_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_4048_251_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_4048_251_disk_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_4048_251_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_4299_266",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_4299_266_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_4299_266_bulge_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_4299_266_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_4299_266_disk_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_4299_266_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_4565_283",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_4565_283_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_4565_283_bulge_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_4565_283_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_4565_283_disk_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_4565_283_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_4848_300",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_4848_300_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_4848_300_bulge_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_4848_300_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_4848_300_disk_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_4848_300_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_5148_319",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_5148_319_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_5148_319_bulge_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_5148_319_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_5148_319_disk_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_5148_319_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_5467_339",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_5467_339_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_5467_339_bulge_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_5467_339_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_5467_339_disk_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_5467_339_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_5806_360",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_5806_360_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_5806_360_bulge_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_5806_360_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_5806_360_disk_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_5806_360_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_6166_382",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_6166_382_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_6166_382_bulge_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_6166_382_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_6166_382_disk_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_6166_382_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_6548_406",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_6548_406_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_6548_406_bulge_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_6548_406_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_6548_406_disk_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_6548_406_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_6954_431",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_6954_431_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_6954_431_bulge_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_6954_431_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_6954_431_disk_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_6954_431_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_7385_458",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_7385_458_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_7385_458_bulge_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_7385_458_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_7385_458_disk_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_7385_458_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_7843_486",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_7843_486_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_7843_486_bulge_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_7843_486_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_7843_486_disk_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_7843_486_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_8329_517",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_8329_517_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_8329_517_bulge_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_8329_517_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_8329_517_disk_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_8329_517_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_8846_549",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_8846_549_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_8846_549_bulge_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_8846_549_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_8846_549_disk_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_8846_549_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_9395_583",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_9395_583_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_9395_583_bulge_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_9395_583_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_9395_583_disk_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_9395_583_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_9978_1489",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_9978_1489_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_9978_1489_bulge_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_9978_1489_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_9978_1489_disk_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sed_9978_1489_no_host_extinction",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sersic_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "sersic_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "shear_1",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "shear_2",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "shear_2_phosim",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "shear_2_treecorr",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "size_bulge_true",
+              "type": "FLOAT"
+            },
+            {
+              "name": "size_disk_true",
+              "type": "FLOAT"
+            },
+            {
+              "name": "size_minor_bulge_true",
+              "type": "FLOAT"
+            },
+            {
+              "name": "size_minor_disk_true",
+              "type": "FLOAT"
+            },
+            {
+              "name": "size_minor_true",
+              "type": "FLOAT"
+            },
+            {
+              "name": "size_true",
+              "type": "FLOAT"
+            },
+            {
+              "name": "stellar_mass",
+              "type": "FLOAT"
+            },
+            {
+              "name": "stellar_mass_bulge",
+              "type": "FLOAT"
+            },
+            {
+              "name": "stellar_mass_disk",
+              "type": "FLOAT"
+            },
+            {
+              "name": "velocity_x",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "velocity_y",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "velocity_z",
+              "type": "DOUBLE"
+            },
+            {
+              "name": "chunkId",
+              "type": "int(11) NOT NULL"
+            },
+            {
+              "name": "subChunkId",
+              "type": "int(11) NOT NULL"
+            }
+          ],
+          "position": [
+            {
+              "name": "qserv_trans_id",
+              "type": "INT NOT NULL"
+            },
+            {
+              "name": "galaxy_id",
+              "type": "bigint(20)"
+            },
+            {
+              "name": "halo_id",
+              "type": "bigint(20)"
+            },
+            {
+              "name": "coord_ra",
+              "type": "DOUBLE NOT NULL"
+            },
+            {
+              "name": "coord_dec",
+              "type": "DOUBLE NOT NULL"
+            },
+            {
+              "name": "chunkId",
+              "type": "int(11) NOT NULL"
+            },
+            {
+              "name": "subChunkId",
+              "type": "int(11) NOT NULL"
+            }
+          ]
+        },
+        "database": "cosmoDC2_v1_1_4_image",
+        "director_key": "galaxy_id",
+        "director_table": "position",
+        "family_name": "layout_340_3",
+        "is_published": 0,
+        "sub_chunk_id_key": "subChunkId",
+        "tables": {
+          "data": {
+            "is_partitioned": 1,
+            "latitude_key": "",
+            "longitude_key": "",
+            "name": "data"
+          },
+          "position": {
+            "is_partitioned": 1,
+            "latitude_key": "coord_dec",
+            "longitude_key": "coord_ra",
+            "name": "position"
+          }
+        }
+      }
+    ],
+    "general": {
+      "common": {
+        "request_buf_size_bytes": 131072,
+        "request_retry_interval_sec": 5
+      },
+      "controller": {
+        "empty_chunks_dir": "/qserv/data/qserv",
+        "http_server_port": 8080,
+        "http_server_threads": 16,
+        "job_heartbeat_sec": 0,
+        "job_timeout_sec": 57600,
+        "num_threads": 64,
+        "request_timeout_sec": 57600
+      },
+      "database": {
+        "host": "qserv-repl-db",
+        "name": "qservReplica",
+        "password": "",
+        "port": 3306,
+        "qserv_master_services_pool_size": 4,
+        "qserv_master_tmp_dir": "/qserv/data/ingest",
+        "qserv_master_user": "qsmaster",
+        "services_pool_size": 32,
+        "user": "qsreplica"
+      },
+      "worker": {
+        "fs_buf_size_bytes": 4194304,
+        "num_exporter_processing_threads": 16,
+        "num_fs_processing_threads": 32,
+        "num_http_loader_processing_threads": 16,
+        "num_loader_processing_threads": 16,
+        "num_svc_processing_threads": 16,
+        "technology": "FS"
+      },
+      "worker_defaults": {
+        "data_dir": "/qserv/data/mysql",
+        "exporter_port": 25003,
+        "exporter_tmp_dir": "/qserv/data/export",
+        "fs_port": 25001,
+        "http_loader_port": 25004,
+        "http_loader_tmp_dir": "/qserv/data/ingest",
+        "loader_port": 25002,
+        "loader_tmp_dir": "/qserv/data/ingest",
+        "svc_port": 25000
+      },
+      "xrootd": {
+        "auto_notify": 1,
+        "host": "qserv-xrootd-redirector",
+        "port": 1094,
+        "request_timeout_sec": 600
+      }
+    },
+    "meta": {
+      "common": {
+        "request_buf_size_bytes": {
+          "description": "The default buffer size for network communications. Must be greater than 0.",
+          "read_only": 1,
+          "security_context": 0
+        },
+        "request_retry_interval_sec": {
+          "description": "The default retry timeout for network communications. Must be greater than 0.",
+          "read_only": 1,
+          "security_context": 0
+        }
+      },
+      "controller": {
+        "empty_chunks_dir": {
+          "description": "A path to a folder where Qserv master stores its empty chunk lists. Must be non-empty.",
+          "read_only": 1,
+          "security_context": 0
+        },
+        "http_server_port": {
+          "description": "The port number for the controller's HTTP server. Must be greater than 0.",
+          "read_only": 1,
+          "security_context": 0
+        },
+        "http_server_threads": {
+          "description": "The number of threads managed by BOOST ASIO for the HTTP server. Must be greater than 0.",
+          "read_only": 1,
+          "security_context": 0
+        },
+        "job_heartbeat_sec": {
+          "description": "The heartbeat interval for jobs. A value of 0 disables heartbeats.",
+          "read_only": 1,
+          "security_context": 0
+        },
+        "job_timeout_sec": {
+          "description": "The default timeout for completing jobs. Must be greater than 0.",
+          "read_only": 1,
+          "security_context": 0
+        },
+        "num_threads": {
+          "description": "The number of threads managed by BOOST ASIO. Must be greater than 0.",
+          "read_only": 1,
+          "security_context": 0
+        },
+        "request_timeout_sec": {
+          "description": "The default timeout for completing worker requests. Must be greater than 0.",
+          "read_only": 1,
+          "security_context": 0
+        }
+      },
+      "database": {
+        "host": {
+          "description": "The host name of the MySQL server where the Replication system maintains its persistent state. Note that this parameter can't be updated through the Configuration service as it's set up at the startup time of the Replication/Ingest system.",
+          "read_only": 0,
+          "security_context": 0
+        },
+        "name": {
+          "description": "The name of a MySQL database for a service where the Replication system maintains its persistent state. Note that this parameter can't be updated through the Configuration  service as it's set up at the startup time of the Replication/Ingest system.",
+          "read_only": 0,
+          "security_context": 0
+        },
+        "password": {
+          "description": "A password for the MySQL account where the Replication system maintains its persistent state",
+          "read_only": 0,
+          "security_context": 1
+        },
+        "port": {
+          "description": "The port number of the MySQL server where the Replication maintains its persistent state. Note that this parameter can't be updated through the Configuration service as it's set up at the startup time of the Replication/Ingest system.",
+          "read_only": 0,
+          "security_context": 0
+        },
+        "qserv_master_services_pool_size": {
+          "description": "The pool size at the client database services connector for the Qserv Master database.",
+          "read_only": 1,
+          "security_context": 0
+        },
+        "qserv_master_tmp_dir": {
+          "description": "The temporary folder for exchanging data with the Qserv 'czar' database service.",
+          "read_only": 1,
+          "security_context": 0
+        },
+        "qserv_master_user": {
+          "description": "The MySQL user account of a service where Qserv 'czar' maintains its persistent state.",
+          "read_only": 1,
+          "security_context": 0
+        },
+        "services_pool_size": {
+          "description": "The pool size at the client database services connector.",
+          "read_only": 1,
+          "security_context": 0
+        },
+        "user": {
+          "description": "The MySQL user account of a service where the Replication system maintains its persistent state. Note that this parameter can't be updated through the Configuration service as it's set up at the startup time of the Replication/Ingest system.",
+          "read_only": 0,
+          "security_context": 0
+        }
+      },
+      "worker": {
+        "fs_buf_size_bytes": {
+          "description": "The default buffer size for file and network operations at Replication worker's file service.",
+          "read_only": 1,
+          "security_context": 0
+        },
+        "num_exporter_processing_threads": {
+          "description": "The number of request processing threads in each Replication worker's data exporting service.",
+          "read_only": 1,
+          "security_context": 0
+        },
+        "num_fs_processing_threads": {
+          "description": "The number of request processing threads in each Replication worker's file service.",
+          "read_only": 1,
+          "security_context": 0
+        },
+        "num_http_loader_processing_threads": {
+          "description": "The number of request processing threads in each Replication worker's HTTP-based ingest service.",
+          "read_only": 1,
+          "security_context": 0
+        },
+        "num_loader_processing_threads": {
+          "description": "The number of request processing threads in each Replication worker's ingest service.",
+          "read_only": 1,
+          "security_context": 0
+        },
+        "num_svc_processing_threads": {
+          "description": "The number of request processing threads in each Replication worker service.",
+          "read_only": 1,
+          "security_context": 0
+        },
+        "technology": {
+          "description": "The name of a technology for implementing replica management requests at workers.",
+          "read_only": 1,
+          "security_context": 0
+        }
+      },
+      "worker_defaults": {
+        "data_dir": {
+          "description": "The default data directory from which the worker file service serves files to other workers. This folder is required to be the location where the MySQL service of Qserv worker stores its data.",
+          "read_only": 1,
+          "security_context": 0
+        },
+        "exporter_port": {
+          "description": "The default port for the worker's table export service.",
+          "read_only": 1,
+          "security_context": 0
+        },
+        "exporter_tmp_dir": {
+          "description": "The default location for temporary files stored by the worker's table export service before returning them a client.",
+          "read_only": 1,
+          "security_context": 0
+        },
+        "fs_port": {
+          "description": "The default port for the worker's file service.",
+          "read_only": 1,
+          "security_context": 0
+        },
+        "http_loader_port": {
+          "description": "The default port for the worker's HTTP-based REST service for ingesting table contributions into the adjacent Qserv worker's MySQL database.",
+          "read_only": 1,
+          "security_context": 0
+        },
+        "http_loader_tmp_dir": {
+          "description": "The default location for temporary files stored by the worker's HTTP-based REST service ingesting table before ingesting them into the adjacent Qserv worker's MySQL database.",
+          "read_only": 1,
+          "security_context": 0
+        },
+        "loader_port": {
+          "description": "The default port for the worker's binary file ingest service.",
+          "read_only": 1,
+          "security_context": 0
+        },
+        "loader_tmp_dir": {
+          "description": "The default location for temporary files stored by the worker's binary file ingest service before ingesting them into the adjacent Qserv worker's MySQL database.",
+          "read_only": 1,
+          "security_context": 0
+        },
+        "svc_port": {
+          "description": "The default port for the worker's replication service.",
+          "read_only": 1,
+          "security_context": 0
+        }
+      },
+      "xrootd": {
+        "auto_notify": {
+          "description": "Automatically notify Qserv on changes in replica disposition.",
+          "read_only": 1,
+          "security_context": 0
+        },
+        "host": {
+          "description": "The service location (the host name or an IP address) of XRootD/SSI for communications with Qserv.",
+          "read_only": 1,
+          "security_context": 0
+        },
+        "port": {
+          "description": "A port number for the XRootD/SSI service needed for communications with Qserv.",
+          "read_only": 1,
+          "security_context": 0
+        },
+        "request_timeout_sec": {
+          "description": "The default timeout for communications with Qserv over XRootD/SSI.",
+          "read_only": 1,
+          "security_context": 0
+        }
+      }
+    },
+    "workers": [
+      {
+        "data_dir": "/qserv/data/mysql",
+        "exporter_host": "qserv-worker-0.qserv-worker",
+        "exporter_port": 25003,
+        "exporter_tmp_dir": "/qserv/data/export",
+        "fs_host": "qserv-worker-0.qserv-worker",
+        "fs_port": 25001,
+        "http_loader_host": "qserv-worker-0.qserv-worker",
+        "http_loader_port": 25004,
+        "http_loader_tmp_dir": "/qserv/data/ingest",
+        "is_enabled": 1,
+        "is_read_only": 0,
+        "loader_host": "qserv-worker-0.qserv-worker",
+        "loader_port": 25002,
+        "loader_tmp_dir": "/qserv/data/ingest",
+        "name": "qserv-worker-0",
+        "svc_host": "qserv-worker-0.qserv-worker",
+        "svc_port": 25000
+      },
+      {
+        "data_dir": "/qserv/data/mysql",
+        "exporter_host": "qserv-worker-1.qserv-worker",
+        "exporter_port": 25003,
+        "exporter_tmp_dir": "/qserv/data/export",
+        "fs_host": "qserv-worker-1.qserv-worker",
+        "fs_port": 25001,
+        "http_loader_host": "qserv-worker-1.qserv-worker",
+        "http_loader_port": 25004,
+        "http_loader_tmp_dir": "/qserv/data/ingest",
+        "is_enabled": 1,
+        "is_read_only": 0,
+        "loader_host": "qserv-worker-1.qserv-worker",
+        "loader_port": 25002,
+        "loader_tmp_dir": "/qserv/data/ingest",
+        "name": "qserv-worker-1",
+        "svc_host": "qserv-worker-1.qserv-worker",
+        "svc_port": 25000
+      },
+      {
+        "data_dir": "/qserv/data/mysql",
+        "exporter_host": "qserv-worker-2.qserv-worker",
+        "exporter_port": 25003,
+        "exporter_tmp_dir": "/qserv/data/export",
+        "fs_host": "qserv-worker-2.qserv-worker",
+        "fs_port": 25001,
+        "http_loader_host": "qserv-worker-2.qserv-worker",
+        "http_loader_port": 25004,
+        "http_loader_tmp_dir": "/qserv/data/ingest",
+        "is_enabled": 1,
+        "is_read_only": 0,
+        "loader_host": "qserv-worker-2.qserv-worker",
+        "loader_port": 25002,
+        "loader_tmp_dir": "/qserv/data/ingest",
+        "name": "qserv-worker-2",
+        "svc_host": "qserv-worker-2.qserv-worker",
+        "svc_port": 25000
+      },
+      {
+        "data_dir": "/qserv/data/mysql",
+        "exporter_host": "qserv-worker-3.qserv-worker",
+        "exporter_port": 25003,
+        "exporter_tmp_dir": "/qserv/data/export",
+        "fs_host": "qserv-worker-3.qserv-worker",
+        "fs_port": 25001,
+        "http_loader_host": "qserv-worker-3.qserv-worker",
+        "http_loader_port": 25004,
+        "http_loader_tmp_dir": "/qserv/data/ingest",
+        "is_enabled": 1,
+        "is_read_only": 0,
+        "loader_host": "qserv-worker-3.qserv-worker",
+        "loader_port": 25002,
+        "loader_tmp_dir": "/qserv/data/ingest",
+        "name": "qserv-worker-3",
+        "svc_host": "qserv-worker-3.qserv-worker",
+        "svc_port": 25000
+      },
+      {
+        "data_dir": "/qserv/data/mysql",
+        "exporter_host": "qserv-worker-4.qserv-worker",
+        "exporter_port": 25003,
+        "exporter_tmp_dir": "/qserv/data/export",
+        "fs_host": "qserv-worker-4.qserv-worker",
+        "fs_port": 25001,
+        "http_loader_host": "qserv-worker-4.qserv-worker",
+        "http_loader_port": 25004,
+        "http_loader_tmp_dir": "/qserv/data/ingest",
+        "is_enabled": 1,
+        "is_read_only": 0,
+        "loader_host": "qserv-worker-4.qserv-worker",
+        "loader_port": 25002,
+        "loader_tmp_dir": "/qserv/data/ingest",
+        "name": "qserv-worker-4",
+        "svc_host": "qserv-worker-4.qserv-worker",
+        "svc_port": 25000
+      },
+      {
+        "data_dir": "/qserv/data/mysql",
+        "exporter_host": "qserv-worker-5.qserv-worker",
+        "exporter_port": 25003,
+        "exporter_tmp_dir": "/qserv/data/export",
+        "fs_host": "qserv-worker-5.qserv-worker",
+        "fs_port": 25001,
+        "http_loader_host": "qserv-worker-5.qserv-worker",
+        "http_loader_port": 25004,
+        "http_loader_tmp_dir": "/qserv/data/ingest",
+        "is_enabled": 1,
+        "is_read_only": 0,
+        "loader_host": "qserv-worker-5.qserv-worker",
+        "loader_port": 25002,
+        "loader_tmp_dir": "/qserv/data/ingest",
+        "name": "qserv-worker-5",
+        "svc_host": "qserv-worker-5.qserv-worker",
+        "svc_port": 25000
+      },
+      {
+        "data_dir": "/qserv/data/mysql",
+        "exporter_host": "qserv-worker-6.qserv-worker",
+        "exporter_port": 25003,
+        "exporter_tmp_dir": "/qserv/data/export",
+        "fs_host": "qserv-worker-6.qserv-worker",
+        "fs_port": 25001,
+        "http_loader_host": "qserv-worker-6.qserv-worker",
+        "http_loader_port": 25004,
+        "http_loader_tmp_dir": "/qserv/data/ingest",
+        "is_enabled": 1,
+        "is_read_only": 0,
+        "loader_host": "qserv-worker-6.qserv-worker",
+        "loader_port": 25002,
+        "loader_tmp_dir": "/qserv/data/ingest",
+        "name": "qserv-worker-6",
+        "svc_host": "qserv-worker-6.qserv-worker",
+        "svc_port": 25000
+      },
+      {
+        "data_dir": "/qserv/data/mysql",
+        "exporter_host": "qserv-worker-7.qserv-worker",
+        "exporter_port": 25003,
+        "exporter_tmp_dir": "/qserv/data/export",
+        "fs_host": "qserv-worker-7.qserv-worker",
+        "fs_port": 25001,
+        "http_loader_host": "qserv-worker-7.qserv-worker",
+        "http_loader_port": 25004,
+        "http_loader_tmp_dir": "/qserv/data/ingest",
+        "is_enabled": 1,
+        "is_read_only": 0,
+        "loader_host": "qserv-worker-7.qserv-worker",
+        "loader_port": 25002,
+        "loader_tmp_dir": "/qserv/data/ingest",
+        "name": "qserv-worker-7",
+        "svc_host": "qserv-worker-7.qserv-worker",
+        "svc_port": 25000
+      },
+      {
+        "data_dir": "/qserv/data/mysql",
+        "exporter_host": "qserv-worker-8.qserv-worker",
+        "exporter_port": 25003,
+        "exporter_tmp_dir": "/qserv/data/export",
+        "fs_host": "qserv-worker-8.qserv-worker",
+        "fs_port": 25001,
+        "http_loader_host": "qserv-worker-8.qserv-worker",
+        "http_loader_port": 25004,
+        "http_loader_tmp_dir": "/qserv/data/ingest",
+        "is_enabled": 1,
+        "is_read_only": 0,
+        "loader_host": "qserv-worker-8.qserv-worker",
+        "loader_port": 25002,
+        "loader_tmp_dir": "/qserv/data/ingest",
+        "name": "qserv-worker-8",
+        "svc_host": "qserv-worker-8.qserv-worker",
+        "svc_port": 25000
+      },
+      {
+        "data_dir": "/qserv/data/mysql",
+        "exporter_host": "qserv-worker-9.qserv-worker",
+        "exporter_port": 25003,
+        "exporter_tmp_dir": "/qserv/data/export",
+        "fs_host": "qserv-worker-9.qserv-worker",
+        "fs_port": 25001,
+        "http_loader_host": "qserv-worker-9.qserv-worker",
+        "http_loader_port": 25004,
+        "http_loader_tmp_dir": "/qserv/data/ingest",
+        "is_enabled": 1,
+        "is_read_only": 0,
+        "loader_host": "qserv-worker-9.qserv-worker",
+        "loader_port": 25002,
+        "loader_tmp_dir": "/qserv/data/ingest",
+        "name": "qserv-worker-9",
+        "svc_host": "qserv-worker-9.qserv-worker",
+        "svc_port": 25000
+      }
+    ]
+  },
+  "error": "",
+  "error_ext": {},
+  "success": 1
+}

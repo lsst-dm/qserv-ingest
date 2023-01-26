@@ -26,6 +26,7 @@
 """
 
 import logging
+import sys
 import urllib.parse
 
 # -------------------------------
@@ -38,7 +39,8 @@ from typing import Any, Dict, List, Optional
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-from .http import json_get
+from . import version
+from .http import json_load
 from .loadbalancerurl import LoadBalancedURL, LoadBalancerAlgorithm
 
 CSV = "csv"
@@ -54,6 +56,7 @@ EXT_LIST: List[str] = [CSV, TSV, TXT]
 _CHUNKS: str = "chunks"
 _FILES: str = "files"
 _METADATA_FILENAME: str = "metadata.json"
+_MIN_SUPPORTED_VERSION = 12
 _OVERLAPS: str = "overlaps"
 _LOG = logging.getLogger(__name__)
 
@@ -183,7 +186,7 @@ class TableSpec:
 
         self.data: List[Any] = table_meta["data"]
         schema_file: str = table_meta["schema"]
-        self.json_schema: Dict[Any, Any] = json_get(metadata_url, schema_file)
+        self.json_schema: Dict[Any, Any] = json_load(metadata_url, schema_file)
         self.name: str = self.json_schema["table"]
         self.database: str = self.json_schema["database"]
         self.is_partitioned: bool = self.json_schema["is_partitioned"] == 1
@@ -191,7 +194,7 @@ class TableSpec:
         idx_files: List[str] = table_meta.get("indexes", [])
         self.json_indexes: List[Dict[str, Any]] = []
         for f in idx_files:
-            self.json_indexes.append(json_get(metadata_url, f))
+            self.json_indexes.append(json_load(metadata_url, f))
 
         self.contrib_specs: List[TableContributionsSpec] = []
         for d in self.data:
@@ -251,25 +254,92 @@ class ContributionMetadata:
             access to metadata. Defaults to [].
 
         """
-
+        self._database: str
+        self._json_db: Dict[str, Any] = {}
         self.fileformats: Dict[str, FileFormat] = {}
-        self.tables: List[TableSpec]
+        self._tableSpecs: List[TableSpec]
 
         # Get scheme configuration
         lbAlgo = LoadBalancerAlgorithm(loadbalancers)
         self.lb_url = LoadBalancedURL(path, lbAlgo)
 
         self.metadata_url = self.lb_url.direct_url
-        self.metadata = json_get(self.metadata_url, _METADATA_FILENAME)
+        self.metadata = json_load(self.metadata_url, _METADATA_FILENAME)
+        self._check_version()
 
         filename = self.metadata["database"]
-        self.json_db = json_get(self.metadata_url, filename)
-        self.database = self.json_db["database"]
-        self.family = "layout_{}_{}".format(self.json_db["num_stripes"], self.json_db["num_sub_stripes"])
+        self._json_db = json_load(self.metadata_url, filename)
+        self._database = self._json_db["database"]
+        self.family = "layout_{}_{}".format(self._json_db["num_stripes"], self._json_db["num_sub_stripes"])
         self._init_tables()
         self._init_fileformats()
 
-    def get_table_contribs_spec(self) -> Generator[TableContributionsSpec, None, None]:
+    @property
+    def database(self) -> str:
+        """Getter for the database property
+
+        Returns
+        -------
+        database: `str`
+            List of tables specification available in metadata file
+        """
+        return self._database
+
+    @property
+    def charset_name(self) -> str:
+        """Getter for the charset_name property
+
+        Returns
+        -------
+        charset_name: `str`
+            charset_name used for all the contribution files,
+            use replication service default if not set
+        """
+        return self.metadata.get("charset_name", "")
+
+    @property
+    def tableSpecs(self) -> List[TableSpec]:
+        """Getter for the tableSpecs property
+
+        Returns
+        -------
+        tableSpecs: List[TableSpec]
+            List of table specifications available in metadata file
+        """
+        return self._tableSpecs
+
+    @property
+    def json_db(self) -> Dict[str, Any]:
+        """Getter for the json_db property
+
+        Returns
+        -------
+        json_db: Dict[str, Any]
+            Database configuration issued from json configuration
+        """
+        return self._json_db
+
+    def _check_version(self) -> None:
+        """Check metadata file version
+        and exit if its value is not supported"""
+        fileversion = None
+        if "version" in self.metadata:
+            fileversion = self.metadata["version"]
+
+        if fileversion is None or not (_MIN_SUPPORTED_VERSION <= fileversion <= version.REPL_SERVICE_VERSION):
+            _LOG.critical(
+                "The metadata file (%s) version is not in the range supported by qserv-ingest "
+                "(is %s, expected between %s and %s)",
+                self.metadata_url,
+                fileversion,
+                _MIN_SUPPORTED_VERSION,
+                version.REPL_SERVICE_VERSION,
+            )
+            sys.exit(1)
+        _LOG.info("Metadata file version: %s", version.REPL_SERVICE_VERSION)
+
+    @property
+    def table_contribs_spec(self) -> Generator[TableContributionsSpec, None, None]:
         """Generator for contribution specifications for the whole database.
 
         Retrieve information about input contribution files
@@ -281,26 +351,36 @@ class ContributionMetadata:
             Iterator on each contribution specifications for a database
 
         """
-        for table in self.tables:
+        for table in self._tableSpecs:
             yield from table.contrib_specs
 
-    def get_file_url(self, path: str) -> str:
+    def file_url(self, path: str) -> str:
         """Return the url of a file located on the input data server."""
         return urllib.parse.urljoin(self.metadata_url, path)
 
-    def get_tables_names(self) -> List[str]:
+    @property
+    def table_names(self) -> List[str]:
+        """Get list of table names available in metadata file
+
+        Returns
+        -------
+        List[str]
+            List of table names available in metadata file
+        """
         table_names = []
-        for t in self.tables:
+        for t in self._tableSpecs:
             table_names.append(t.name)
         return table_names
 
-    def get_json_indexes(self) -> List[Dict[str, Any]]:
+    @property
+    def json_indexes(self) -> List[Dict[str, Any]]:
         json_indexes: List[Dict] = []
-        for tbl in self.tables:
+        for tbl in self._tableSpecs:
             json_indexes.extend(tbl.json_indexes)
         return json_indexes
 
-    def get_ordered_tables_json(self) -> List[Dict[Any, Any]]:
+    @property
+    def ordered_tables_json(self) -> List[Dict[Any, Any]]:
         """Retrieve json schema for each tables of a given database in order to
         register them inside the replication service.
 
@@ -313,19 +393,19 @@ class ContributionMetadata:
 
         """
         schema_files = []
-        for t in self.tables:
+        for t in self._tableSpecs:
             schema_files.append(t.json_schema)
         return schema_files
 
     def _init_tables(self) -> None:
-        self.tables = []
+        self._tableSpecs = []
         self._has_extra_overlaps = False
         for table_meta in self.metadata["tables"]:
             table = TableSpec(self.metadata_url, table_meta)
             if table.is_director:
-                self.tables.insert(0, table)
+                self._tableSpecs.insert(0, table)
             else:
-                self.tables.append(table)
+                self._tableSpecs.append(table)
 
     def _init_fileformats(self) -> None:
         format = self.metadata.get("formats")

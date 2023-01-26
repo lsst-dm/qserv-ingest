@@ -28,31 +28,29 @@
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
+import os
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-from . import validator
-import os
+from . import util, validator
 
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
 
-_CWD = os.path.dirname(os.path.abspath(__file__))
-
 
 def test_dircmp() -> None:
     """Check the function which compare files in two directories."""
-    dir1 = os.path.join(_CWD, "testdata", "dbbench-difffiles")
-    dir2 = os.path.join(_CWD, "testdata", "dbbench-expected")
+    dir1 = os.path.join(util.DATADIR, "dbbench-difffiles")
+    dir2 = os.path.join(util.DATADIR, "dbbench-expected")
     result = validator._dircmp(dir1, dir2)
     assert not result
 
-    dir1 = os.path.join(_CWD, "testdata", "dbbench-diffdata")
+    dir1 = os.path.join(util.DATADIR, "dbbench-diffdata")
     result = validator._dircmp(dir1, dir2)
     assert not result
 
-    dir1 = os.path.join(_CWD, "testdata", "dbbench-ok")
+    dir1 = os.path.join(util.DATADIR, "dbbench-ok")
     result = validator._dircmp(dir1, dir2)
     assert result

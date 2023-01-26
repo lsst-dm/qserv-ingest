@@ -29,25 +29,25 @@
 #  Imports of standard modules --
 # -------------------------------
 
+import logging
+import os
+
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-from . import metadata
-import logging
-import os
+from . import metadata, util
 
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
 
-_CWD = os.path.dirname(os.path.abspath(__file__))
 _LOG = logging.getLogger(__name__)
 
 
 def test_get_ordered_tables_json() -> None:
-    data_url = os.path.join(_CWD, "testdata", "dp01_dc2_catalogs")
+    data_url = os.path.join(util.DATADIR, "dp01_dc2_catalogs")
     contribution_metadata = metadata.ContributionMetadata(data_url)
-    tables_json_data = contribution_metadata.get_ordered_tables_json()
+    tables_json_data = contribution_metadata.ordered_tables_json
     tables = []
     for json_data in tables_json_data:
         tables.append(json_data["table"])
@@ -63,13 +63,13 @@ def test_get_ordered_tables_json() -> None:
 
 
 def test_get_contribution_file_specs_dp01() -> None:
-    data_url = os.path.join(_CWD, "testdata", "dp01_dc2_catalogs")
+    data_url = os.path.join(util.DATADIR, "dp01_dc2_catalogs")
     contribution_metadata = metadata.ContributionMetadata(data_url)
     contrib_count = 0
     contrib_director_count = 0
     contrib_director_overlap_count = 0
     contrib_director_chunk_count = 0
-    for table_contrib_spec in contribution_metadata.get_table_contribs_spec():
+    for table_contrib_spec in contribution_metadata.table_contribs_spec:
         for contrib_spec in table_contrib_spec.get_contrib():
             contrib_count += 1
             contrib_spec["database"] = contribution_metadata.database
@@ -86,13 +86,13 @@ def test_get_contribution_file_specs_dp01() -> None:
 
 
 def test_get_contribution_file_specs_case01() -> None:
-    data_url = os.path.join(_CWD, "testdata", "case01")
+    data_url = os.path.join(util.DATADIR, "case01")
     contribution_metadata = metadata.ContributionMetadata(data_url)
     contrib_count = 0
     contrib_director_count = 0
     contrib_director_overlap_count = 0
     contrib_director_chunk_count = 0
-    for table_contrib_spec in contribution_metadata.get_table_contribs_spec():
+    for table_contrib_spec in contribution_metadata.table_contribs_spec:
         for contrib_spec in table_contrib_spec.get_contrib():
             contrib_count += 1
             contrib_spec["database"] = contribution_metadata.database
@@ -114,15 +114,15 @@ def test_get_contribution_file_specs_case01() -> None:
 
 
 def test_get_table_names() -> None:
-    data_url = os.path.join(_CWD, "testdata", "dp01_dc2_catalogs")
+    data_url = os.path.join(util.DATADIR, "dp01_dc2_catalogs")
     contribution_metadata = metadata.ContributionMetadata(data_url)
-    table_names = contribution_metadata.get_tables_names()
+    table_names = contribution_metadata.table_names
 
     assert table_names == ["object", "position", "forced_photometry", "reference", "truth_match"]
 
 
 def test_init_fileformats() -> None:
-    data_url = os.path.join(_CWD, "testdata", "dp01_dc2_catalogs")
+    data_url = os.path.join(util.DATADIR, "dp01_dc2_catalogs")
     contribution_metadata = metadata.ContributionMetadata(data_url)
 
     ff: metadata.FileFormat
@@ -139,7 +139,7 @@ def test_init_fileformats() -> None:
     assert ff.fields_escaped_by is None
     assert ff.lines_terminated_by is None
 
-    data_url = os.path.join(_CWD, "testdata", "case01")
+    data_url = os.path.join(util.DATADIR, "case01")
     contribution_metadata = metadata.ContributionMetadata(data_url)
 
     ff = contribution_metadata.fileformats[metadata.CSV]
@@ -155,40 +155,40 @@ def test_init_fileformats() -> None:
 
 
 def test_is_director() -> None:
-    data_url = os.path.join(_CWD, "testdata", "dp02")
+    data_url = os.path.join(util.DATADIR, "dp02")
     contribution_metadata = metadata.ContributionMetadata(data_url)
-    table_names = contribution_metadata.get_tables_names()
+    table_names = contribution_metadata.table_names
 
     # case: "director_table":""
     idx = table_names.index("Source")
-    tableSpec = contribution_metadata.tables[idx]
+    tableSpec = contribution_metadata.tableSpecs[idx]
     assert tableSpec._is_director()
 
     #  case: no "director_table" field, and "is_partitioned": 1
     idx = table_names.index("DiaObject")
-    tableSpec = contribution_metadata.tables[idx]
+    tableSpec = contribution_metadata.tableSpecs[idx]
     assert tableSpec._is_director()
 
     #  case: parititioned non director table
     idx = table_names.index("DiaSource")
-    tableSpec = contribution_metadata.tables[idx]
+    tableSpec = contribution_metadata.tableSpecs[idx]
     assert not tableSpec._is_director()
 
     #  case: regular non director table
     idx = table_names.index("CcdVisit")
-    tableSpec = contribution_metadata.tables[idx]
+    tableSpec = contribution_metadata.tableSpecs[idx]
     assert not tableSpec._is_director()
 
 
 def test_get_contribution_file_specs_dp02() -> None:
-    data_url = os.path.join(_CWD, "testdata", "dp02")
+    data_url = os.path.join(util.DATADIR, "dp02")
     contribution_metadata = metadata.ContributionMetadata(data_url)
     contrib_count = 0
     contrib_director_count = 0
     contrib_source_count = 0
     contrib_director_overlap_count = 0
     contrib_director_chunk_count = 0
-    for table_contrib_spec in contribution_metadata.get_table_contribs_spec():
+    for table_contrib_spec in contribution_metadata.table_contribs_spec:
         for contrib_spec in table_contrib_spec.get_contrib():
             contrib_count += 1
             contrib_spec["database"] = contribution_metadata.database

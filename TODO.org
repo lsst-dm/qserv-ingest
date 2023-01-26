@@ -1,0 +1,74 @@
+* TODO DM-36606
+
+** DONE [#A] Debug chunk location, see 5.3 https://confluence.lsstcorp.org/display/DM/Live+demo%3A+test+ingest+of+a+subset+of+one+track+of+the+HSC+Object+catalog
+
+** DONE add ORDER BY in case03 itest queries
+** DONE Document ingest.yaml + version change
+** TODO Document repcli
+** TODO Document qserv doc generation
+Fritz will do that, decided on Jan 4th
+qserv build-docs --cmake --linkcheck --user=qserv   --user-build-image qserv/lite-build-runner:2022.12.1-rc2
+firefox build/doc/html/index.html
+** DONE Document metadata.json version change
+Add
+version:
+
+and also in all json files
+
+Add
+charset_name
+default to latin1
+** DONE Move itest/README.md to official doc + link
+** DONE Move IngestConfig to a dedicated config.py file
+** DONE Create version.py to check metadata.json and ingest.yaml version
+version ingest.yaml
+** DONE See option to generate statistics with Gabrielle
+https://confluence.lsstcorp.org/display/DM/Ingest%3A+4.+The+version+history+of+the+Ingest+API
+
+* TODO chase non-deterministic benchmark bug
+** DONE add count(*) to queries for all tables
+* TODO Misc
+
+** TODO Get chunk location once!
+
+
+** TODO kind/CI
+
+- put sql+result on github release
+- Improve error management for job see https://stackoverflow.com/questions/69266116/do-not-delete-pods-even-if-job-fails and argoWorkflow 'withItems' parameter
+
+** TODO Argo/Config
+
+See if example/config.yaml can be set in argo CLI (i.e. in params.yaml):
+https://argoproj.github.io/argo-workflows/examples/#parameters
+argo submit arguments-parameters.yaml --parameter-file params.yaml
+
+
+** TODO In validate, SQLAlchemy has a weird bahavior:
+
+  UPDATE This seem to be fixed with SQLAlchemy v12 upgrade
+
+  Query: SELECT count(*) AS count_1
+  FROM dpdd_ref
+  Query total time: 0.069575
+  Query result: 0
+
+  Result with regular mysql client is 37??
+
+## two-mode:
+  * crash on error, as before
+  * continue at max: cancel ingest for chunks which produce some special error or have been ingested too much time without success.
+
+
+- Improve error recovery: if transaction fails, then check chunk queue state (non terminated tasks) before relaunching workflow and ask for chunk queue manuel cleanup
+
+- Improve management of connection parameters for input data
+- Improve argo-workflow install
+- Run as non root
+
+## batch ingest
+
+- optimize
+  - Use MEMQ+JOB (number of job is workers/ingest-thread), where ingest-thread=ncore
+  - https://lsstc.slack.com/archives/C996604NR/p1605234280138600
+- "LOAD DATA INFILE" use 20MB/sec per thread

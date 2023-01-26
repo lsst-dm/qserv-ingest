@@ -2,7 +2,7 @@ FROM golang:1.17.6-bullseye AS dbbench
 RUN apt-get update && apt-get upgrade -y && \
     apt-get install -y bash curl git mariadb-client openssh-server && \
     rm -rf /var/lib/apt/lists/*
-RUN go get github.com/lsst-dm/dbbench@163e978def488c6600c22fffe3ea80c4713f9642
+RUN go install github.com/lsst-dm/dbbench@163e978def488c6600c22fffe3ea80c4713f9642
 
 FROM python:3.10.2-bullseye as ingest-deps
 LABEL org.opencontainers.image.authors="fabrice.jammes@in2p3.fr"
@@ -40,4 +40,3 @@ COPY rootfs/ingest /ingest
 # TODO build an image with static analysis tools
 # TODO run 'black rootfs --line-length 110'
 # RUN python3 -m pip install mypy==0.950
-

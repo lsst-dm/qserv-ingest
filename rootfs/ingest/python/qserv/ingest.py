@@ -34,25 +34,21 @@ import time
 from enum import Enum, auto
 from typing import Dict, List, Optional, Tuple
 
-from . import util
-
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
+from .contribqueue import QueueManager
 from .contribution import Contribution
 from .exception import IngestError
+from .ingestconfig import IngestServiceConfig
 from .jsonparser import DatabaseStatus
 from .metadata import ContributionMetadata
-from .queue import QueueManager
 from .replicationclient import ReplicationClient
 
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
 _LOG = logging.getLogger(__name__)
-
-# Max attempts to retry ingesting a file on replication service retriable error
-MAX_RETRY_ATTEMPTS = 3
 
 
 class TransactionAction(Enum):
@@ -114,7 +110,7 @@ class Ingester:
         self.repl_client.database_publish(database)
 
     def database_register_and_config(
-        self, replication_config: util.ReplicationConfig, felis: Optional[Dict] = None
+        self, replication_config: IngestServiceConfig, felis: Optional[Dict] = None
     ) -> None:
         """Register a database, its tables and its configuration inside
         replication/ingest system using data_url/<database_name>.json as input
@@ -128,9 +124,15 @@ class Ingester:
         felis: `dict`, optional
             Felis schema for tables. Defaults to None.
         """
-        self.repl_client.database_register(self.contrib_meta.json_db)
-        self.repl_client.database_register_tables(self.contrib_meta.get_ordered_tables_json(), felis)
+        self.repl_client.database_register(self.contrib_meta._json_db)
+        self.repl_client.database_register_tables(self.contrib_meta.ordered_tables_json, felis)
         self.repl_client.database_config(self.contrib_meta.database, replication_config)
+
+    def deploy_statistics(self) -> None:
+        """Build statistics for all tables, using replication client"""
+
+        table_names = self.contrib_meta.table_names
+        self.repl_client.deploy_statistics(self.contrib_meta.database, table_names)
 
     def get_database_status(self) -> DatabaseStatus:
         """Return the status of a Qserv catalog database."""
@@ -152,7 +154,7 @@ class Ingester:
             database = self.contrib_meta.database
             self.repl_client.build_secondary_index(database)
         else:
-            json_indexes = self.contrib_meta.get_json_indexes()
+            json_indexes = self.contrib_meta.json_indexes
             self.repl_client.index_all_tables(json_indexes)
 
     def _build_contributions(
@@ -178,17 +180,20 @@ class Ingester:
         for contrib_file in contribfiles_locked:
             (database, chunk_id, filepath, is_overlap, table) = contrib_file
             lb_base_url = self.contrib_meta.lb_url
+            _charset_name = self.contrib_meta.charset_name
             if chunk_id is not None:
                 # Partitioned tables
                 (host, port) = self.repl_client.get_chunk_location(chunk_id, database)
-                contribution = Contribution(host, port, chunk_id, filepath, table, is_overlap, lb_base_url)
+                contribution = Contribution(
+                    host, port, chunk_id, filepath, table, is_overlap, lb_base_url, _charset_name
+                )
                 contributions.append(contribution)
             else:
                 # Regular tables
                 locations = self.repl_client.get_regular_tables_locations(database)
                 for (host, port) in locations:
                     contribution = Contribution(
-                        host, port, chunk_id, filepath, table, is_overlap, lb_base_url
+                        host, port, chunk_id, filepath, table, is_overlap, lb_base_url, _charset_name
                     )
                     contributions.append(contribution)
         return contributions

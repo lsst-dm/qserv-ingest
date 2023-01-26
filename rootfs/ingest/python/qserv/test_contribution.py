@@ -32,17 +32,17 @@ import logging
 import os
 from typing import Dict, TypedDict
 
+from . import metadata, util
+
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
 from .contribution import Contribution
-from . import metadata
-from .loadbalancerurl import LoadBalancerAlgorithm, LoadBalancedURL
+from .loadbalancerurl import LoadBalancedURL, LoadBalancerAlgorithm
 
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
-_CWD = os.path.dirname(os.path.abspath(__file__))
 _LOG = logging.getLogger(__name__)
 
 _PATH = "/lsst/data/"
@@ -123,7 +123,7 @@ def test_build_payload() -> None:
 
     assert payload["url"] == "https://server1/lsst/data/step4_4/chunk_4_overlap.txt"
 
-    data_url = os.path.join(_CWD, "testdata", "case01")
+    data_url = os.path.join(util.DATADIR, "case01")
     contribution_metadata = metadata.ContributionMetadata(data_url)
     Contribution.fileformats = contribution_metadata.fileformats
     c = Contribution(**params)
@@ -149,6 +149,7 @@ def test_print() -> None:
     else:
         is_overlap = int(_PARAMS["is_overlap"])
     params["is_overlap"] = is_overlap
+    params["charset_name"] = ""
     params["load_balanced_url"] = c.load_balanced_url
     params["request_id"] = None
     params["retry_attempts"] = 0
