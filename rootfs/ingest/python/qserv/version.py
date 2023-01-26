@@ -49,4 +49,4 @@ import yaml
 # ---------------------------------
 _LOG = logging.getLogger(__name__)
 
-REPL_SERVICE_VERSION = 17
+REPL_SERVICE_VERSION = 18
