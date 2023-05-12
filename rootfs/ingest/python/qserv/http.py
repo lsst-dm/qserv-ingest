@@ -52,7 +52,7 @@ from .exception import IngestError, ReplicationControllerError
 # Local non-exported definitions --
 # ---------------------------------
 DEFAULT_AUTH_PATH = "~/.lsst/qserv"
-TIMEOUT_SHORT_SEC = 5
+TIMEOUT_SHORT_SEC = 30
 TIMEOUT_LONG_SEC = 120
 
 _MAX_RETRY_ATTEMPTS = 3
