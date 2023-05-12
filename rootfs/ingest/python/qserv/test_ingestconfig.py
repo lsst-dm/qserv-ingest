@@ -19,55 +19,39 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""Tests for util modules.
-
+"""
 @author  Fabrice Jammes, IN2P3
-
 """
 
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
 
+import logging
+
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-import argparse
-import logging
 import os
 
+import yaml
+
 from . import util
+from .ingestconfig import IngestConfig
 
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
 
-
 _LOG = logging.getLogger(__name__)
 
 
-def test_ingestconfig() -> None:
-    """Check the function which compare files in two directories."""
+def test_ingestconfig_metadata_url() -> None:
+    """Check support for metadata url parameter in configuration"""
+    config_file = os.path.join(util.DATADIR, util.DP02, "ingest.yaml")
+    with open(config_file, "r") as values:
+        yaml_data = yaml.safe_load(values)
 
-    parser = argparse.ArgumentParser(description="Test util module")
-    util.add_default_arguments(parser)
+    config = IngestConfig(yaml_data)
 
-    configfile = os.path.join(util.DATADIR, "dp02", "ingest.yaml")
-    args = parser.parse_args(["--config", configfile])
-
-    _LOG.debug("Replication configuration: %s", args.config.ingestservice)
-
-    assert args.config.ingestservice.cainfo == "/etc/pki/tls/certs/ca-bundle.crt"
-    assert args.config.ingestservice.ssl_verifypeer == 1
-    assert args.config.ingestservice.low_speed_limit == 60
-    assert args.config.ingestservice.low_speed_time == 120
-
-    configfile = os.path.join(util.DATADIR, "dp02", "ingest.finetuned.yaml")
-    args = parser.parse_args(["--config", configfile])
-
-    assert args.config.ingestservice.cainfo == "/etc/pki/tls/certs/ca-bundle.crt"
-    assert args.config.ingestservice.ssl_verifypeer == 1
-    assert args.config.ingestservice.low_speed_limit == 10
-    assert args.config.ingestservice.low_speed_time == 3600
-    assert args.config.http_write_timeout == 1800
-    assert args.config.http_read_timeout == 10
+    assert config.metadata_url == "https://raw.githubusercontent.com/rubin-in2p3/qserv-ingest-schema/main/"

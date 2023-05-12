@@ -39,7 +39,7 @@ import pytest
 # ----------------------------
 import requests
 
-from . import http, metadata, replicationclient, util
+from . import metadata, replicationclient, util
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -57,14 +57,14 @@ def test_database_register_tables() -> None:
     """
 
     data_url = os.path.join(util.DATADIR, "dp01_dc2_catalogs")
-    contribution_metadata = metadata.ContributionMetadata(data_url)
+    contribution_metadata = metadata.ContributionMetadata(data_url, data_url)
     tables_json_data = contribution_metadata.ordered_tables_json
 
     _, auth_path = tempfile.mkstemp()
 
-    _LOG.debug("Credentials: %s", http.DEFAULT_AUTH_PATH)
+    _LOG.debug("Credentials: %s", auth_path)
     with pytest.raises(requests.exceptions.ConnectionError) as e:
-        repl_client = replicationclient.ReplicationClient("http://no_url/", auth_path)
+        repl_client = replicationclient.ReplicationClient("http://no_url/", 1, 1, auth_path)
         # TODO add mock replication server for method below
         repl_client.database_register_tables(tables_json_data, None)
     _LOG.error("Expected error: %s", e)

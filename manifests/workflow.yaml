@@ -37,8 +37,7 @@ spec:
       env:
       - name: QSERV_INGEST_VERBOSE
         value: "{{workflow.parameters.verbose}}"
-      command: ["/bin/sh"]
-      args: ["-c", "{{inputs.parameters.script}}"]
+      command: ["{{inputs.parameters.script}}"]
       image: "{{workflow.parameters.image}}"
       imagePullPolicy: IfNotPresent
       volumeMounts:
@@ -63,7 +62,26 @@ spec:
               labels:
                 app: qserv
                 tier: ingest
+                role: transaction
             spec:
+              # affinity:
+              #   podAntiAffinity:
+              #     requiredDuringSchedulingIgnoredDuringExecution:
+              #     - labelSelector:
+              #         matchExpressions:
+              #         - key: app
+              #           operator: In
+              #           values:
+              #           - qserv
+              #         - key: tier
+              #           operator: In
+              #           values:
+              #           - ingest
+              #         - key: role
+              #           operator: In
+              #           values:
+              #           - transaction
+              #      topologyKey: "kubernetes.io/hostname"
               containers:
               - name: ingest
                 env:
@@ -74,6 +92,9 @@ spec:
                 args:
                 - "{{workflow.parameters.superTransactions}}"
                 image: {{workflow.parameters.image}}
+                resources:
+                  requests:
+                    memory: "2Gi"
                 imagePullPolicy: IfNotPresent
                 volumeMounts:
                   - name: repl-creds
@@ -111,17 +132,23 @@ spec:
   - name: main
     dag:
       tasks:
-      - name: queue
+      - name: check-sanity
+        template: ingest-step
+        arguments:
+          parameters: [{name: script, value: check-sanity.sh}]
+      - name: load-queue
         template: ingest-step
         arguments:
           parameters: [{name: script, value: load-queue.sh}]
+        dependencies: [check-sanity]
       - name: register
         template: ingest-step
         arguments:
           parameters: [{name: script, value: register.sh}]
+        dependencies: [check-sanity]
       - name: transactions
         template: transactions
-        dependencies: [queue, register]
+        dependencies: [load-queue, register]
       - name: check-transactions
         template: ingest-step
         arguments:

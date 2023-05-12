@@ -2,18 +2,17 @@ version: 15
 ingest:
     http:
         # Timeout for POST and PUT queries in seconds
-        write_timeout: 1800
+        write_timeout: 7200
         # Timeout for READ queries in seconds
-        read_timeout: 10
+        read_timeout: 7200
     input:
         # Servers which provides input data
         # TODO Add support for webdav protocol
         # Use file:// as first element in list when using local data
         servers:
-            - https://www.k8s-school.fr
-            - https://www.k8s-school.fr
+            - http://wsa.roe.ac.uk
         # Path on server where input data is available
-        path: stable/idf-dp0.2-catalog-chunked/PREOPS-905
+        path: gaiaFull/
     qserv:
         # TODO add support for secondary index generation method
         # Override the default value stored in input metadata

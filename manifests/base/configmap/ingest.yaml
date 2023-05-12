@@ -1,5 +1,10 @@
-version: 12
+version: 15
 ingest:
+    http:
+        # Timeout for POST and PUT queries in seconds
+        write_timeout: 1800
+        # Timeout for GET queries in seconds
+        read_timeout: 10
     input:
         # Servers which provides input data
         # TODO Add support for webdav protocol
@@ -10,11 +15,10 @@ ingest:
         # Path on server where input data is available
         path: datasets/DC2/
     qserv:
-        # TODO add support for secondary index generation method
-        # Override the default value stored in input metadata
-        # 1: build secondary index after each transaction
+        # Override the default value stored in input metadata (in database.json file)
+        # 1: build secondary index when closing a transaction
         # 0: build secondary index after ingest
-        auto_build_secondary_index: 0
+        auto_build_secondary_index: 1
 
         # URL of Qserv services
         # Proxy URL
@@ -23,3 +27,7 @@ ingest:
         queue_url: "mysql://qsingest:@qserv-ingest-db-0.qserv-ingest-db/qservIngest"
         # Replication service URL
         replication_url: http://qserv-repl-ctl-0.qserv-repl-ctl:8080
+    ingestservice:
+        async_proc_limit: 4
+        low_speed_limit: 10
+        low_speed_time: 3600

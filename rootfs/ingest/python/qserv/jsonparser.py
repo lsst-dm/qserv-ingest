@@ -71,8 +71,14 @@ class DatabaseStatus(Enum):
 
 class TransactionState(Enum):
     ABORTED = "ABORTED"
-    STARTED = "STARTED"
+    ABORT_FAILED = "ABORT_FAILED"
     FINISHED = "FINISHED"
+    FINISH_FAILED = "FINISH_FAILED"
+    IS_ABORTING = "IS_ABORTING"
+    IS_FINISHING = "IS_FINISHING"
+    IS_STARTING = "IS_STARTING"
+    STARTED = "STARTED"
+    START_FAILED = "START_FAILED"
 
 
 class ContributionMonitor:

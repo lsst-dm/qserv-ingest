@@ -80,17 +80,66 @@ class Ingester:
         self,
         contribution_metadata: ContributionMetadata,
         replication_url: str,
+        timeout_read_sec: int,
+        timeout_write_sec: int,
         queue_manager: QueueManager = None,
     ):
+        self.timeout_read_sec = timeout_read_sec
+        self.timeout_write_sec = timeout_write_sec
         self.contrib_meta = contribution_metadata
         self.queue_manager = queue_manager
-        self.repl_client = ReplicationClient(replication_url)
+        self.repl_client = ReplicationClient(replication_url, self.timeout_read_sec, self.timeout_write_sec)
         Contribution.fileformats = contribution_metadata.fileformats
+
+    def check_sanity(self) -> None:
+        """Check
+           1. the ingest queue is empty
+           2. all transactions for the database are in FINISHED, ABORTED state
+           3. no contribution is in progress
+
+        Raises
+        ------
+        IngestError
+            Qserv is not ready for current ingest
+        """
+        db_status = self.get_database_status()
+
+        match db_status:
+            case DatabaseStatus.NOT_REGISTERED:
+                _LOG.info(
+                    "Database %s can be safely ingested because it has not been previously registered.",
+                    self.contrib_meta.database,
+                )
+            case DatabaseStatus.PUBLISHED:
+                raise IngestError(
+                    "Database %s is already published and must be deleted "
+                    "in order to run the ingest workflow"
+                )
+            case DatabaseStatus.REGISTERED_NOT_PUBLISHED:
+                if self.queue_manager is not None:
+                    contributions = self.queue_manager.select_inprogress_contribfiles()
+                else:
+                    raise IngestError("Uninitialized queue manager")
+                raise_msg: str = ""
+                if len(contributions) > 0:
+                    _LOG.error(f"Contributions in progress from prior database ingest: {contributions}")
+                    raise_msg = f"contributions in progress: {len(contributions)}"
+                trans = self.repl_client.get_transactions_inprogress(self.contrib_meta.database)
+                if len(trans) > 0:
+                    raise_msg += f"transactions in progress : {trans}."
+                if len(raise_msg) != 0:
+                    raise_msg = "Ingest prevented by other workflow instance: " + raise_msg
+                    raise IngestError(raise_msg)
+                _LOG.info(
+                    "Database %s can be safely ingested because no queued contributions are in progress",
+                    self.contrib_meta.database,
+                )
+            case _:
+                raise IngestError(f"Unknown status {db_status} for database {self.contrib_meta.database}")
 
     def check_supertransactions_success(self) -> None:
         """Check all super-transactions have ran successfully."""
-        trans = self.repl_client.get_transactions_started(self.contrib_meta.database)
-        _LOG.debug(f"IDs of transactions in STARTED state: {trans}")
+        trans = self.repl_client.get_transactions_inprogress(self.contrib_meta.database)
         if len(trans) > 0:
             raise IngestError(f"Database publication prevented by started transactions: {trans}")
         if self.queue_manager is not None:
@@ -135,7 +184,13 @@ class Ingester:
         self.repl_client.deploy_statistics(self.contrib_meta.database, table_names)
 
     def get_database_status(self) -> DatabaseStatus:
-        """Return the status of a Qserv catalog database."""
+        """Return the status of current Qserv database.
+
+        Returns
+        -------
+        DatabaseStatus
+            Status of current Qserv database.
+        """
         return self.repl_client.get_database_status(self.contrib_meta.database, self.contrib_meta.family)
 
     def ingest(self, contribution_queue_fraction: int) -> None:
@@ -185,7 +240,16 @@ class Ingester:
                 # Partitioned tables
                 (host, port) = self.repl_client.get_chunk_location(chunk_id, database)
                 contribution = Contribution(
-                    host, port, chunk_id, filepath, table, is_overlap, lb_base_url, _charset_name
+                    host,
+                    port,
+                    self.timeout_read_sec,
+                    self.timeout_write_sec,
+                    chunk_id,
+                    filepath,
+                    table,
+                    is_overlap,
+                    lb_base_url,
+                    _charset_name,
                 )
                 contributions.append(contribution)
             else:
@@ -193,7 +257,16 @@ class Ingester:
                 locations = self.repl_client.get_regular_tables_locations(database)
                 for (host, port) in locations:
                     contribution = Contribution(
-                        host, port, chunk_id, filepath, table, is_overlap, lb_base_url, _charset_name
+                        host,
+                        port,
+                        self.timeout_read_sec,
+                        self.timeout_write_sec,
+                        chunk_id,
+                        filepath,
+                        table,
+                        is_overlap,
+                        lb_base_url,
+                        _charset_name,
                     )
                     contributions.append(contribution)
         return contributions
@@ -332,7 +405,7 @@ class Ingester:
         database = self.contrib_meta.database
         match action:
             case TransactionAction.ABORT_ALL:
-                self.repl_client.abort_transactions(database)
+                self.repl_client.abort_all_transactions(database)
             case TransactionAction.START:
                 transaction_id = self.repl_client.start_transaction(database)
                 _LOG.info("Start transaction %s", transaction_id)
@@ -343,9 +416,9 @@ class Ingester:
                 else:
                     raise ValueError(f"Missing transaction id for {TransactionAction.CLOSE}")
             case TransactionAction.CLOSE_ALL:
-                transaction_ids = self.repl_client.get_transactions_started(database)
+                transaction_ids = self.repl_client.get_transactions_inprogress(database)
                 for i in transaction_ids:
                     self.repl_client.close_transaction(database, i, True)
                     _LOG.info("Commit transaction %s", i)
             case TransactionAction.LIST_STARTED:
-                self.repl_client.get_transactions_started(database)
+                self.repl_client.get_transactions_inprogress(database)

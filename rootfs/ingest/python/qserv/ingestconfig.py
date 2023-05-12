@@ -42,13 +42,14 @@ import yaml
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-from . import version
+from . import http, version
+from .loadbalancerurl import LoadBalancedURL, LoadBalancerAlgorithm
 
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
 _LOG = logging.getLogger(__name__)
-_MIN_SUPPORTED_VERSION = 12
+_MIN_SUPPORTED_VERSION = 15
 
 CWD = os.path.dirname(os.path.abspath(__file__))
 DATADIR = os.path.join(CWD, "testdata")
@@ -59,16 +60,35 @@ class IngestConfig:
 
     def __init__(self, yaml: dict):
 
-        self._check_version(yaml)
         ingest_dict = yaml["ingest"]
 
+        # Added in v15
+        self.http_write_timeout = ingest_dict.get("http", {}).get(
+            "write_timeout", http.DEFAULT_TIMEOUT_WRITE_SEC
+        )
+        self.http_read_timeout = ingest_dict.get("http", {}).get(
+            "read_timeout", http.DEFAULT_TIMEOUT_READ_SEC
+        )
+
         self.servers = ingest_dict["input"]["servers"]
-        self.path = ingest_dict["input"]["path"]
+        self.datapath = ingest_dict["input"]["path"]
+        if "metadata" in ingest_dict:
+            self.metadata_url = ingest_dict["metadata"]["url"]
+        else:
+            lbAlgo = LoadBalancerAlgorithm(self.servers)
+            self.lb_url = LoadBalancedURL(self.datapath, lbAlgo)
+            self.metadata_url = self.lb_url.direct_url
+
+        self._check_version(yaml)
         self.data_url = ingest_dict["qserv"]["queue_url"]
         self.query_url = ingest_dict["qserv"]["query_url"]
         self.queue_url = ingest_dict["qserv"]["queue_url"]
         self.replication_url = ingest_dict["qserv"]["replication_url"]
-        ingest = ingest_dict.get("ingest")
+        # Added in v15
+        self.auto_build_secondary_index = ingest_dict["qserv"].get("auto_build_secondary_index")
+
+        # Section name changed in v15 from "ingest" -> "ingestservice"
+        ingest = ingest_dict.get("ingestservice")
         if ingest is not None:
             self.ingestservice = IngestServiceConfig(
                 cainfo=ingest.get("cainfo"),
@@ -80,25 +100,27 @@ class IngestConfig:
         else:
             self.ingestservice = IngestServiceConfig()
 
-    def _check_version(self, configuration: dict) -> None:
+    def _check_version(self, yaml: dict) -> None:
         """Check ingest file version and exit if its value is not supported
 
         Parameters
         ----------
-        configuration : `dict`
+        yaml : `dict`
             ingest configuration file content
         """
         fileversion = None
-        if "version" in configuration:
-            fileversion = configuration["version"]
+        if "version" in yaml:
+            fileversion = yaml["version"]
 
-        if fileversion is None or not (_MIN_SUPPORTED_VERSION <= fileversion <= version.REPL_SERVICE_VERSION):
+        if fileversion is None or not (
+            _MIN_SUPPORTED_VERSION <= fileversion <= version.INGEST_CONFIG_VERSION
+        ):
             _LOG.critical(
-                "The ingest configuration file (%s) version is not in the range supported by qserv-ingest "
+                "The ingest configuration file (ingest.yaml) version "
+                "is not in the range supported by qserv-ingest "
                 "(is %s, expected between %s and %s)",
-                self.metadata_url,
                 fileversion,
-                self._MIN_SUPPORTED_VERSION,
+                _MIN_SUPPORTED_VERSION,
                 version.REPL_SERVICE_VERSION,
             )
             sys.exit(1)

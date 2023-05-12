@@ -28,7 +28,9 @@
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
+import argparse
 import logging
+import os
 
 import pytest
 
@@ -38,8 +40,7 @@ import pytest
 import requests
 from requests import HTTPError
 
-from . import http, version
-from .util import DATADIR
+from . import http, util, version
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -55,7 +56,7 @@ def test_file_exists() -> None:
 
 
 def test_json_get() -> None:
-    data = http.json_load(DATADIR, "servers.json")
+    data = http.json_load(util.DATADIR, "servers.json")
     assert data["http_servers"][0] == "https://server1"
     assert data["http_servers"][2] == "https://server3"
 
@@ -88,3 +89,18 @@ def test_retry_post() -> None:
     _http = http.Http()
     with pytest.raises(requests.ConnectionError):
         _http.post_retry(url="http://server.not-exists", payload={})
+
+
+def test_config() -> None:
+    """Test configuration propagation from configuration file
+    to http service"""
+    parser = argparse.ArgumentParser(description="Test util module")
+    util.add_default_arguments(parser)
+
+    configfile = os.path.join(util.DATADIR, "dp02", "ingest.finetuned.yaml")
+    args = parser.parse_args(["--config", configfile])
+
+    _http = http.Http(args.config.http_read_timeout, args.config.http_write_timeout)
+
+    assert _http.timeout_read_sec == 10
+    assert _http.timeout_write_sec == 1800

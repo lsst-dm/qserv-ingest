@@ -1,5 +1,12 @@
-version: 12
+version: 15
 ingest:
+    http:
+        # Timeout for POST and PUT queries in seconds
+        write_timeout: 7200
+        # Timeout for GET queries in seconds
+        read_timeout: 600
+    metadata:
+      url: https://raw.githubusercontent.com/rubin-in2p3/qserv-ingest-schema/v12/idf-dp0.2-catalog-chunked/v12/
     input:
         # Servers which provides input data
         # TODO Add support for webdav protocol
@@ -12,7 +19,6 @@ ingest:
         # Path on server where input data is available
         path: stable/idf-dp0.2-catalog-chunked/PREOPS-905
     qserv:
-        # TODO add support for secondary index generation method
         # Override the default value stored in input metadata
         # 1: build secondary index after each transaction
         # 0: build secondary index after ingest

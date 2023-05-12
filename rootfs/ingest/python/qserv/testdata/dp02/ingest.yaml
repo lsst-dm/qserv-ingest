@@ -1,5 +1,7 @@
-version: 12
+version: 15
 ingest:
+    metadata:
+        url: https://raw.githubusercontent.com/rubin-in2p3/qserv-ingest-schema/main/
     input:
         # Servers which provides input data
         # TODO Add support for webdav protocol

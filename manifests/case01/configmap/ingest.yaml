@@ -1,4 +1,4 @@
-version: 12
+version: 15
 ingest:
     input:
         # Servers which provides input data
@@ -14,7 +14,7 @@ ingest:
         # Override the default value stored in input metadata
         # 1: build secondary index after each transaction
         # 0: build secondary index after ingest
-        auto_build_secondary_index: 0
+        auto_build_secondary_index: 1
 
         # URL of Qserv services
         # Proxy URL

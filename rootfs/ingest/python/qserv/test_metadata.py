@@ -46,7 +46,7 @@ _LOG = logging.getLogger(__name__)
 
 def test_get_ordered_tables_json() -> None:
     data_url = os.path.join(util.DATADIR, "dp01_dc2_catalogs")
-    contribution_metadata = metadata.ContributionMetadata(data_url)
+    contribution_metadata = metadata.ContributionMetadata(data_url, data_url)
     tables_json_data = contribution_metadata.ordered_tables_json
     tables = []
     for json_data in tables_json_data:
@@ -64,7 +64,7 @@ def test_get_ordered_tables_json() -> None:
 
 def test_get_contribution_file_specs_dp01() -> None:
     data_url = os.path.join(util.DATADIR, "dp01_dc2_catalogs")
-    contribution_metadata = metadata.ContributionMetadata(data_url)
+    contribution_metadata = metadata.ContributionMetadata(data_url, data_url)
     contrib_count = 0
     contrib_director_count = 0
     contrib_director_overlap_count = 0
@@ -85,9 +85,19 @@ def test_get_contribution_file_specs_dp01() -> None:
     assert contrib_director_chunk_count == 2111
 
 
+def test_override_auto_build_secondary_index() -> None:
+    """Test override of auto_build_secondary_index parameter"""
+
+    data_url = os.path.join(util.DATADIR, "dp01_dc2_catalogs")
+    auto_build_secondary_index = 0
+    contribution_metadata = metadata.ContributionMetadata(data_url, data_url, [], auto_build_secondary_index)
+
+    assert contribution_metadata._json_db["auto_build_secondary_index"] == 0
+
+
 def test_get_contribution_file_specs_case01() -> None:
     data_url = os.path.join(util.DATADIR, "case01")
-    contribution_metadata = metadata.ContributionMetadata(data_url)
+    contribution_metadata = metadata.ContributionMetadata(data_url, data_url)
     contrib_count = 0
     contrib_director_count = 0
     contrib_director_overlap_count = 0
@@ -115,7 +125,7 @@ def test_get_contribution_file_specs_case01() -> None:
 
 def test_get_table_names() -> None:
     data_url = os.path.join(util.DATADIR, "dp01_dc2_catalogs")
-    contribution_metadata = metadata.ContributionMetadata(data_url)
+    contribution_metadata = metadata.ContributionMetadata(data_url, data_url)
     table_names = contribution_metadata.table_names
 
     assert table_names == ["object", "position", "forced_photometry", "reference", "truth_match"]
@@ -123,7 +133,7 @@ def test_get_table_names() -> None:
 
 def test_init_fileformats() -> None:
     data_url = os.path.join(util.DATADIR, "dp01_dc2_catalogs")
-    contribution_metadata = metadata.ContributionMetadata(data_url)
+    contribution_metadata = metadata.ContributionMetadata(data_url, data_url)
 
     ff: metadata.FileFormat
     ff = contribution_metadata.fileformats[metadata.CSV]
@@ -140,7 +150,7 @@ def test_init_fileformats() -> None:
     assert ff.lines_terminated_by is None
 
     data_url = os.path.join(util.DATADIR, "case01")
-    contribution_metadata = metadata.ContributionMetadata(data_url)
+    contribution_metadata = metadata.ContributionMetadata(data_url, data_url)
 
     ff = contribution_metadata.fileformats[metadata.CSV]
     assert ff.fields_enclosed_by is None
@@ -156,7 +166,7 @@ def test_init_fileformats() -> None:
 
 def test_is_director() -> None:
     data_url = os.path.join(util.DATADIR, "dp02")
-    contribution_metadata = metadata.ContributionMetadata(data_url)
+    contribution_metadata = metadata.ContributionMetadata(data_url, data_url)
     table_names = contribution_metadata.table_names
 
     # case: "director_table":""
@@ -182,7 +192,7 @@ def test_is_director() -> None:
 
 def test_get_contribution_file_specs_dp02() -> None:
     data_url = os.path.join(util.DATADIR, "dp02")
-    contribution_metadata = metadata.ContributionMetadata(data_url)
+    contribution_metadata = metadata.ContributionMetadata(data_url, data_url)
     contrib_count = 0
     contrib_director_count = 0
     contrib_source_count = 0

@@ -36,6 +36,7 @@ import os
 from typing import Any, Dict, List
 
 import yaml
+from sqlalchemy.exc import SQLAlchemyError
 
 # ----------------------------
 # Imports for other modules --
@@ -48,6 +49,7 @@ from .ingestconfig import IngestConfigAction
 _LOG = logging.getLogger(__name__)
 CWD = os.path.dirname(os.path.abspath(__file__))
 DATADIR = os.path.join(CWD, "testdata")
+DP02 = "dp02"
 
 
 def add_default_arguments(parser: argparse.ArgumentParser) -> None:
@@ -161,15 +163,15 @@ def increase_wait_time(wait_sec: int) -> int:
     return wait_sec
 
 
-def check_raise(e: Exception, not_raise_msgs: List[str]) -> None:
-    """Raise not recognized exceptions, depending on their message.
+def check_raise(exc: SQLAlchemyError, not_raise_errorcodes: List[int]) -> None:
+    """Raise not recognized exceptions, depending on error code.
 
     Parameters
     ----------
-    e : `Exception`
-        Exception
-    not_raise_msgs : `List[str]`
-        List of exception message which prevent raising exception
+    exc : `SQLAlchemyError`
+        SQLAlchemyError
+    not_raise_msgs : `List[int]`
+        List of error code which prevent raising exception
 
     Raises
     ------
@@ -177,10 +179,5 @@ def check_raise(e: Exception, not_raise_msgs: List[str]) -> None:
         Raised exception
 
     """
-    raiseExc = True
-    for msg in not_raise_msgs:
-        if msg in str(e):
-            raiseExc = False
-            break
-    if raiseExc:
-        raise e
+    if exc.code not in not_raise_errorcodes:
+        raise exc
