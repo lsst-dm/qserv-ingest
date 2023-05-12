@@ -52,8 +52,8 @@ from .exception import IngestError, ReplicationControllerError
 # Local non-exported definitions --
 # ---------------------------------
 DEFAULT_AUTH_PATH = "~/.lsst/qserv"
-TIMEOUT_SHORT_SEC = 30
-TIMEOUT_LONG_SEC = 120
+TIMEOUT_SHORT_SEC = 300
+TIMEOUT_LONG_SEC = 600
 
 _MAX_RETRY_ATTEMPTS = 3
 
