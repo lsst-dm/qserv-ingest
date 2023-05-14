@@ -148,13 +148,6 @@ class Contribution:
 
         _LOG.debug("start_async(): payload: %s", payload)
 
-        # Start ASYNC file ingest request using the POST method.
-        # See https://lsstc.slack.com/archives/D2Y1TQY5S/p1645556026791089
-        _LOG.debug(
-            "_ingest_chunk: url %s, retry attempts: %s, payload: %s",
-            url,
-            payload,
-        )
         responseJson = Http().post_retry(url, payload)
 
         raise_error(responseJson)

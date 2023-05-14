@@ -63,7 +63,26 @@ spec:
               labels:
                 app: qserv
                 tier: ingest
+                role: transaction
             spec:
+              # affinity:
+              #   podAntiAffinity:
+              #     requiredDuringSchedulingIgnoredDuringExecution:
+              #     - labelSelector:
+              #         matchExpressions:
+              #         - key: app
+              #           operator: In
+              #           values:
+              #           - qserv
+              #         - key: tier
+              #           operator: In
+              #           values:
+              #           - ingest
+              #         - key: role
+              #           operator: In
+              #           values:
+              #           - transaction
+                    topologyKey: "kubernetes.io/hostname"
               containers:
               - name: ingest
                 env:
