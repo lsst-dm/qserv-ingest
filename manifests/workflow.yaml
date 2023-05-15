@@ -23,7 +23,7 @@ spec:
     - name: image
       # superTransactions is the number of pods running concurrent super-transactions
     - name: superTransactions
-      value: 10
+      value: 1
     - name: backoffLimit
       value: 5
     - name: verbose
