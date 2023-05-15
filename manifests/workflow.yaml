@@ -82,7 +82,7 @@ spec:
               #           operator: In
               #           values:
               #           - transaction
-                    topologyKey: "kubernetes.io/hostname"
+              #      topologyKey: "kubernetes.io/hostname"
               containers:
               - name: ingest
                 env:

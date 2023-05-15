@@ -1,5 +1,5 @@
-version: 12
 ingest:
+    version: 14
     input:
         # Servers which provides input data
         # TODO Add support for webdav protocol
@@ -22,3 +22,7 @@ ingest:
         queue_url: "mysql://qsingest:@qserv-ingest-db-0.qserv-ingest-db/qservIngest"
         # Replication service URL
         replication_url: http://qserv-repl-ctl-0.qserv-repl-ctl:8080
+    ingest:
+        async_proc_limit: 4
+        low_speed_limit: 10
+        low_speed_time: 3600
