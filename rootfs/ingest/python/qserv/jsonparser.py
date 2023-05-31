@@ -42,8 +42,7 @@ from jsonpath_ng.ext import parse
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
-from .exception import IngestError, ReplicationControllerError
-from .http import Http
+from .exception import ReplicationControllerError
 
 _LOG = logging.getLogger(__name__)
 
@@ -173,37 +172,10 @@ def get_chunk_location(responseJson: dict) -> Tuple[str, int]:
     issued by replication service."""
     fqdns = responseJson["location"]["http_host_name"]
     port = int(responseJson["location"]["http_port"])
-    fqdn = get_fqdn(fqdns, port)
-    if not fqdn:
-        raise IngestError(f"Unable to find a valid worker fqdn in json response {responseJson}")
-    return (fqdn, port)
+    return (fqdns, port)
 
 
-def get_fqdn(fqdns: str, port: int, scheme: str = "http") -> str:
-    """Return fqdn of the first reachable scheme://fqdn:port entry.
-
-    Parameters
-    ----------
-    fqdns: `str`
-        comma-separated list of fqdns
-    port: `int`
-        url port to reach
-
-    Returns
-    -------
-    fqdn : `str`
-        First reachable host fqdn, empty string if not fqdn is reachable
-
-    """
-    http = Http()
-    for fqdn in fqdns.split(","):
-        url = f"{scheme}://{fqdn}:{port}"
-        if http.is_reachable(url):
-            return fqdn
-    return ""
-
-
-def get_regular_table_locations(responseJson: dict) -> List[Tuple[str, int]]:
+def get_regular_table_locations(responseJson: dict) -> List[Tuple[List[str], int]]:
     """Retrieve locations (workers host and port) for regular tables inside
     json response issued by replication service.
 
@@ -225,10 +197,7 @@ def get_regular_table_locations(responseJson: dict) -> List[Tuple[str, int]]:
     for entry in responseJson["locations"]:
         fqdns = entry["http_host_name"]
         port = entry["http_port"]
-        fqdn = get_fqdn(fqdns, port)
-        if not fqdn:
-            raise IngestError(f"Unable to find a valid worker fqdn in json response {responseJson}")
-        locations.append((fqdn, port))
+        locations.append((fqdns, port))
     return locations
 
 

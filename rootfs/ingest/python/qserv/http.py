@@ -41,6 +41,7 @@ from typing import Any, Dict, Tuple, Union
 # Imports for other modules --
 # ----------------------------
 import requests
+from qserv import jsonparser
 from requests.adapters import HTTPAdapter
 from retry import retry
 from urllib3.util import Retry
@@ -196,9 +197,7 @@ class Http:
         r = self.http.get(url, params=params, json=payload, timeout=self.timeout_read_sec)
         r.raise_for_status()
         response_json = r.json()
-        if not response_json["success"]:
-            _LOG.critical("%s %s", url, response_json["error"])
-            raise ReplicationControllerError("Error in JSON response (GET)", url, response_json["error"])
+        jsonparser.raise_error(response_json)
         _LOG.debug("GET: success")
         return response_json
 
@@ -249,6 +248,7 @@ class Http:
             raise e
         r.raise_for_status()
         response_json = r.json()
+        jsonparser.raise_error(response_json)
         _LOG.debug("POST %s: success", url)
         return response_json
 
@@ -312,9 +312,7 @@ class Http:
         r = requests.put(url, json=payload, timeout=timeouts)
         r.raise_for_status()
         response_json = r.json()
-        if not response_json["success"]:
-            _LOG.critical("%s %s", url, response_json["error"])
-            raise ReplicationControllerError("Error in JSON response (PUT)", url, response_json["error"])
+        jsonparser.raise_error(response_json)
         _LOG.debug("PUT: success")
         return response_json
 
@@ -347,3 +345,27 @@ class Http:
             raise ReplicationControllerError("Error in JSON response (DELETE)", url, response_json["error"])
         _LOG.debug("DELETE: success")
         return response_json
+
+
+def get_fqdn(fqdns: str, port: int, scheme: str = "http") -> str:
+    """Return fqdn of the first reachable scheme://fqdn:port entry.
+
+    Parameters
+    ----------
+    fqdns: `str`
+        comma-separated list of fqdns
+    port: `int`
+        url port to reach
+
+    Returns
+    -------
+    fqdn : `str`
+        First reachable host fqdn, empty string if not fqdn is reachable
+
+    """
+    http = Http()
+    for fqdn in fqdns.split(","):
+        url = f"{scheme}://{fqdn}:{port}"
+        if http.is_reachable(url):
+            return fqdn
+    return ""

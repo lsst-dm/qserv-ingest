@@ -355,9 +355,9 @@ class Ingester:
         """
         loop = True
         _LOG.info(
-            "%s contributions to ingest during transaction %s",
-            len(contributions),
+            "Contributions to ingest during transaction #%s: %s",
             transaction_id,
+            len(contributions),
         )
         while loop:
             contribs_started_count = 0
