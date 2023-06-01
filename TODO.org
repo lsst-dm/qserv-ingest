@@ -1,5 +1,5 @@
 * TODO DM-39183
-** TODO fix unit test and GHA (checksanity step)
+** DONE fix unit test and GHA (checksanity step)
 ** TODO use memray to profile memory usage for transaction pods
 ** DONE Stop ingest with error if chunk queue is not empty or if there is running transactions for the database and document cleanup
 ** DONE Document ingest.yaml parameters
