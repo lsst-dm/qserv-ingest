@@ -276,6 +276,9 @@ class ContributionMetadata:
         # with ingest.yaml parameter value
         if auto_build_secondary_index is not None:
             self._json_db["auto_build_secondary_index"] = auto_build_secondary_index
+        # In Kubernetes context, "1" is a better default value
+        # for this parameter
+        self._json_db["local_load_secondary_index"] = self._json_db.get("local_load_secondary_index", 1)
         self._database = self._json_db["database"]
         self.family = "layout_{}_{}".format(self._json_db["num_stripes"], self._json_db["num_sub_stripes"])
         self._init_tables()

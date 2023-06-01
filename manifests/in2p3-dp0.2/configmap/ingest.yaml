@@ -19,10 +19,6 @@ ingest:
         # Path on server where input data is available
         path: stable/idf-dp0.2-catalog-chunked/PREOPS-905
     qserv:
-        # Override the default value stored in input metadata
-        # 1: build secondary index after each transaction
-        # 0: build secondary index after ingest
-        auto_build_secondary_index: 0
 
         # URL of Qserv services
         # Proxy URL

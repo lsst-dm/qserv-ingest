@@ -147,7 +147,7 @@ if __name__ == "__main__":
         args.config.metadata_url,
         args.config.datapath,
         args.config.servers,
-        args.config.auto_build_secondary_index,
+        args.config.ingestservice.auto_build_secondary_index,
     )
 
     if args.task == Task.CHECKSANITY:

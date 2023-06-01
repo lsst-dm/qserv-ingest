@@ -12,11 +12,6 @@ ingest:
         # Path on server where input data is available
         path: dc2_object_run2_2i_dr6_wfd/
     qserv:
-        # TODO add support for secondary index generation method
-        # Override the default value stored in input metadata
-        # 1: build secondary index after each transaction
-        # 0: build secondary index after ingest
-        auto_build_secondary_index: 0
 
         # URL of Qserv services
         # Proxy URL

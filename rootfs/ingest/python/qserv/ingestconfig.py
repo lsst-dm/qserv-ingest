@@ -35,7 +35,7 @@ import logging
 import os
 import sys
 from dataclasses import dataclass, fields
-from typing import Any
+from typing import Any, Optional
 
 import yaml
 
@@ -84,18 +84,18 @@ class IngestConfig:
         self.query_url = ingest_dict["qserv"]["query_url"]
         self.queue_url = ingest_dict["qserv"]["queue_url"]
         self.replication_url = ingest_dict["qserv"]["replication_url"]
-        # Added in v15
-        self.auto_build_secondary_index = ingest_dict["qserv"].get("auto_build_secondary_index")
 
         # Section name changed in v15 from "ingest" -> "ingestservice"
-        ingest = ingest_dict.get("ingestservice")
-        if ingest is not None:
+        ingestcfg = ingest_dict.get("ingestservice")
+        if ingestcfg is not None:
+            # "auto_build_secondary_index" parameter added in v15
             self.ingestservice = IngestServiceConfig(
-                cainfo=ingest.get("cainfo"),
-                ssl_verifypeer=ingest.get("ssl_verifypeer"),
-                low_speed_limit=ingest.get("low_speed_limit"),
-                low_speed_time=ingest.get("low_speed_time"),
-                async_proc_limit=ingest.get("async_proc_limit"),
+                auto_build_secondary_index=ingestcfg.get("auto_build_secondary_index"),
+                cainfo=ingestcfg.get("cainfo"),
+                ssl_verifypeer=ingestcfg.get("ssl_verifypeer"),
+                low_speed_limit=ingestcfg.get("low_speed_limit"),
+                low_speed_time=ingestcfg.get("low_speed_time"),
+                async_proc_limit=ingestcfg.get("async_proc_limit"),
             )
         else:
             self.ingestservice = IngestServiceConfig()
@@ -154,12 +154,13 @@ class IngestServiceConfig:
         Default value: 0
     """
 
-    # Default values
+    # Default valuesingest
+    auto_build_secondary_index: Optional[int] = None
     cainfo: str = "/etc/pki/tls/certs/ca-bundle.crt"
     ssl_verifypeer: int = 1
-    low_speed_limit: int = 60
-    low_speed_time: int = 120
-    async_proc_limit: int = 0
+    low_speed_limit: Optional[int] = None
+    low_speed_time: Optional[int] = None
+    async_proc_limit: Optional[int] = None
 
     def __post_init__(self) -> None:
         """Set default value for all parameters, in case `None` value is used

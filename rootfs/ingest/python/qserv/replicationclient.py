@@ -131,17 +131,21 @@ class ReplicationClient:
             replication/ingest system
 
         """
-
-        url = urllib.parse.urljoin(self.repl_url, "/ingest/config/")
         json = {
             "version": version.REPL_SERVICE_VERSION,
-            "ASYNC_PROC_LIMIT": ingest_service_config.async_proc_limit,
             "database": database,
             "CAINFO": ingest_service_config.cainfo,
             "SSL_VERIFYPEER": ingest_service_config.ssl_verifypeer,
-            "LOW_SPEED_LIMIT": ingest_service_config.low_speed_limit,
-            "LOW_SPEED_TIME": ingest_service_config.low_speed_time,
         }
+
+        if ingest_service_config.async_proc_limit is not None:
+            json["ASYNC_PROC_LIMIT"] = ingest_service_config.async_proc_limit
+        if ingest_service_config.async_proc_limit is not None:
+            json["LOW_SPEED_LIMIT"] = ingest_service_config.low_speed_limit
+        if ingest_service_config.async_proc_limit is not None:
+            json["LOW_SPEED_TIME"] = ingest_service_config.low_speed_time
+
+        url = urllib.parse.urljoin(self.repl_url, "/ingest/config/")
         _LOG.debug("Configure database inside replication system, url: %s, json: %s", url, json)
         self.http.put(url, json)
 
