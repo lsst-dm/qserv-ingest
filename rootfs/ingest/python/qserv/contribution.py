@@ -110,7 +110,9 @@ class Contribution:
         self.finished = False
 
     def __str__(self) -> str:
-        return f"Contribution({self.__dict__})"
+        outdict = (self.__dict__).copy()
+        outdict.pop("http")
+        return f"Contribution({outdict})"
 
     def _build_payload(self, transaction_id: int) -> dict:
         payload = {

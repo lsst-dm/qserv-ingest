@@ -175,7 +175,7 @@ def get_chunk_location(responseJson: dict) -> Tuple[str, int]:
     return (fqdns, port)
 
 
-def get_regular_table_locations(responseJson: dict) -> List[Tuple[List[str], int]]:
+def get_regular_table_locations(responseJson: dict) -> List[Tuple[str, int]]:
     """Retrieve locations (workers host and port) for regular tables inside
     json response issued by replication service.
 

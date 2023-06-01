@@ -104,3 +104,20 @@ def test_config() -> None:
 
     assert _http.timeout_read_sec == 10
     assert _http.timeout_write_sec == 1800
+
+
+def test_get_fqdn() -> None:
+    remote_server = "k8s-school.fr"
+    response = os.system("ping -c 1 " + remote_server)
+
+    if response == 0:
+        fqdn = http.get_fqdn(remote_server, 80)
+        assert fqdn == remote_server
+
+        fqdn = http.get_fqdn(f"does-not-exists,{remote_server}", 80)
+        assert fqdn == remote_server
+    else:
+        _LOG.warning("Skipping some tests because %s is not reachable", remote_server)
+
+    fqdn = http.get_fqdn("does-not-exists1,does-not-exists2,does-not-exists3", 80)
+    assert fqdn == ""
