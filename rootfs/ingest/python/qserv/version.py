@@ -29,15 +29,7 @@
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
-import argparse
-import dataclasses
-import json
 import logging
-import os
-from dataclasses import dataclass, fields
-from typing import Any, Dict, List
-
-import yaml
 
 # ----------------------------
 # Imports for other modules --
@@ -50,3 +42,4 @@ import yaml
 _LOG = logging.getLogger(__name__)
 
 REPL_SERVICE_VERSION = 18
+INGEST_CONFIG_VERSION = 15

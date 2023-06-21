@@ -42,7 +42,8 @@ from . import metadata
 from .exception import IngestError
 from .http import Http
 from .jsonparser import ContributionMonitor, ContributionState, raise_error
-from .metadata import FileFormat, LoadBalancedURL
+from .loadbalancerurl import LoadBalancedURL
+from .metadata import FileFormat
 from .util import increase_wait_time
 
 # ---------------------------------
@@ -68,6 +69,8 @@ class Contribution:
         self,
         worker_host: str,
         worker_port: int,
+        timeout_read_sec: int,
+        timeout_write_sec: int,
         chunk_id: int,
         filepath: str,
         table: str,
@@ -78,6 +81,8 @@ class Contribution:
         self.is_overlap: int
         self.ext: str = ""
         self.chunk_id = chunk_id
+        self.http = Http(timeout_read_sec, timeout_write_sec)
+
         if chunk_id is None:
             # regular tables
             self.chunk_id = -1
@@ -105,7 +110,9 @@ class Contribution:
         self.finished = False
 
     def __str__(self) -> str:
-        return f"Contribution({self.__dict__})"
+        outdict = (self.__dict__).copy()
+        outdict.pop("http")
+        return f"Contribution({outdict})"
 
     def _build_payload(self, transaction_id: int) -> dict:
         payload = {
@@ -148,14 +155,7 @@ class Contribution:
 
         _LOG.debug("start_async(): payload: %s", payload)
 
-        # Start ASYNC file ingest request using the POST method.
-        # See https://lsstc.slack.com/archives/D2Y1TQY5S/p1645556026791089
-        _LOG.debug(
-            "_ingest_chunk: url %s, retry attempts: %s, payload: %s",
-            url,
-            payload,
-        )
-        responseJson = Http().post_retry(url, payload)
+        responseJson = self.http.post_retry(url, payload, auth=True, no_readtimeout=True)
 
         raise_error(responseJson)
         self.request_id = responseJson["contrib"]["id"]
@@ -187,7 +187,7 @@ class Contribution:
         retry = True
         wait_sec = 1
         while retry:
-            response_json = Http().get(status_url)
+            response_json = self.http.get(status_url)
             retry = raise_error(response_json, monitor_request_retry_attempts, MAX_RETRY_ATTEMPTS)
             if retry:
                 monitor_request_retry_attempts += 1

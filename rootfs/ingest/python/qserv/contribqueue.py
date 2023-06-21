@@ -38,7 +38,7 @@ import typing
 import sqlalchemy
 from sqlalchemy import MetaData, Table, event, update
 from sqlalchemy.engine.url import make_url
-from sqlalchemy.exc import OperationalError, StatementError
+from sqlalchemy.exc import OperationalError, PendingRollbackError
 from sqlalchemy.sql import func, select
 
 from . import util
@@ -348,6 +348,33 @@ class QueueManager:
             result.close()
         return contribfiles
 
+    def select_inprogress_contribfiles(self) -> typing.List[typing.Tuple]:
+        """Return all contribution files which are in progress and locked
+        by a pod
+
+        Returns
+        -------
+        contribfiles: typing.List[typing.Tuple]
+            List of contribution files
+        """
+        query = select(
+            [
+                self.queue.c.database,
+                self.queue.c.chunk_id,
+                self.queue.c.filepath,
+                self.queue.c.is_overlap,
+                self.queue.c.table,
+            ]
+        )
+        query = query.where(self.queue.c.succeed.isnot(True))
+        query = query.where(self.queue.c.locking_pod.isnot(None))
+        query = query.where(self.queue.c.database == self.contribution_metadata.database)
+        with self.engine.connect() as connection:
+            result = connection.execute(query)
+            contribfiles = result.fetchall()
+            result.close()
+        return contribfiles
+
     def _safe_execute(self, query: typing.Any, max_retry: int = 0) -> None:
         """Retry failed update queries.
 
@@ -363,19 +390,44 @@ class QueueManager:
         """
         wait_sec = 1
         retry_count = 0
-        mysql_retry_err_msg = ["MySQL server has gone away", "server closed the connection unexpectedly"]
-        sqlalchemy_retry_err_msg = ["Can't reconnect until invalid transaction is rolled back"]
+        # See mysql client error codes
+
         loop = True
         connection: typing.Any
         while loop:
             retry_count += 1
             try:
-                connection = self.engine.connect()
-                connection.execute(query)
-                connection.commit()
-                loop = False
+                with self.engine.connect() as connection:
+                    try:
+                        connection.execute(query)
+                    except OperationalError as ex:
+                        connection.rollback()
+                        mysql_retry_err_code = [1205]
+                        util.check_raise(ex, mysql_retry_err_code)
+                        if retry_count < max_retry:
+                            _LOG.error(
+                                "Database statement execution error: %s - sleeping for %ss"
+                                " and will retry (attempt #%s of %s)",
+                                ex,
+                                wait_sec,
+                                retry_count,
+                                max_retry,
+                            )
+                            time.sleep(wait_sec)
+                            wait_sec = util.increase_wait_time(wait_sec)
+                            continue
+                        else:
+                            raise
+                    try:
+                        connection.commit()
+                        loop = False
+                    except PendingRollbackError as ex:
+                        connection.rollback()
+                        _LOG.error("Database commit error %s," " transaction has been rolled back", ex)
+                        continue
             except OperationalError as ex:
-                util.check_raise(ex, mysql_retry_err_msg)
+                mysql_retry_err_code = [2003, 2004, 2005, 2006, 2013]
+                util.check_raise(ex, mysql_retry_err_code)
                 if retry_count < max_retry:
                     _LOG.error(
                         "Database connection error: %s - sleeping for %ss"
@@ -390,12 +442,3 @@ class QueueManager:
                     continue
                 else:
                     raise
-            except StatementError as ex:
-                util.check_raise(ex, sqlalchemy_retry_err_msg)
-                connection.rollback()
-                _LOG.error(
-                    "An error occurred during execution of a SQL statement: {},"
-                    " transaction has been rolled back (attempt #{} of {})".format(ex, retry_count, max_retry)
-                )
-            finally:
-                connection.close()

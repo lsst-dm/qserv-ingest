@@ -36,12 +36,13 @@ from collections.abc import Generator
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
+from qserv.loadbalancerurl import LoadBalancedURL, LoadBalancerAlgorithm
+
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
 from . import version
 from .http import json_load
-from .loadbalancerurl import LoadBalancedURL, LoadBalancerAlgorithm
 
 CSV = "csv"
 TSV = "tsv"
@@ -236,7 +237,13 @@ class ContributionMetadata:
 
     """
 
-    def __init__(self, path: str, loadbalancers: List[str] = []):
+    def __init__(
+        self,
+        metadata_url: str,
+        datapath: str,
+        loadbalancers: List[str] = [],
+        auto_build_secondary_index: Optional[int] = None,
+    ):
         """Retrieve and store metadata located at 'path' and describing:
 
              - database
@@ -247,28 +254,31 @@ class ContributionMetadata:
 
         Parameters
         ----------
-        path : `str`
+        metadata_url : `str`
             Path to metadata
-        loadbalancers: `List[str]` optional
-            List of http(s) load balancer urls providing
-            access to metadata. Defaults to [].
-
         """
         self._database: str
         self._json_db: Dict[str, Any] = {}
         self.fileformats: Dict[str, FileFormat] = {}
         self._tableSpecs: List[TableSpec]
 
-        # Get scheme configuration
         lbAlgo = LoadBalancerAlgorithm(loadbalancers)
-        self.lb_url = LoadBalancedURL(path, lbAlgo)
+        self.lb_url = LoadBalancedURL(datapath, lbAlgo)
 
-        self.metadata_url = self.lb_url.direct_url
+        self.metadata_url = metadata_url
+        # FIXME not all steps require to load full metadata.json
         self.metadata = json_load(self.metadata_url, _METADATA_FILENAME)
         self._check_version()
 
         filename = self.metadata["database"]
         self._json_db = json_load(self.metadata_url, filename)
+        # Override metadata value for parameter "auto_build_secondary_index"
+        # with ingest.yaml parameter value
+        if auto_build_secondary_index is not None:
+            self._json_db["auto_build_secondary_index"] = auto_build_secondary_index
+        # In Kubernetes context, "1" is a better default value
+        # for this parameter
+        self._json_db["local_load_secondary_index"] = self._json_db.get("local_load_secondary_index", 1)
         self._database = self._json_db["database"]
         self.family = "layout_{}_{}".format(self._json_db["num_stripes"], self._json_db["num_sub_stripes"])
         self._init_tables()
@@ -355,7 +365,7 @@ class ContributionMetadata:
             yield from table.contrib_specs
 
     def file_url(self, path: str) -> str:
-        """Return the url of a file located on the input data server."""
+        """Return the url of a file located on the metadata data server."""
         return urllib.parse.urljoin(self.metadata_url, path)
 
     @property

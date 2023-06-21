@@ -59,8 +59,8 @@ def test_ingestconfig() -> None:
 
     assert args.config.ingestservice.cainfo == "/etc/pki/tls/certs/ca-bundle.crt"
     assert args.config.ingestservice.ssl_verifypeer == 1
-    assert args.config.ingestservice.low_speed_limit == 60
-    assert args.config.ingestservice.low_speed_time == 120
+    assert args.config.ingestservice.low_speed_limit is None
+    assert args.config.ingestservice.low_speed_time is None
 
     configfile = os.path.join(util.DATADIR, "dp02", "ingest.finetuned.yaml")
     args = parser.parse_args(["--config", configfile])
@@ -69,3 +69,5 @@ def test_ingestconfig() -> None:
     assert args.config.ingestservice.ssl_verifypeer == 1
     assert args.config.ingestservice.low_speed_limit == 10
     assert args.config.ingestservice.low_speed_time == 3600
+    assert args.config.http_write_timeout == 1800
+    assert args.config.http_read_timeout == 10

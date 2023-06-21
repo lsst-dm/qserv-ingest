@@ -48,6 +48,7 @@ from qserv.validator import Validator
 
 
 class Task(str, Enum):
+    CHECKSANITY = "checksanity"
     REGISTER = "register"
     QUEUE = "queue"
     INGEST = "ingest"
@@ -66,6 +67,11 @@ if __name__ == "__main__":
     )
     util.add_default_arguments(parser)
     subparsers = parser.add_subparsers(dest="task")
+
+    # CHECKSANITY step management
+    parser_queue = subparsers.add_parser(
+        Task.CHECKSANITY, help="Check Qserv is ready for ingesting this database"
+    )
 
     # QUEUE step management
     parser_queue = subparsers.add_parser(
@@ -137,15 +143,36 @@ if __name__ == "__main__":
     logger.debug("Ingest configuration: %s", args.config.__dict__)
     logger.debug("Task: %s", args.task)
 
-    contribution_metadata = ContributionMetadata(args.config.path, args.config.servers)
+    contribution_metadata = ContributionMetadata(
+        args.config.metadata_url,
+        args.config.datapath,
+        args.config.servers,
+        args.config.ingestservice.auto_build_secondary_index,
+    )
 
-    if args.task == Task.QUEUE:
+    if args.task == Task.CHECKSANITY:
+        logger.debug("Sanity check")
+        queue_manager = QueueManager(args.config.queue_url, contribution_metadata)
+        ingester = Ingester(
+            contribution_metadata,
+            args.config.replication_url,
+            args.config.http_read_timeout,
+            args.config.http_write_timeout,
+            queue_manager,
+        )
+        ingester.check_sanity()
+    elif args.task == Task.QUEUE:
         logger.debug("Queue")
         queue_manager = QueueManager(args.config.queue_url, contribution_metadata)
         queue_manager.insert_contribfiles()
         queue_manager.init_mutex()
     elif args.task == Task.REGISTER:
-        ingester = Ingester(contribution_metadata, args.config.replication_url)
+        ingester = Ingester(
+            contribution_metadata,
+            args.config.replication_url,
+            args.config.http_read_timeout,
+            args.config.http_write_timeout,
+        )
         database_status = ingester.get_database_status()
         if database_status == DatabaseStatus.NOT_REGISTERED:
             ingester.database_register_and_config(args.config.ingestservice, args.felis)
@@ -156,16 +183,32 @@ if __name__ == "__main__":
             sys.exit(1)
     elif args.task == Task.INGEST:
         queue_manager = QueueManager(args.config.queue_url, contribution_metadata)
-        ingester = Ingester(contribution_metadata, args.config.replication_url, queue_manager)
+        ingester = Ingester(
+            contribution_metadata,
+            args.config.replication_url,
+            args.config.http_read_timeout,
+            args.config.http_write_timeout,
+            queue_manager,
+        )
         if args.check:
             ingester.check_supertransactions_success()
         else:
             ingester.ingest(args.chunk_queue_fraction)
     elif args.task == Task.PUBLISH:
-        ingester = Ingester(contribution_metadata, args.config.replication_url)
+        ingester = Ingester(
+            contribution_metadata,
+            args.config.replication_url,
+            args.config.http_read_timeout,
+            args.config.http_write_timeout,
+        )
         ingester.database_publish()
     elif args.task == Task.INDEX:
-        ingester = Ingester(contribution_metadata, args.config.replication_url)
+        ingester = Ingester(
+            contribution_metadata,
+            args.config.replication_url,
+            args.config.http_read_timeout,
+            args.config.http_write_timeout,
+        )
         ingester.index(args.secondary)
     elif args.task == Task.VALIDATE:
         validator = Validator(contribution_metadata, args.config.query_url, True)
@@ -178,5 +221,10 @@ if __name__ == "__main__":
             logger.fatal("Query results are not identical to those expected")
             sys.exit(1)
     elif args.task == Task.STATISTICS:
-        ingester = Ingester(contribution_metadata, args.config.replication_url)
+        ingester = Ingester(
+            contribution_metadata,
+            args.config.replication_url,
+            args.config.http_read_timeout,
+            args.config.http_write_timeout,
+        )
         ingester.deploy_statistics()

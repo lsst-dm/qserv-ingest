@@ -19,27 +19,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-"""Tests for util modules.
-
+"""
 @author  Fabrice Jammes, IN2P3
-
 """
 
 # -------------------------------
 #  Imports of standard modules --
 # -------------------------------
-import logging
-import os
-import tempfile
 
-import pytest
+import logging
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-import requests
+import os
 
-from . import metadata, replicationclient, util
+import yaml
+
+from . import util
+from .ingestconfig import IngestConfig
 
 # ---------------------------------
 # Local non-exported definitions --
@@ -48,23 +46,12 @@ from . import metadata, replicationclient, util
 _LOG = logging.getLogger(__name__)
 
 
-def test_database_register_tables() -> None:
-    """Test function database_register_tables.
+def test_ingestconfig_metadata_url() -> None:
+    """Check support for metadata url parameter in configuration"""
+    config_file = os.path.join(util.DATADIR, util.DP02, "ingest.yaml")
+    with open(config_file, "r") as values:
+        yaml_data = yaml.safe_load(values)
 
-    TODO add mock replication server for testing database_register_tables()
-    method
+    config = IngestConfig(yaml_data)
 
-    """
-
-    data_url = os.path.join(util.DATADIR, "dp01_dc2_catalogs")
-    contribution_metadata = metadata.ContributionMetadata(data_url, data_url)
-    tables_json_data = contribution_metadata.ordered_tables_json
-
-    _, auth_path = tempfile.mkstemp()
-
-    _LOG.debug("Credentials: %s", auth_path)
-    with pytest.raises(requests.exceptions.ConnectionError) as e:
-        repl_client = replicationclient.ReplicationClient("http://no_url/", 1, 1, auth_path)
-        # TODO add mock replication server for method below
-        repl_client.database_register_tables(tables_json_data, None)
-    _LOG.error("Expected error: %s", e)
+    assert config.metadata_url == "https://raw.githubusercontent.com/rubin-in2p3/qserv-ingest-schema/main/"

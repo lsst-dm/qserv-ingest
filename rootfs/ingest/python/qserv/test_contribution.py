@@ -55,6 +55,8 @@ _LB_URL = LoadBalancedURL(_PATH, _LBALGO)
 class ContribArgs(TypedDict):
     worker_host: str
     worker_port: int
+    timeout_read_sec: int
+    timeout_write_sec: int
     chunk_id: int
     filepath: str
     table: str
@@ -65,6 +67,8 @@ class ContribArgs(TypedDict):
 _PARAMS: ContribArgs = {
     "worker_host": "host",
     "worker_port": 8080,
+    "timeout_read_sec": 10,
+    "timeout_write_sec": 10,
     "chunk_id": 1,
     "filepath": "step1_1/chunk_1_overlap.txt",
     "table": "mytable",
@@ -89,6 +93,8 @@ def test_build_payload() -> None:
     params: ContribArgs = {
         "worker_host": "host",
         "worker_port": 8080,
+        "timeout_read_sec": 10,
+        "timeout_write_sec": 100,
         "chunk_id": 1,
         "filepath": "step1_1/chunk_1_overlap.txt",
         "table": "mytable",
@@ -124,7 +130,7 @@ def test_build_payload() -> None:
     assert payload["url"] == "https://server1/lsst/data/step4_4/chunk_4_overlap.txt"
 
     data_url = os.path.join(util.DATADIR, "case01")
-    contribution_metadata = metadata.ContributionMetadata(data_url)
+    contribution_metadata = metadata.ContributionMetadata(data_url, data_url, _SERVERS)
     Contribution.fileformats = contribution_metadata.fileformats
     c = Contribution(**params)
     payload = c._build_payload(transaction_id)
@@ -152,8 +158,6 @@ def test_print() -> None:
     params["charset_name"] = ""
     params["load_balanced_url"] = c.load_balanced_url
     params["request_id"] = None
-    params["retry_attempts"] = 0
-    params["retry_attempts_post"] = 0
     params["worker_url"] = "http://host:8080"
     params["finished"] = False
     expected_string = f"Contribution({params})"

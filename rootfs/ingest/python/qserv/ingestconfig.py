@@ -35,20 +35,21 @@ import logging
 import os
 import sys
 from dataclasses import dataclass, fields
-from typing import Any
+from typing import Any, Optional
 
 import yaml
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
-from . import version
+from . import http, version
+from .loadbalancerurl import LoadBalancedURL, LoadBalancerAlgorithm
 
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
 _LOG = logging.getLogger(__name__)
-_MIN_SUPPORTED_VERSION = 12
+_MIN_SUPPORTED_VERSION = 15
 
 CWD = os.path.dirname(os.path.abspath(__file__))
 DATADIR = os.path.join(CWD, "testdata")
@@ -59,46 +60,67 @@ class IngestConfig:
 
     def __init__(self, yaml: dict):
 
-        self._check_version(yaml)
         ingest_dict = yaml["ingest"]
 
+        # Added in v15
+        self.http_write_timeout = ingest_dict.get("http", {}).get(
+            "write_timeout", http.DEFAULT_TIMEOUT_WRITE_SEC
+        )
+        self.http_read_timeout = ingest_dict.get("http", {}).get(
+            "read_timeout", http.DEFAULT_TIMEOUT_READ_SEC
+        )
+
         self.servers = ingest_dict["input"]["servers"]
-        self.path = ingest_dict["input"]["path"]
+        self.datapath = ingest_dict["input"]["path"]
+        if "metadata" in ingest_dict:
+            self.metadata_url = ingest_dict["metadata"]["url"]
+        else:
+            lbAlgo = LoadBalancerAlgorithm(self.servers)
+            self.lb_url = LoadBalancedURL(self.datapath, lbAlgo)
+            self.metadata_url = self.lb_url.direct_url
+
+        self._check_version(yaml)
         self.data_url = ingest_dict["qserv"]["queue_url"]
         self.query_url = ingest_dict["qserv"]["query_url"]
         self.queue_url = ingest_dict["qserv"]["queue_url"]
         self.replication_url = ingest_dict["qserv"]["replication_url"]
-        ingest = ingest_dict.get("ingest")
-        if ingest is not None:
+
+        # Section name changed in v15 from "ingest" -> "ingestservice"
+        ingestcfg = ingest_dict.get("ingestservice")
+        if ingestcfg is not None:
+            # "auto_build_secondary_index" parameter added in v15
             self.ingestservice = IngestServiceConfig(
-                cainfo=ingest.get("cainfo"),
-                ssl_verifypeer=ingest.get("ssl_verifypeer"),
-                low_speed_limit=ingest.get("low_speed_limit"),
-                low_speed_time=ingest.get("low_speed_time"),
-                async_proc_limit=ingest.get("async_proc_limit"),
+                auto_build_secondary_index=ingestcfg.get("auto_build_secondary_index"),
+                cainfo=ingestcfg.get("cainfo"),
+                ssl_verifypeer=ingestcfg.get("ssl_verifypeer"),
+                low_speed_limit=ingestcfg.get("low_speed_limit"),
+                low_speed_time=ingestcfg.get("low_speed_time"),
+                async_proc_limit=ingestcfg.get("async_proc_limit"),
             )
         else:
             self.ingestservice = IngestServiceConfig()
 
-    def _check_version(self, configuration: dict) -> None:
+    def _check_version(self, yaml: dict) -> None:
         """Check ingest file version and exit if its value is not supported
 
         Parameters
         ----------
-        configuration : `dict`
+        yaml : `dict`
             ingest configuration file content
         """
         fileversion = None
-        if "version" in configuration:
-            fileversion = configuration["version"]
+        if "version" in yaml:
+            fileversion = yaml["version"]
 
-        if fileversion is None or not (_MIN_SUPPORTED_VERSION <= fileversion <= version.REPL_SERVICE_VERSION):
+        if fileversion is None or not (
+            _MIN_SUPPORTED_VERSION <= fileversion <= version.INGEST_CONFIG_VERSION
+        ):
             _LOG.critical(
-                "The ingest configuration file (%s) version is not in the range supported by qserv-ingest "
+                "The ingest configuration file (ingest.yaml) version "
+                "is not in the range supported by qserv-ingest "
                 "(is %s, expected between %s and %s)",
-                self.metadata_url,
                 fileversion,
-                self._MIN_SUPPORTED_VERSION,
+                _MIN_SUPPORTED_VERSION,
                 version.REPL_SERVICE_VERSION,
             )
             sys.exit(1)
@@ -132,12 +154,13 @@ class IngestServiceConfig:
         Default value: 0
     """
 
-    # Default values
+    # Default valuesingest
+    auto_build_secondary_index: Optional[int] = None
     cainfo: str = "/etc/pki/tls/certs/ca-bundle.crt"
     ssl_verifypeer: int = 1
-    low_speed_limit: int = 60
-    low_speed_time: int = 120
-    async_proc_limit: int = 0
+    low_speed_limit: Optional[int] = None
+    low_speed_time: Optional[int] = None
+    async_proc_limit: Optional[int] = None
 
     def __post_init__(self) -> None:
         """Set default value for all parameters, in case `None` value is used

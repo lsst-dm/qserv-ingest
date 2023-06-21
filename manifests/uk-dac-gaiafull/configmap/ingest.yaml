@@ -1,16 +1,18 @@
 version: 15
 ingest:
+    http:
+        # Timeout for POST and PUT queries in seconds
+        write_timeout: 7200
+        # Timeout for READ queries in seconds
+        read_timeout: 7200
     input:
         # Servers which provides input data
         # TODO Add support for webdav protocol
         # Use file:// as first element in list when using local data
         servers:
-            - https://ccnetlsst01.in2p3.fr:65101
-            - https://ccnetlsst02.in2p3.fr:65101
-            - https://ccnetlsst03.in2p3.fr:65101
-            - https://ccnetlsst04.in2p3.fr:65101
+            - http://wsa.roe.ac.uk
         # Path on server where input data is available
-        path: dp01_dc2_catalogs/
+        path: gaiaFull/
     qserv:
 
         # URL of Qserv services
@@ -20,3 +22,8 @@ ingest:
         queue_url: "mysql://qsingest:@qserv-ingest-db-0.qserv-ingest-db/qservIngest"
         # Replication service URL
         replication_url: http://qserv-repl-ctl-0.qserv-repl-ctl:8080
+    ingestservice:
+        auto_build_secondary_index: 1
+        async_proc_limit: 4
+        low_speed_limit: 10
+        low_speed_time: 3600

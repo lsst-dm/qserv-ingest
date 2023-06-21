@@ -35,12 +35,13 @@ import json
 import logging
 import os
 import urllib.parse
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Tuple, Union
 
 # ----------------------------
 # Imports for other modules --
 # ----------------------------
 import requests
+from qserv import jsonparser
 from requests.adapters import HTTPAdapter
 from retry import retry
 from urllib3.util import Retry
@@ -48,13 +49,14 @@ from urllib3.util import Retry
 from . import util, version
 from .exception import IngestError, ReplicationControllerError
 
+DEFAULT_AUTH_PATH = "~/.lsst/qserv"
+DEFAULT_TIMEOUT_READ_SEC = 300.0
+DEFAULT_TIMEOUT_WRITE_SEC = 600.0
+
 # ---------------------------------
 # Local non-exported definitions --
 # ---------------------------------
-DEFAULT_AUTH_PATH = "~/.lsst/qserv"
-TIMEOUT_SHORT_SEC = 5
-TIMEOUT_LONG_SEC = 120
-
+_DEFAULT_CONNECTION_TIMEOUT = 5.0
 _MAX_RETRY_ATTEMPTS = 3
 
 _LOG = logging.getLogger(__name__)
@@ -131,14 +133,22 @@ class Http:
     """Manage http(s) connections
     designed to connect to Qserv Replication Controller"""
 
-    def __init__(self, auth_path: Optional[str] = None) -> None:
+    def __init__(
+        self,
+        timeout_read_sec: float = DEFAULT_TIMEOUT_READ_SEC,
+        timeout_write_sec: float = DEFAULT_TIMEOUT_WRITE_SEC,
+        auth_path: str = DEFAULT_AUTH_PATH,
+    ) -> None:
         """Set http connections retry/timeout errors."""
+        self.auth_path = auth_path
         adapter = HTTPAdapter(max_retries=_get_retry_object())
         # Session is only used for the GET method
         self.http = requests.Session()
         self.http.mount("https://", adapter)
         self.http.mount("http://", adapter)
-        self.authKey = self._authenticate(auth_path)
+        self.authKey = self._authenticate()
+        self.timeout_read_sec = timeout_read_sec
+        self.timeout_write_sec = timeout_write_sec
 
     def is_reachable(self, url: str) -> bool:
         """Check if a given http URL is reachable through the network."""
@@ -149,20 +159,16 @@ class Http:
             return False
         return True
 
-    def _authenticate(self, auth_path: Optional[str]) -> str:
-        if not auth_path:
-            auth_path = DEFAULT_AUTH_PATH
+    def _authenticate(self) -> str:
         try:
-            with open(os.path.expanduser(auth_path), "r") as f:
+            with open(os.path.expanduser(self.auth_path), "r") as f:
                 authKey = f.read().strip()
         except IOError:
-            _LOG.warning("Cannot find %s", auth_path)
+            _LOG.warning("Cannot find %s", self.auth_path)
             authKey = getpass.getpass()
         return authKey
 
-    def get(
-        self, url: str, payload: Dict[str, Any] = dict(), auth: bool = True, timeout: Optional[int] = None
-    ) -> Dict:
+    def get(self, url: str, payload: Dict[str, Any] = dict(), auth: bool = True) -> Dict:
         """Send a GET query to replication controller/worker http(s) URL
 
         Parameters
@@ -173,8 +179,6 @@ class Http:
             JSON payload, Defaults to dict().
         auth : `bool`, optional
             Perform HTTP authentication. Defaults to True.
-        timeout : `int` optional
-            Query time-out. Defaults to None.
 
         Raises
         ------
@@ -190,16 +194,16 @@ class Http:
         if auth is True:
             payload["auth_key"] = self.authKey
         params = {"version": version.REPL_SERVICE_VERSION}
-        r = self.http.get(url, params=params, json=payload, timeout=timeout)
+        r = self.http.get(url, params=params, json=payload, timeout=self.timeout_read_sec)
         r.raise_for_status()
         response_json = r.json()
-        if not response_json["success"]:
-            _LOG.critical("%s %s", url, response_json["error"])
-            raise ReplicationControllerError("Error in JSON response (GET)", url, response_json["error"])
+        jsonparser.raise_error(response_json)
         _LOG.debug("GET: success")
         return response_json
 
-    def post(self, url: str, payload: Dict[str, Any] = None, auth: bool = True, timeout: int = None) -> Dict:
+    def post(
+        self, url: str, payload: Dict[str, Any] = None, auth: bool = True, no_readtimeout: bool = False
+    ) -> Dict:
         """Send a POST query to an http(s) URL.
 
         Parameters
@@ -228,8 +232,13 @@ class Http:
             payload = dict()
         if auth is True:
             payload["auth_key"] = self.authKey
+        timeouts: Union[float, Tuple[float, float], Tuple[float, None]]
+        if no_readtimeout:
+            timeouts = (_DEFAULT_CONNECTION_TIMEOUT, None)
+        else:
+            timeouts = (_DEFAULT_CONNECTION_TIMEOUT, self.timeout_write_sec)
         try:
-            r = requests.post(url, json=payload, timeout=timeout)
+            r = requests.post(url, json=payload, timeout=timeouts)
         except (requests.exceptions.RequestException, ConnectionResetError) as e:
             _LOG.critical("Error when sending POST request to url %s", url)
             e.args = (
@@ -239,17 +248,22 @@ class Http:
             raise e
         r.raise_for_status()
         response_json = r.json()
+        jsonparser.raise_error(response_json)
         _LOG.debug("POST %s: success", url)
         return response_json
 
-    @retry(requests.exceptions.Timeout, delay=5, tries=_MAX_RETRY_ATTEMPTS)
-    def post_retry(self, url: str, payload: Dict[str, Any] = None, auth: bool = True) -> Dict:
+    @retry(requests.exceptions.ConnectTimeout, delay=5, tries=_MAX_RETRY_ATTEMPTS)
+    def post_retry(
+        self, url: str, payload: Dict[str, Any] = None, auth: bool = True, no_readtimeout: bool = False
+    ) -> Dict:
         """Send a POST query to an http(s) URL and retry on time-out error.
 
         Parameters
         ----------
         url : `str`
             Http(s) URL
+        timeout : `int`
+            Timeout in seconds
         payload : `Dict[ str, Any ]`, optional
             JSON payload, Defaults to None.
         auth : `bool`, optional
@@ -261,9 +275,9 @@ class Http:
         """
         if payload is None:
             payload = dict()
-        return self.post(url, payload, auth, TIMEOUT_SHORT_SEC)
+        return self.post(url, payload, auth, no_readtimeout)
 
-    def put(self, url: str, payload: Dict[str, Any] = None, timeout: int = None) -> Dict:
+    def put(self, url: str, payload: Dict[str, Any] = None, no_readtimeout: bool = True) -> Dict:
         """Send a PUT query to an http(s) URL.
 
         Parameters
@@ -287,14 +301,20 @@ class Http:
         """
         if payload is None:
             payload = dict()
-            payload["version"] = version.REPL_SERVICE_VERSION
+
+        # Set version if it does not exists
+        payload["version"] = payload.get("version", version.REPL_SERVICE_VERSION)
         payload["auth_key"] = self.authKey
-        r = requests.put(url, json=payload, timeout=timeout)
+
+        timeouts: Union[float, Tuple[float, float], Tuple[float, None]]
+        if no_readtimeout:
+            timeouts = (_DEFAULT_CONNECTION_TIMEOUT, None)
+        else:
+            timeouts = (_DEFAULT_CONNECTION_TIMEOUT, self.timeout_write_sec)
+        r = requests.put(url, json=payload, timeout=timeouts)
         r.raise_for_status()
         response_json = r.json()
-        if not response_json["success"]:
-            _LOG.critical("%s %s", url, response_json["error"])
-            raise ReplicationControllerError("Error in JSON response (PUT)", url, response_json["error"])
+        jsonparser.raise_error(response_json)
         _LOG.debug("PUT: success")
         return response_json
 
@@ -327,3 +347,27 @@ class Http:
             raise ReplicationControllerError("Error in JSON response (DELETE)", url, response_json["error"])
         _LOG.debug("DELETE: success")
         return response_json
+
+
+def get_fqdn(fqdns: str, port: int, scheme: str = "http") -> str:
+    """Return fqdn of the first reachable scheme://fqdn:port entry.
+
+    Parameters
+    ----------
+    fqdns: `str`
+        comma-separated list of fqdns
+    port: `int`
+        url port to reach
+
+    Returns
+    -------
+    fqdn : `str`
+        First reachable host fqdn, empty string if not fqdn is reachable
+
+    """
+    http = Http()
+    for fqdn in fqdns.split(","):
+        url = f"{scheme}://{fqdn}:{port}"
+        if http.is_reachable(url):
+            return fqdn
+    return ""
