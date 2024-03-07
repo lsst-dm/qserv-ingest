@@ -41,5 +41,5 @@ import logging
 # ---------------------------------
 _LOG = logging.getLogger(__name__)
 
-REPL_SERVICE_VERSION = 25
+REPL_SERVICE_VERSION = 30
 INGEST_CONFIG_VERSION = 15
