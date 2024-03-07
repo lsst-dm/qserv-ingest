@@ -1,6 +1,6 @@
 # Set variable below to empty string in order to install
 # current development version
-INGEST_RELEASE='2023.10.1-rc1'
+INGEST_RELEASE='2024.3.1-rc2'
 TAG=${INGEST_RELEASE:-$(git -C $DIR describe --dirty --always)}
 
 # Select dataset to load
