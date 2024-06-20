@@ -5,10 +5,9 @@ ingest:
         # TODO Add support for webdav protocol
         # Use file:// as first element in list when using local data
         servers:
-            - https://ccnetlsst01.in2p3.fr:65101
-            - https://ccnetlsst02.in2p3.fr:65101
-            - https://ccnetlsst03.in2p3.fr:65101
-            - https://ccnetlsst04.in2p3.fr:65101
+            - https://ccnetlsst10.in2p3.fr:65101
+            - https://ccnetlsst11.in2p3.fr:65101
+            - https://ccnetlsst12.in2p3.fr:65101
         # Path on server where input data is available
         path: dp01_dc2_catalogs/
     qserv:
