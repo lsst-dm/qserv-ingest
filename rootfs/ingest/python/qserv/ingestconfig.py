@@ -112,19 +112,16 @@ class IngestConfig:
         if "version" in yaml:
             fileversion = yaml["version"]
 
-        if fileversion is None or not (
-            _MIN_SUPPORTED_VERSION <= fileversion <= version.INGEST_CONFIG_VERSION
-        ):
+        if fileversion is None or fileversion < _MIN_SUPPORTED_VERSION:
             _LOG.critical(
                 "The ingest configuration file (ingest.yaml) version "
                 "is not in the range supported by qserv-ingest "
-                "(is %s, expected between %s and %s)",
+                "(is %s, expected at least %s)",
                 fileversion,
                 _MIN_SUPPORTED_VERSION,
-                version.REPL_SERVICE_VERSION,
             )
             sys.exit(1)
-        _LOG.info("Ingest configuration file version: %s", version.REPL_SERVICE_VERSION)
+        _LOG.info("Ingest configuration file version: %s", fileversion)
 
 
 @dataclass

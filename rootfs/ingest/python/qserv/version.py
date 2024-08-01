@@ -41,5 +41,8 @@ import logging
 # ---------------------------------
 _LOG = logging.getLogger(__name__)
 
-REPL_SERVICE_VERSION = 30
-INGEST_CONFIG_VERSION = 15
+# The version number of the Qserv Replication/Ingest service this application
+# has been written for. The number is sent to the REST services in all
+# requests. This mechanism is meant to check compatibility between the application
+# and the services.
+REPL_SERVICE_VERSION = 16
