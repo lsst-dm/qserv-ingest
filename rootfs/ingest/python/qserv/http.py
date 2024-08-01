@@ -230,6 +230,8 @@ class Http:
         """
         if payload is None:
             payload = dict()
+        # Set version if it does not exists
+        payload["version"] = payload.get("version", version.REPL_SERVICE_VERSION)
         if auth is True:
             payload["auth_key"] = self.authKey
         timeouts: Union[float, Tuple[float, float], Tuple[float, None]]
