@@ -152,6 +152,7 @@ class Http:
 
     def is_reachable(self, url: str) -> bool:
         """Check if a given http URL is reachable through the network."""
+        _LOG.debug("Checking if %s is reachable", url)
         try:
             self.http.head(url)
         except requests.exceptions.ConnectionError as e:
