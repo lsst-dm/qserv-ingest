@@ -1,0 +1,13 @@
+bases:
+- ../../base/configmap
+
+configMapGenerator:
+- name: config-ingest
+  behavior: replace
+  files:
+  - ingest.yaml
+  - dbbench.ini
+generatorOptions:
+  labels:
+    kustomize.generated.resources: qserv.ingest
+  disableNameSuffixHash: true
