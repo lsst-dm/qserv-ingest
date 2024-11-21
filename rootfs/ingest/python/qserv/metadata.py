@@ -330,23 +330,21 @@ class ContributionMetadata:
         return self._json_db
 
     def _check_version(self) -> None:
-        """Check metadata file version
-        and exit if its value is not supported"""
+        """Check metadata file version and exit if its value is not supported"""
         fileversion = None
         if "version" in self.metadata:
             fileversion = self.metadata["version"]
 
-        if fileversion is None or not (_MIN_SUPPORTED_VERSION <= fileversion <= version.REPL_SERVICE_VERSION):
+        if fileversion is None or fileversion < _MIN_SUPPORTED_VERSION:
             _LOG.critical(
                 "The metadata file (%s) version is not in the range supported by qserv-ingest "
-                "(is %s, expected between %s and %s)",
+                "(is %s, expected at least %s)",
                 self.metadata_url,
                 fileversion,
                 _MIN_SUPPORTED_VERSION,
-                version.REPL_SERVICE_VERSION,
             )
             sys.exit(1)
-        _LOG.info("Metadata file version: %s", version.REPL_SERVICE_VERSION)
+        _LOG.info("Metadata file version: %s", fileversion)
 
     @property
     def table_contribs_spec(self) -> Generator[TableContributionsSpec, None, None]:

@@ -64,7 +64,7 @@ class ReplicationClient:
 
         self.repl_url = util.trailing_slash(repl_url)
         self.http = Http(timeout_read_sec, timeout_write_sec, auth_path)
-        self._check_version()
+        self._report_version()
         self.index_url = urllib.parse.urljoin(self.repl_url, "replication/sql/index")
 
     def abort_all_transactions(self, database: str) -> None:
@@ -102,20 +102,11 @@ class ReplicationClient:
         for trans in responseJson["databases"][database]["transactions"]:
             _LOG.debug("Close transaction (id: %s state: %s)", trans["id"], trans["state"])
 
-    def _check_version(self) -> None:
-        """Check replication service version and exit if it is not
-        the expected one
-        """
+    def _report_version(self) -> None:
+        """Get and report replication service version"""
         url = urllib.parse.urljoin(self.repl_url, "meta/version")
         responseJson = self.http.get(url)
-        if responseJson["version"] != version.REPL_SERVICE_VERSION:
-            _LOG.critical(
-                "Invalid replication server version (is %s, expected %s)",
-                responseJson["version"],
-                version.REPL_SERVICE_VERSION,
-            )
-            sys.exit(1)
-        _LOG.info("Replication service version: v%s", version.REPL_SERVICE_VERSION)
+        _LOG.info("Replication service version: %s, this application's version: %s", responseJson["version"], version.REPL_SERVICE_VERSION)
 
     def database_config(self, database: str, ingest_service_config: IngestServiceConfig) -> None:
         """Set replication system configuration for a given database https://co

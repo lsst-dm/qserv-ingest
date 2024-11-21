@@ -152,6 +152,7 @@ class Http:
 
     def is_reachable(self, url: str) -> bool:
         """Check if a given http URL is reachable through the network."""
+        _LOG.debug("Checking if %s is reachable", url)
         try:
             self.http.head(url)
         except requests.exceptions.ConnectionError as e:
@@ -230,6 +231,8 @@ class Http:
         """
         if payload is None:
             payload = dict()
+        # Set version if it does not exists
+        payload["version"] = payload.get("version", version.REPL_SERVICE_VERSION)
         if auth is True:
             payload["auth_key"] = self.authKey
         timeouts: Union[float, Tuple[float, float], Tuple[float, None]]
